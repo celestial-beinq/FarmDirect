@@ -3,9 +3,9 @@
  * of the site itself (stock photos, blog teasers, storage tips).
  * Products, farms, pools and orders live in Supabase — see store.service.ts.
  */
-import { buyOptions as priceOptions } from '../../../supabase/functions/_shared/pricing';
+import { buyOptions as priceOptions, unitsFromOption } from '../../../supabase/functions/_shared/pricing';
 
-export { UNIT_PLURALS } from '../../../supabase/functions/_shared/pricing';
+export { UNIT_PLURALS, unitsFromOption } from '../../../supabase/functions/_shared/pricing';
 export type { BuyOption } from '../../../supabase/functions/_shared/pricing';
 
 /** Builds an image URL. Accepts a full URL, or a stock-photo id. */
@@ -51,6 +51,8 @@ export interface Crop {
   highlights: string[];
   /** The farm that sells this crop. */
   farmerId: string;
+  /** Available harvest quantity in `unit` (e.g. baskets or kg). */
+  quantity: number;
   /** Only "live" crops from verified farms appear in the marketplace. */
   status: ProductStatus;
 }

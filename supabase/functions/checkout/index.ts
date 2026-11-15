@@ -7,7 +7,7 @@
  * Every price is looked up here from the database, so a tampered request
  * cannot buy anything for less than it costs.
  */
-import { buyOptions } from '../_shared/pricing.ts';
+import { buyOptions, unitsFromOption } from '../_shared/pricing.ts';
 import {
   HttpError,
   SITE_URL,
@@ -100,7 +100,7 @@ serve(async (req) => {
   const { data: products } = await admin
     .from('products')
     .select(
-      'id, farm_id, kind, name, category, price, unit, image, min_share, status, farms(status)',
+      'id, farm_id, kind, name, category, price, unit, quantity, image, min_share, status, farms(status)',
     )
     .in('id', productIds);
   const byId = new Map((products ?? []).map((p) => [p.id, p]));
@@ -141,6 +141,17 @@ serve(async (req) => {
         throw new HttpError(409, `"${product.name}" is no longer sold in that pack size.`);
       if (!Number.isInteger(qty) || qty < 1 || qty > 99) {
         throw new HttpError(400, `Choose between 1 and 99 of "${product.name}".`);
+      }
+      const available = (product as { quantity?: number }).quantity ?? 0;
+      if (available <= 0) {
+        throw new HttpError(409, `"${product.name}" is currently finished and not available.`);
+      }
+      const unitsNeeded = unitsFromOption(option.label, qty, product.unit);
+      if (unitsNeeded > available) {
+        throw new HttpError(
+          409,
+          `Only ${available} ${product.unit} of "${product.name}" remaining. Please adjust your quantity.`,
+        );
       }
       return { ...base, title: product.name, detail: option.label, unitPrice: option.price, qty };
     }
