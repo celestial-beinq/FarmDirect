@@ -15,6 +15,7 @@ const EMPTY_FORM: ProductForm = {
   category: 'Vegetables',
   price: 0,
   unit: 'kg',
+  quantity: 10,
   description: '',
 };
 
@@ -60,6 +61,14 @@ export class FarmerDashboard {
   );
   protected readonly pendingCount = computed(
     () => this.products().filter((p) => p.status === 'pending').length,
+  );
+  /** Produce items with quantity < 5 that trigger low-stock alerts */
+  protected readonly lowStockItems = computed(() =>
+    this.products().filter((p) => p.quantity < 5),
+  );
+  /** Produce items that have run out of stock (quantity === 0) */
+  protected readonly outOfStockItems = computed(() =>
+    this.products().filter((p) => p.quantity <= 0),
   );
   protected readonly sales = computed(() =>
     this.orders()
@@ -192,7 +201,13 @@ export class FarmerDashboard {
     { id: 'analytics', label: 'Analytics', icon: 'chart', group: 'Workspace' },
     { id: 'reports', label: 'Reports', icon: 'file', group: 'Workspace' },
     { id: 'orders', label: 'Orders', icon: 'box', group: 'Farm', count: this.toFulfil().length },
-    { id: 'products', label: 'My Produce', icon: 'tag', group: 'Farm' },
+    {
+      id: 'products',
+      label: 'My Produce',
+      icon: 'tag',
+      group: 'Farm',
+      count: this.lowStockItems().length > 0 ? this.lowStockItems().length : undefined,
+    },
     {
       id: 'reviews',
       label: 'Reviews',
@@ -202,6 +217,27 @@ export class FarmerDashboard {
     },
     { id: 'profile', label: 'Farm Profile', icon: 'leaf', group: 'Account' },
   ]);
+
+  /* ---- Quick Restock State ---- */
+  protected readonly restockingId = signal<string | null>(null);
+  protected readonly restockQty = signal<number>(10);
+  protected readonly restockSaved = signal<string | null>(null);
+
+  protected startRestock(product: Crop): void {
+    this.restockingId.set(product.id);
+    this.restockQty.set(product.quantity <= 0 ? 10 : product.quantity + 10);
+  }
+
+  protected async saveRestock(product: Crop): Promise<void> {
+    const qty = this.restockQty();
+    if (qty < 0) return;
+    await this.store.updateStock(product.id, qty);
+    this.restockingId.set(null);
+    this.restockSaved.set(product.id);
+    setTimeout(() => {
+      if (this.restockSaved() === product.id) this.restockSaved.set(null);
+    }, 2500);
+  }
 
   /* ---- Add / edit listing form ---- */
   /** null = form closed, "new" = adding, otherwise the id being edited. */
@@ -238,6 +274,7 @@ export class FarmerDashboard {
       category: product.category,
       price: product.price,
       unit: product.unit,
+      quantity: product.quantity,
       description: product.description,
     });
     this.formError.set('');
@@ -247,7 +284,10 @@ export class FarmerDashboard {
   protected setField(field: keyof ProductForm, value: string): void {
     this.form.update((f) => ({
       ...f,
-      [field]: field === 'price' ? Math.floor(Number(value)) || 0 : value,
+      [field]:
+        field === 'price' || field === 'quantity'
+          ? Math.max(0, Math.floor(Number(value)) || 0)
+          : value,
     }));
   }
 

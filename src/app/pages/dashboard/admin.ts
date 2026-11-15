@@ -20,7 +20,6 @@ export class AdminDashboard {
   readonly tab = input<string>();
   protected readonly active = computed(() => this.tab() ?? 'overview');
 
-  protected readonly statuses = ORDER_STATUSES;
   protected readonly tone = tone;
 
   /** Farms with how many listings each has. */
@@ -252,10 +251,6 @@ export class AdminDashboard {
 
   protected stars(rating: number): string {
     return '★'.repeat(rating) + '☆'.repeat(5 - rating);
-  }
-
-  protected setOrderStatus(id: string, status: string): void {
-    void this.store.advanceOrder(id, status as OrderStatus);
   }
 
   protected removePool(id: string, name: string): void {
