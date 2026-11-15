@@ -42,3 +42,13 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Secrets and local configuration — never commit these.
+.env
+.env.*
+!.env.example
+supabase/functions/.env
+supabase/.temp/
+supabase/.branches/
+# Generated from .env by scripts/set-env.mjs
+/src/environments/environment.ts

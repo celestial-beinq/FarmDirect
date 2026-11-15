@@ -138,6 +138,9 @@
         </div>
       }
     </div>
+    <div class="container">
+      <app-reviews [productId]="animal.id" />
+    </div>
   </section>
 
   <!-- Start New Pool dialog -->
@@ -316,6 +319,12 @@
       </div>
     </div>
   }
+} @else if (!store.loaded()) {
+  <section class="section">
+    <div class="container">
+      <div class="empty"><p class="muted">Loading…</p></div>
+    </div>
+  </section>
 } @else {
   <section class="section">
     <div class="container">

@@ -70,15 +70,24 @@
             <app-icon name="truck" [size]="18" /> Order before the end of Thursday for Sunday
             delivery.
           </p>
-          <button type="button" class="btn btn--primary btn--block" (click)="placeOrder()">
-            Place Order
+          <button
+            type="button"
+            class="btn btn--primary btn--block"
+            [disabled]="busy()"
+            (click)="pay()"
+          >
+            {{ busy() ? 'Taking you to Paystack…' : 'Pay with Paystack' }}
           </button>
           @if (problem()) {
-            <p class="summary__pending summary__pending--bad" role="alert">{{ problem() }}</p>
+            <p class="summary__pending summary__pending--bad" role="alert">
+              {{ problem() }}
+              @if (needsAddress()) {
+                <a routerLink="/account" [queryParams]="{ tab: 'profile' }">Add address</a>
+              }
+            </p>
           }
           <p class="summary__pending">
-            Online payment isn't connected yet, so placing an order records it without taking
-            payment.
+            You'll pay on Paystack's secure page. Prices are confirmed by our server at checkout.
           </p>
           <a routerLink="/crops" class="btn btn--ghost btn--block">Continue Shopping</a>
         </aside>

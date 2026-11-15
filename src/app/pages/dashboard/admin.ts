@@ -1,9 +1,7 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ORDER_STATUSES, OrderStatus, tone } from '../../core/accounts';
-import { ANIMALS } from '../../core/data';
-import { PoolService } from '../../core/pool.service';
+import { ORDER_STATUSES, OrderStatus, Review, tone } from '../../core/accounts';
 import { StoreService } from '../../core/store.service';
 import { NairaPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
@@ -15,7 +13,6 @@ import { DashShell, DashTab } from './dash-shell';
 })
 export class AdminDashboard {
   protected readonly store = inject(StoreService);
-  protected readonly poolService = inject(PoolService);
 
   /** The open tab, from "?tab=..." in the URL. */
   readonly tab = input<string>();
@@ -28,28 +25,25 @@ export class AdminDashboard {
   protected readonly farmers = computed(() =>
     this.store.farmers().map((farmer) => ({
       farmer,
-      listings: this.store.products().filter((p) => p.farmerId === farmer.id).length,
+      owner: farmer.ownerId ? this.store.profileName(farmer.ownerId) : 'Sample farm (no login)',
+      listings: this.store.crops().filter((p) => p.farmerId === farmer.id).length,
     })),
   );
   protected readonly pendingFarmers = computed(() =>
     this.store.farmers().filter((f) => f.status === 'pending'),
   );
   protected readonly pendingProducts = computed(() =>
-    this.store.products().filter((p) => p.status === 'pending'),
+    this.store.crops().filter((p) => p.status === 'pending'),
   );
 
-  /** All orders, newest first. */
-  protected readonly orders = computed(() =>
-    [...this.store.orders()].sort(
-      (a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id),
-    ),
-  );
+  protected readonly orders = this.store.orders;
   protected readonly openOrders = computed(() =>
-    this.orders().filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled'),
+    this.orders().filter((o) => ['Placed', 'Confirmed', 'Dispatched'].includes(o.status)),
   );
+  /** Money actually received: orders that got past "Awaiting payment". */
   protected readonly sales = computed(() =>
     this.orders()
-      .filter((o) => o.status !== 'Cancelled')
+      .filter((o) => o.status !== 'Cancelled' && o.status !== 'Awaiting payment')
       .reduce((sum, o) => sum + o.total, 0),
   );
   /** How many orders sit at each status, for the overview breakdown. */
@@ -62,21 +56,25 @@ export class AdminDashboard {
 
   /** Customers with how many orders each has placed. */
   protected readonly customers = computed(() =>
-    this.store.customers().map((customer) => ({
-      customer,
-      orders: this.store.orders().filter((o) => o.customerId === customer.id).length,
-    })),
+    this.store
+      .profiles()
+      .filter((p) => p.role === 'customer')
+      .map((customer) => ({
+        customer,
+        orders: this.orders().filter((o) => o.customerId === customer.id).length,
+      })),
   );
 
   /** Pools with the animal they are for and how funded they are. */
   protected readonly pools = computed(() =>
-    this.poolService.pools().map((pool) => {
-      const animal = ANIMALS.find((a) => a.id === pool.animalId);
-      const target = animal?.price ?? 0;
-      const percent = target ? Math.min(100, Math.round((pool.raised / target) * 100)) : 0;
-      return { pool, animal, target, percent };
-    }),
+    this.store.pools().map((pool) => ({
+      pool,
+      animal: this.store.animals().find((a) => a.id === pool.animalId),
+      percent: Math.min(100, Math.round((pool.raised / pool.target) * 100)),
+    })),
   );
+
+  protected readonly reviews = signal<Review[]>([]);
 
   protected readonly tabs = computed<DashTab[]>(() => [
     { id: 'overview', label: 'Overview' },
@@ -84,20 +82,47 @@ export class AdminDashboard {
     { id: 'products', label: 'Listings', count: this.pendingProducts().length },
     { id: 'orders', label: 'Orders', count: this.openOrders().length },
     { id: 'pools', label: 'Livestock Pools' },
+    { id: 'reviews', label: 'Reviews' },
     { id: 'customers', label: 'Customers' },
   ]);
 
+  constructor() {
+    // Load reviews the first time the Reviews tab is opened.
+    effect(() => {
+      if (this.active() === 'reviews') untracked(() => void this.loadReviews());
+    });
+  }
+
+  private async loadReviews(): Promise<void> {
+    this.reviews.set(await this.store.loadReviews());
+  }
+
+  protected productName(id: string): string {
+    return (
+      this.store.crops().find((p) => p.id === id)?.name ??
+      this.store.animals().find((a) => a.id === id)?.name ??
+      'Removed listing'
+    );
+  }
+
+  protected stars(rating: number): string {
+    return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+  }
+
   protected setOrderStatus(id: string, status: string): void {
-    this.store.setOrderStatus(id, status as OrderStatus);
+    void this.store.advanceOrder(id, status as OrderStatus);
   }
 
   protected removePool(id: string, name: string): void {
-    if (confirm(`Remove the pool "${name}"? This cannot be undone.`)) this.poolService.remove(id);
+    if (confirm(`Remove the pool "${name}"? This cannot be undone.`)) {
+      void this.store.removePool(id);
+    }
   }
 
-  protected resetDemo(): void {
-    if (confirm('Reset all farmers, listings, orders, pools and customers to the sample data?')) {
-      this.store.resetDemo();
-    }
+  protected async removeReview(review: Review): Promise<void> {
+    if (!confirm(`Delete this review by ${review.author}? This cannot be undone.`)) return;
+    const error = await this.store.deleteReview(review.id);
+    this.store.error.set(error ?? '');
+    await this.loadReviews();
   }
 }

@@ -156,3 +156,8 @@
   background: #fbe9e7;
   color: var(--danger);
 }
+
+.summary__pending a {
+  font-weight: 600;
+  text-decoration: underline;
+}

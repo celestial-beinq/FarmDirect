@@ -1,0 +1,18 @@
+# Supabase project settings used by the Supabase CLI.
+project_id = "farmdirect"
+
+# Paystack calls this function directly, so it cannot carry a user's
+# sign-in token. The function checks Paystack's signature instead.
+[functions.paystack-webhook]
+verify_jwt = false
+
+# Sign-in attempts are rate-limited by Supabase Auth itself. These values
+# apply to local development; for the hosted project set them in the
+# dashboard under Authentication → Rate Limits.
+[auth.rate_limit]
+sign_in_sign_ups = 30
+token_refresh = 150
+email_sent = 4
+
+[auth]
+minimum_password_length = 8

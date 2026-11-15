@@ -133,7 +133,7 @@
             </div>
             <span class="price">{{ item.option.price | naira }}</span>
           </div>
-          <p>{{ item.crop.blurb }}</p>
+          <p>{{ item.crop.description }}</p>
           <button type="button" class="btn btn--primary btn--block" (click)="add(item.crop)">
             <app-icon name="basket" [size]="18" /> Add {{ item.option.label }} to Basket
           </button>

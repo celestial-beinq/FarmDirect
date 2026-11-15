@@ -1,28 +1,9 @@
-import { isPlatformBrowser } from '@angular/common';
-import {
-  Injectable,
-  PLATFORM_ID,
-  afterNextRender,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
-import {
-  CUSTOMERS,
-  Customer,
-  FARMERS,
-  Farmer,
-  FarmerStatus,
-  ORDERS,
-  Order,
-  OrderStatus,
-} from './accounts';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Farmer, FarmerStatus, Order, OrderStatus, Profile, Review } from './accounts';
+import { AuthService } from './auth.service';
 import { CartItem } from './cart.service';
-import { CROPS, Crop, CropCategory, DEFAULT_IMAGE, ProductStatus, UNIT_PLURALS } from './data';
-import { PoolService } from './pool.service';
-
-const STORAGE_KEY = 'farmdirect.db.v1';
+import { Animal, Crop, CropCategory, DEFAULT_IMAGE, Pool, ProductStatus } from './data';
+import { Supabase, friendlyError } from './supabase';
 
 export interface ProductForm {
   name: string;
@@ -32,76 +13,202 @@ export interface ProductForm {
   description: string;
 }
 
+/** How long until a pool closes, in words. */
+function timeLeft(closesAt: string): string {
+  const hours = Math.round((new Date(closesAt).getTime() - Date.now()) / 3_600_000);
+  if (hours <= 0) return 'closed';
+  if (hours < 48) return hours === 1 ? '1 hour' : `${hours} hours`;
+  return `${Math.round(hours / 24)} days`;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- rows come straight from the database */
+const toReview = (row: any): Review => ({
+  id: row.id,
+  productId: row.product_id,
+  customerId: row.customer_id,
+  author: row.author_name,
+  rating: row.rating,
+  comment: row.comment,
+  date: row.created_at,
+});
+
 /**
- * The app's stand-in database: farmers, customers, product listings and
- * orders. Everything is saved in this browser's localStorage, so the three
- * dashboards and the marketplace stay in step — but only on this device.
- * Replace the methods here with HTTP calls when a backend exists.
+ * All marketplace data, read from and written to Supabase.
+ *
+ * `refresh()` simply asks for every table. The database's Row Level
+ * Security decides what comes back: a shopper gets live products, a
+ * customer also gets their own orders, a farmer their own listings and
+ * orders, an admin everything. The app never has to filter for safety.
  */
 @Injectable({ providedIn: 'root' })
 export class StoreService {
-  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly poolService = inject(PoolService);
-  private loaded = false;
+  private readonly supabase = inject(Supabase);
+  private readonly auth = inject(AuthService);
 
-  readonly farmers = signal<Farmer[]>(FARMERS);
-  readonly customers = signal<Customer[]>(CUSTOMERS);
-  readonly products = signal<Crop[]>(CROPS);
-  readonly orders = signal<Order[]>(ORDERS);
+  readonly farmers = signal<Farmer[]>([]);
+  /** Every crop listing this user is allowed to see. */
+  readonly crops = signal<Crop[]>([]);
+  readonly animals = signal<Animal[]>([]);
+  readonly pools = signal<Pool[]>([]);
+  readonly orders = signal<Order[]>([]);
+  /** Profiles this user may see: just their own, or everyone for admins. */
+  readonly profiles = signal<Profile[]>([]);
 
-  /** What shoppers can see: approved listings from verified farms. */
+  /** False until the first load has finished. */
+  readonly loaded = signal(false);
+  /** The last problem talking to the server, for pages to show. */
+  readonly error = signal('');
+
+  /** What shoppers can buy: approved listings from verified farms. */
   readonly liveCrops = computed(() => {
     const verified = new Set(
       this.farmers()
         .filter((f) => f.status === 'verified')
         .map((f) => f.id),
     );
-    return this.products().filter((p) => p.status === 'live' && verified.has(p.farmerId));
+    return this.crops().filter((c) => c.status === 'live' && verified.has(c.farmerId));
   });
 
   constructor() {
-    afterNextRender(() => this.restore());
+    // Load on start, and again whenever someone signs in or out,
+    // because that changes what the database lets us see.
     effect(() => {
-      const snapshot = {
-        farmers: this.farmers(),
-        customers: this.customers(),
-        products: this.products(),
-        orders: this.orders(),
-      };
-      if (!this.loaded) return;
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
-      } catch {
-        // Storage full or blocked: changes still apply for this visit.
-      }
+      this.auth.userId();
+      untracked(() => void this.refresh());
     });
   }
 
-  /** Loads saved data. Safe to call more than once. */
-  restore(): void {
-    if (this.loaded || !this.isBrowser) return;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const db = JSON.parse(saved);
-        this.farmers.set(db.farmers);
-        this.customers.set(db.customers);
-        this.products.set(db.products);
-        this.orders.set(db.orders);
-      }
-    } catch {
-      // Unreadable storage: keep the starting data.
+  async refresh(): Promise<void> {
+    const client = this.supabase.client;
+    if (!client) {
+      // On the server, or before Supabase is configured: nothing to load.
+      if (!this.supabase.configured) this.loaded.set(true);
+      return;
     }
-    this.loaded = true;
-  }
+    await this.auth.ready;
+    const signedIn = !!this.auth.userId();
 
-  /** Puts everything back to the starting sample data. */
-  resetDemo(): void {
-    this.farmers.set(FARMERS);
-    this.customers.set(CUSTOMERS);
-    this.products.set(CROPS);
-    this.orders.set(ORDERS);
-    this.poolService.reset();
+    const [farms, products, pools, orders, profiles] = await Promise.all([
+      client.from('farms').select('*').order('created_at'),
+      client.from('products').select('*').order('created_at'),
+      client.from('pools').select('*').order('created_at'),
+      signedIn
+        ? client
+            .from('orders')
+            .select('*, order_items(*)')
+            .order('created_at', { ascending: false })
+        : { data: [], error: null },
+      signedIn
+        ? client.from('profiles').select('*').order('created_at')
+        : { data: [], error: null },
+    ]);
+
+    const failed = [farms, products, pools, orders, profiles].find((r) => r.error);
+    this.error.set(failed ? friendlyError(failed.error) : '');
+
+    const farmRows: any[] = farms.data ?? [];
+    const location = new Map(farmRows.map((f) => [f.id, f.location]));
+
+    this.farmers.set(
+      farmRows.map((f) => ({
+        id: f.id,
+        ownerId: f.owner_id,
+        name: f.name,
+        location: f.location,
+        status: f.status,
+        joined: f.created_at,
+      })),
+    );
+
+    const productRows: any[] = products.data ?? [];
+    this.crops.set(
+      productRows
+        .filter((p) => p.kind === 'crop')
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          price: p.price,
+          unit: p.unit,
+          tags: p.tags,
+          image: p.image,
+          gallery: p.gallery.length ? p.gallery : [p.image],
+          origin: location.get(p.farm_id) ?? '',
+          description: p.description,
+          highlights: p.highlights,
+          farmerId: p.farm_id,
+          status: p.status,
+        })),
+    );
+    this.animals.set(
+      productRows
+        .filter((p) => p.kind === 'livestock' && p.status === 'live')
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          type: p.category,
+          price: p.price,
+          weight: p.weight,
+          yieldKg: Number(p.yield_kg),
+          origin: location.get(p.farm_id) ?? '',
+          image: p.image,
+          gallery: p.gallery.length ? p.gallery : [p.image],
+          minShare: p.min_share,
+          farmerId: p.farm_id,
+        })),
+    );
+
+    this.pools.set(
+      ((pools.data ?? []) as any[]).map((p) => ({
+        id: p.id,
+        animalId: p.product_id,
+        name: p.name,
+        target: p.target,
+        raised: p.raised,
+        members: p.members,
+        closesIn: timeLeft(p.closes_at),
+        status: p.status,
+      })),
+    );
+
+    this.orders.set(
+      ((orders.data ?? []) as any[]).map((o) => ({
+        id: o.id,
+        code: o.code,
+        customerId: o.customer_id,
+        customerName: o.customer_name,
+        farmerId: o.farm_id,
+        date: o.created_at,
+        total: o.total,
+        status: o.status,
+        address: o.address,
+        items: (o.order_items ?? []).map((i: any) => ({
+          productId: i.product_id,
+          poolId: i.pool_id,
+          kind: i.kind,
+          title: i.title,
+          detail: i.detail,
+          image: i.image,
+          unitPrice: i.unit_price,
+          qty: i.qty,
+        })),
+      })),
+    );
+
+    this.profiles.set(
+      ((profiles.data ?? []) as any[]).map((p) => ({
+        id: p.id,
+        role: p.role,
+        name: p.full_name,
+        email: p.email,
+        phone: p.phone,
+        address: p.address,
+        status: p.status,
+        joined: p.created_at,
+      })),
+    );
+
+    this.loaded.set(true);
   }
 
   /* ----------------------------- Lookups ----------------------------- */
@@ -110,123 +217,183 @@ export class StoreService {
     return this.farmers().find((f) => f.id === id)?.name ?? 'Unknown farm';
   }
 
-  customerName(id: string): string {
-    return this.customers().find((c) => c.id === id)?.name ?? 'Unknown customer';
+  profileName(id: string | null): string {
+    return this.profiles().find((p) => p.id === id)?.name || '—';
   }
 
-  /* ---------------------------- Products ----------------------------- */
+  /* ------------------------- Changing things ------------------------- */
 
-  /** A farmer's new listing waits for admin approval before shoppers see it. */
-  addProduct(farmer: Farmer, form: ProductForm): void {
-    const slug = form.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-    const image = DEFAULT_IMAGE[form.category];
-    const product: Crop = {
-      id: `${slug || 'listing'}-${Date.now().toString(36)}`,
-      name: form.name,
-      category: form.category,
-      price: form.price,
-      unit: form.unit,
-      unitPlural: UNIT_PLURALS[form.unit] ?? form.unit,
-      tags: [],
-      image,
-      gallery: [image],
-      origin: farmer.location,
-      blurb: form.description,
-      description: form.description,
-      highlights: [],
-      farmerId: farmer.id,
-      status: 'pending',
-    };
-    this.products.update((list) => [...list, product]);
+  /**
+   * Runs one change against the database, then reloads. Returns an error
+   * message, or null if it worked. The database checks every change
+   * against its security rules, so a refusal here is expected behaviour
+   * when someone tries something they are not allowed to do.
+   */
+  private async change(
+    action: (client: NonNullable<Supabase['client']>) => PromiseLike<{ error: unknown }>,
+  ): Promise<string | null> {
+    const client = this.supabase.client;
+    if (!client) return 'The server is not set up yet.';
+    const { error } = await action(client);
+    const message = error ? friendlyError(error) : null;
+    this.error.set(message ?? '');
+    if (!message) await this.refresh();
+    return message;
   }
 
-  updateProduct(id: string, form: ProductForm): void {
-    this.products.update((list) =>
-      list.map((p) =>
-        p.id !== id
-          ? p
-          : {
-              ...p,
-              ...form,
-              unitPlural: UNIT_PLURALS[form.unit] ?? form.unit,
-              blurb: form.description,
-              // An edited listing that was rejected goes back to the admin for another look.
-              status: p.status === 'rejected' ? 'pending' : p.status,
-            },
-      ),
+  /** A farmer's new listing waits for admin approval (the database enforces this). */
+  addProduct(farmId: string, form: ProductForm) {
+    return this.change((c) =>
+      c.from('products').insert({
+        farm_id: farmId,
+        kind: 'crop',
+        name: form.name,
+        category: form.category,
+        price: form.price,
+        unit: form.unit,
+        description: form.description,
+        image: DEFAULT_IMAGE[form.category],
+      }),
     );
   }
 
-  setProductStatus(id: string, status: ProductStatus): void {
-    this.products.update((list) => list.map((p) => (p.id === id ? { ...p, status } : p)));
+  updateProduct(id: string, form: ProductForm, wasRejected: boolean) {
+    return this.change((c) =>
+      c
+        .from('products')
+        .update({
+          name: form.name,
+          category: form.category,
+          price: form.price,
+          unit: form.unit,
+          description: form.description,
+          // An edited listing that was rejected goes back for another review.
+          ...(wasRejected ? { status: 'pending' } : {}),
+        })
+        .eq('id', id),
+    );
   }
 
-  deleteProduct(id: string): void {
-    this.products.update((list) => list.filter((p) => p.id !== id));
+  setProductStatus(id: string, status: ProductStatus) {
+    return this.change((c) => c.from('products').update({ status }).eq('id', id));
   }
 
-  /* ----------------------------- People ------------------------------ */
-
-  setFarmerStatus(id: string, status: FarmerStatus): void {
-    this.farmers.update((list) => list.map((f) => (f.id === id ? { ...f, status } : f)));
+  deleteProduct(id: string) {
+    return this.change((c) => c.from('products').delete().eq('id', id));
   }
 
-  updateFarmer(id: string, patch: Partial<Farmer>): void {
-    this.farmers.update((list) => list.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  setFarmerStatus(id: string, status: FarmerStatus) {
+    return this.change((c) => c.from('farms').update({ status }).eq('id', id));
   }
 
-  setCustomerStatus(id: string, status: Customer['status']): void {
-    this.customers.update((list) => list.map((c) => (c.id === id ? { ...c, status } : c)));
+  updateFarm(id: string, name: string, location: string) {
+    return this.change((c) => c.from('farms').update({ name, location }).eq('id', id));
   }
 
-  updateCustomer(id: string, patch: Partial<Customer>): void {
-    this.customers.update((list) => list.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  setCustomerStatus(id: string, status: Profile['status']) {
+    return this.change((c) => c.from('profiles').update({ status }).eq('id', id));
   }
 
-  /* ----------------------------- Orders ------------------------------ */
+  async updateMyProfile(name: string, phone: string, address: string): Promise<string | null> {
+    const id = this.auth.userId();
+    if (!id) return 'Please sign in first.';
+    const error = await this.change((c) =>
+      c.from('profiles').update({ full_name: name, phone, address }).eq('id', id),
+    );
+    if (!error) await this.auth.reloadProfile();
+    return error;
+  }
+
+  /** Moves an order along. The database only allows the steps your role may take. */
+  advanceOrder(id: string, status: OrderStatus) {
+    return this.change((c) => c.rpc('advance_order', { p_order_id: id, p_status: status }));
+  }
+
+  removePool(id: string) {
+    return this.change((c) => c.from('pools').delete().eq('id', id));
+  }
+
+  /* ----------------------------- Payments ---------------------------- */
+
+  /** Calls one of our edge functions and unwraps its `{ error }` message. */
+  private async callFunction<T>(
+    name: string,
+    body: unknown,
+  ): Promise<{ data?: T; error?: string }> {
+    const client = this.supabase.client;
+    if (!client) return { error: 'The server is not set up yet.' };
+    const { data, error } = await client.functions.invoke(name, { body: body as object });
+    if (!error) return { data: data as T };
+    try {
+      const details = await (error as { context?: Response }).context?.json();
+      if (details?.error) return { error: details.error };
+    } catch {
+      // The response was not JSON; fall through to the generic message.
+    }
+    return { error: friendlyError(error) };
+  }
 
   /**
-   * Turns a basket into orders — one per farm, because each farm fulfils
-   * its own. Pool shares are counted towards their pool here.
+   * Sends the basket to the server, which prices it from the database,
+   * creates the orders and returns a Paystack payment page to go to.
+   * Only ids and quantities are sent — never prices.
    */
-  placeOrders(customer: Customer, items: CartItem[]): Order[] {
-    const byFarm = new Map<string, CartItem[]>();
-    for (const item of items) {
-      const farmerId = item.farmerId ?? 'f-ogun'; // baskets saved before farms were tracked
-      byFarm.set(farmerId, [...(byFarm.get(farmerId) ?? []), item]);
-    }
-
-    let next = this.orders().length + 1001;
-    const placed: Order[] = [...byFarm].map(([farmerId, lines]) => ({
-      id: `FD-${next++}`,
-      customerId: customer.id,
-      farmerId,
-      date: new Date().toISOString().slice(0, 10),
-      status: 'Placed',
-      address: customer.address,
-      total: lines.reduce((sum, l) => sum + l.unitPrice * l.qty, 0),
-      items: lines.map((l) => ({
-        title: l.title,
-        detail: l.detail,
-        image: l.image,
-        unitPrice: l.unitPrice,
-        qty: l.qty,
-        kind: l.kind ?? 'crop',
-        poolId: l.poolId,
+  checkout(items: CartItem[]) {
+    return this.callFunction<{ authorizationUrl: string; reference: string }>('checkout', {
+      items: items.map((item) => ({
+        kind: item.kind,
+        productId: item.productId,
+        option: item.option,
+        qty: item.qty,
+        poolId: item.poolId,
+        amount: item.kind === 'pool' ? item.unitPrice : undefined,
       })),
-    }));
-
-    for (const item of items) {
-      if (item.poolId) this.poolService.contribute(item.poolId, item.unitPrice);
-    }
-    this.orders.update((orders) => [...orders, ...placed]);
-    return placed;
+    });
   }
 
-  setOrderStatus(id: string, status: OrderStatus): void {
-    this.orders.update((list) => list.map((o) => (o.id === id ? { ...o, status } : o)));
+  /** Asks the server to confirm with Paystack that a payment went through. */
+  verifyPayment(reference: string) {
+    return this.callFunction<{ status: 'success' | 'pending' | 'failed' }>('verify-payment', {
+      reference,
+    });
+  }
+
+  /* ----------------------------- Reviews ----------------------------- */
+
+  /** Reviews for the given products, newest first. With no ids, all reviews. */
+  async loadReviews(productIds?: string[]): Promise<Review[]> {
+    const client = this.supabase.client;
+    if (!client || productIds?.length === 0) return [];
+    let query = client.from('reviews').select('*').order('created_at', { ascending: false });
+    if (productIds) query = query.in('product_id', productIds);
+    const { data } = await query.limit(200);
+    return (data ?? []).map(toReview);
+  }
+
+  /**
+   * Adds or updates my review. The database refuses it unless I have a
+   * delivered order containing this product.
+   */
+  async saveReview(productId: string, rating: number, comment: string): Promise<string | null> {
+    const client = this.supabase.client;
+    const customerId = this.auth.userId();
+    if (!client || !customerId) return 'Please sign in first.';
+    const { error } = await client
+      .from('reviews')
+      .upsert(
+        { product_id: productId, customer_id: customerId, rating, comment },
+        { onConflict: 'product_id,customer_id' },
+      );
+    if (!error) return null;
+    return /row-level security/i.test(error.message)
+      ? 'You can only review a product after an order containing it has been delivered.'
+      : friendlyError(error);
+  }
+
+  async deleteReview(id: string): Promise<string | null> {
+    const client = this.supabase.client;
+    if (!client) return 'The server is not set up yet.';
+    const { error } = await client.from('reviews').delete().eq('id', id);
+    return error ? friendlyError(error) : null;
   }
 }

@@ -18,34 +18,42 @@ export class Basket {
   private readonly store = inject(StoreService);
   private readonly router = inject(Router);
 
+  protected readonly busy = signal(false);
   protected readonly problem = signal('');
+  /** True when the problem is a missing delivery address, to show a link to fix it. */
+  protected readonly needsAddress = signal(false);
 
-  /** Turns the basket into orders. Payment is not connected yet, so none is taken. */
-  protected placeOrder(): void {
-    this.auth.restore();
-    this.store.restore();
-    const session = this.auth.session();
+  /**
+   * Sends the basket to the server and goes to Paystack to pay. The server
+   * works out the prices itself; the totals shown here are for display.
+   */
+  protected async pay(): Promise<void> {
+    this.problem.set('');
+    this.needsAddress.set(false);
+    await this.auth.ready;
+    const profile = this.auth.profile();
 
-    if (!session) {
-      this.router.navigate(['/login'], { queryParams: { next: 'basket' } });
+    if (!profile) {
+      await this.router.navigate(['/login'], { queryParams: { next: 'basket' } });
       return;
     }
-    if (session.role !== 'customer') {
-      this.problem.set(
+    if (profile.role !== 'customer') {
+      return this.problem.set(
         'Only customer accounts can place orders. Sign in as a customer to continue.',
       );
-      return;
     }
-    const customer = this.store.customers().find((c) => c.id === session.id);
-    if (!customer || customer.status === 'suspended') {
-      this.problem.set(
-        'This account is suspended and cannot place orders. Please contact support.',
-      );
-      return;
+    if (!profile.address.trim()) {
+      this.needsAddress.set(true);
+      return this.problem.set('Add a delivery address before paying.');
     }
 
-    this.store.placeOrders(customer, this.cart.items());
-    this.cart.clear();
-    this.router.navigate(['/account'], { queryParams: { tab: 'orders' } });
+    this.busy.set(true);
+    const { data, error } = await this.store.checkout(this.cart.items());
+    if (error || !data) {
+      this.busy.set(false);
+      return this.problem.set(error ?? 'Could not start the payment. Please try again.');
+    }
+    // Paystack's own secure payment page. Card details never touch our site.
+    location.href = data.authorizationUrl;
   }
 }

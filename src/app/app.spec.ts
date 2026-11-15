@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { buyOptions as serverOptions } from '../../supabase/functions/_shared/pricing';
 import { App } from './app';
-import { CUSTOMERS } from './core/accounts';
-import { CartService } from './core/cart.service';
-import { StoreService } from './core/store.service';
+import { tone } from './core/accounts';
+import { CartItem, CartService } from './core/cart.service';
+import { buyOptions, photo } from './core/data';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -27,16 +28,17 @@ describe('App', () => {
 
   it('should total the basket and merge repeated items', () => {
     const cart = TestBed.inject(CartService);
-    const item = {
+    const item: CartItem = {
       key: 'a',
+      productId: 'p1',
+      kind: 'crop',
+      option: '5kg',
       title: 'A',
-      detail: '',
+      detail: '5kg',
       image: '',
       unitPrice: 500,
       qty: 1,
       link: '/',
-      kind: 'crop' as const,
-      farmerId: 'f-ogun',
     };
     cart.add(item);
     cart.add({ ...item, qty: 2 });
@@ -45,34 +47,24 @@ describe('App', () => {
     expect(cart.total()).toBe(1500);
   });
 
-  it('should split a basket into one order per farm', () => {
-    const store = TestBed.inject(StoreService);
-    const before = store.orders().length;
-    const line = {
-      title: 'A',
-      detail: '',
-      image: '',
-      unitPrice: 1000,
-      qty: 2,
-      link: '/',
-      kind: 'crop' as const,
-    };
-    const placed = store.placeOrders(CUSTOMERS[0], [
-      { ...line, key: 'a', farmerId: 'f-ogun' },
-      { ...line, key: 'b', farmerId: 'f-ogun' },
-      { ...line, key: 'c', farmerId: 'f-benue' },
+  it('should show the same prices the checkout function charges', () => {
+    // The site and the server share one pricing file; this guards against drift.
+    expect(buyOptions({ price: 1200, unit: 'kg' })).toEqual(serverOptions(1200, 'kg'));
+    expect(buyOptions({ price: 1200, unit: 'kg' }).map((o) => o.price)).toEqual([
+      6000, 12000, 30000, 17100, 48600,
     ]);
-    expect(placed.length).toBe(2);
-    expect(placed.find((o) => o.farmerId === 'f-ogun')?.total).toBe(4000);
-    expect(store.orders().length).toBe(before + 2);
+    expect(buyOptions({ price: 400, unit: 'bunch' }).map((o) => [o.label, o.price])).toEqual([
+      ['1 bunch', 400],
+      ['5 bunches', 1900],
+      ['10 bunches', 3600],
+    ]);
   });
 
-  it('should hide listings that are not approved or whose farm is not verified', () => {
-    const store = TestBed.inject(StoreService);
-    expect(store.liveCrops().some((c) => c.id === 'ugu-leaves')).toBe(false);
-    store.setProductStatus('ugu-leaves', 'live');
-    expect(store.liveCrops().some((c) => c.id === 'ugu-leaves')).toBe(true);
-    store.setFarmerStatus('f-ogun', 'suspended');
-    expect(store.liveCrops().some((c) => c.farmerId === 'f-ogun')).toBe(false);
+  it('should build photo URLs and status colours', () => {
+    expect(photo('https://example.com/a.jpg')).toBe('https://example.com/a.jpg');
+    expect(photo('123-abc', 400)).toContain('photo-123-abc?w=400');
+    expect(tone('Delivered')).toBe('good');
+    expect(tone('Awaiting payment')).toBe('warn');
+    expect(tone('Cancelled')).toBe('bad');
   });
 });

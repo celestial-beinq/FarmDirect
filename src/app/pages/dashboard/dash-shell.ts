@@ -1,6 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { StoreService } from '../../core/store.service';
 
 export interface DashTab {
   id: string;
@@ -40,7 +41,14 @@ export interface DashTab {
         <button type="button" class="dash__out" (click)="signOut()">Sign out</button>
       </aside>
       <div class="dash__main">
-        <ng-content />
+        @if (store.error()) {
+          <p class="notice notice--bad" role="alert">{{ store.error() }}</p>
+        }
+        @if (store.loaded()) {
+          <ng-content />
+        } @else {
+          <p class="muted">Loading…</p>
+        }
       </div>
     </section>
   `,
@@ -48,14 +56,15 @@ export interface DashTab {
 export class DashShell {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  protected readonly store = inject(StoreService);
 
   readonly role = input.required<string>();
   readonly name = input.required<string>();
   readonly tabs = input.required<DashTab[]>();
   readonly active = input.required<string>();
 
-  protected signOut(): void {
-    this.auth.signOut();
-    this.router.navigate(['/']);
+  protected async signOut(): Promise<void> {
+    await this.auth.signOut();
+    await this.router.navigate(['/']);
   }
 }

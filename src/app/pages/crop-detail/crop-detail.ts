@@ -5,23 +5,25 @@ import { BuyOption, STORAGE_TIPS, buyOptions } from '../../core/data';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
+import { Reviews } from '../../shared/reviews';
 
 type Tab = 'Details' | 'Storage Tips' | 'Delivery Info';
 
 @Component({
   selector: 'app-crop-detail',
-  imports: [RouterLink, Icon, NairaPipe, PhotoPipe],
+  imports: [RouterLink, Icon, NairaPipe, PhotoPipe, Reviews],
   templateUrl: './crop-detail.html',
   styleUrl: './crop-detail.css',
 })
 export class CropDetail {
   private readonly cart = inject(CartService);
-  private readonly store = inject(StoreService);
+  protected readonly store = inject(StoreService);
 
   /** Filled in from the ":id" part of the URL. */
   readonly id = input.required<string>();
 
   protected readonly crop = computed(() => this.store.liveCrops().find((c) => c.id === this.id()));
+  protected readonly farmName = computed(() => this.store.farmerName(this.crop()?.farmerId ?? ''));
   protected readonly options = computed(() => {
     const crop = this.crop();
     return crop ? buyOptions(crop) : [];
@@ -60,13 +62,14 @@ export class CropDetail {
     if (!crop || !option) return;
     this.cart.add({
       key: `crop:${crop.id}:${option.label}`,
+      productId: crop.id,
+      kind: 'crop',
+      option: option.label,
       title: crop.name,
       detail: option.label,
       image: crop.image,
       unitPrice: option.price,
       qty: this.units(),
-      kind: 'crop',
-      farmerId: crop.farmerId,
       link: `/crops/${crop.id}`,
     });
     this.units.set(1);

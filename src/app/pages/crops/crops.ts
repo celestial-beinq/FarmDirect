@@ -17,7 +17,7 @@ const PAGE_SIZE = 6;
 })
 export class Crops {
   protected readonly categories = CROP_CATEGORIES;
-  private readonly store = inject(StoreService);
+  protected readonly store = inject(StoreService);
 
   /** The dearest crop on sale — the top of the price slider. */
   protected readonly priceCeiling = computed(() =>

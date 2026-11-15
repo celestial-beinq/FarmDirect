@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ANIMALS, ANIMAL_TYPES, AnimalType } from '../../core/data';
-import { PoolService } from '../../core/pool.service';
+import { ANIMAL_TYPES, AnimalType } from '../../core/data';
+import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 
@@ -12,7 +12,7 @@ import { NairaPipe, PhotoPipe } from '../../shared/pipes';
   styleUrl: './livestock.css',
 })
 export class Livestock {
-  private readonly poolService = inject(PoolService);
+  protected readonly store = inject(StoreService);
 
   protected readonly types = ANIMAL_TYPES;
   protected readonly type = signal<AnimalType | 'All'>('All');
@@ -45,14 +45,20 @@ export class Livestock {
   protected readonly animals = computed(() => {
     const type = this.type();
     const direction = this.sort() === 'high' ? -1 : 1;
-    return ANIMALS.map((animal) => ({
-      animal,
-      pools: this.poolService.forAnimal(animal.id).length,
-    }))
+    const openPools = this.store.pools().filter((p) => p.status === 'open');
+    return this.store
+      .animals()
+      .map((animal) => ({
+        animal,
+        pools: openPools.filter((p) => p.animalId === animal.id).length,
+      }))
       .filter((row) => type === 'All' || row.animal.type === type)
       .filter((row) => !this.poolsOnly() || row.pools > 0)
       .sort((a, b) => (a.animal.price - b.animal.price) * direction);
   });
+
+  /** The first cow on sale, for the "view cow pools" shortcut. */
+  protected readonly firstCow = computed(() => this.store.animals().find((a) => a.type === 'Cow'));
 
   protected setType(value: string): void {
     this.type.set(value as AnimalType | 'All');

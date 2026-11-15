@@ -31,7 +31,7 @@
       <div>
         <h2 class="detail__title">{{ crop.name }}</h2>
         <p class="detail__origin">
-          <app-icon name="pin" [size]="18" /> Direct from {{ crop.origin }}
+          <app-icon name="pin" [size]="18" /> {{ farmName() }} · {{ crop.origin }}
         </p>
         <p class="delivery">
           <app-icon name="truck" [size]="22" />
@@ -129,6 +129,15 @@
           }
         </div>
       </div>
+    </div>
+    <div class="container">
+      <app-reviews [productId]="crop.id" />
+    </div>
+  </section>
+} @else if (!store.loaded()) {
+  <section class="section">
+    <div class="container">
+      <div class="empty"><p class="muted">Loading…</p></div>
     </div>
   </section>
 } @else {

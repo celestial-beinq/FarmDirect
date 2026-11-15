@@ -49,6 +49,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/login').then((m) => m.Login),
   },
   {
+    path: 'payment/callback',
+    title: 'Payment — FarmDirect',
+    loadComponent: () => import('./pages/payment/payment-callback').then((m) => m.PaymentCallback),
+  },
+  {
     path: 'account',
     title: 'My Account — FarmDirect',
     canActivate: [roleGuard('customer')],

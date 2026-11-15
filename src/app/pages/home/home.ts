@@ -66,12 +66,11 @@ export class Home {
     },
   ];
 
-  /** Three featured crops — skipped if a listing is no longer on sale. */
+  /** The first three crops on sale. */
   protected readonly trending = computed(() => {
-    const featured = ['vegetable-box', 'ofada-rice', 'fruit-basket'];
     return this.store
       .liveCrops()
-      .filter((crop) => featured.includes(crop.id))
+      .slice(0, 3)
       .map((crop) => ({ crop, option: buyOptions(crop)[0] }));
   });
 
@@ -85,7 +84,8 @@ export class Home {
       unitPrice: option.price,
       qty: 1,
       kind: 'crop',
-      farmerId: crop.farmerId,
+      productId: crop.id,
+      option: option.label,
       link: `/crops/${crop.id}`,
     });
   }

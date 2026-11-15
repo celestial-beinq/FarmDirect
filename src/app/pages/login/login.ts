@@ -1,136 +1,256 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Role } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
-import { Icon, IconName } from '../../shared/icon';
+import { Supabase } from '../../core/supabase';
 
 @Component({
   selector: 'app-login',
-  imports: [Icon],
   template: `
     <section class="section">
       <div class="container login">
-        <h1>Sign in</h1>
-        <p class="muted">
-          This is a demo sign-in: choose a role to open that dashboard with a sample account. Real
-          accounts with passwords need a backend.
-        </p>
+        <h1>{{ mode() === 'in' ? 'Sign in' : 'Create your account' }}</h1>
 
-        <div class="roles">
-          @for (option of options; track option.role) {
-            <button type="button" class="role" (click)="choose(option.role)">
-              <span class="role__icon"><app-icon [name]="option.icon" [size]="26" /></span>
-              <strong>{{ option.title }}</strong>
-              <span>{{ option.text }}</span>
-              <span class="role__go">Continue <app-icon name="arrow-right" [size]="16" /></span>
-            </button>
-          }
+        @if (!supabase.configured) {
+          <p class="notice">
+            Accounts are not set up yet. Add your Supabase details to the .env file (see SETUP.md)
+            and restart the site.
+          </p>
+        }
+
+        @if (confirmEmail()) {
+          <p class="notice" role="status">
+            Almost done — we've sent a confirmation link to your email. Open it, then sign in here.
+          </p>
+        }
+
+        <div class="panel">
+          <form class="form" (submit)="$event.preventDefault(); submit()">
+            @if (mode() === 'up') {
+              <div class="wide roles" role="radiogroup" aria-label="Account type">
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="role() === 'customer'"
+                  [class.is-chosen]="role() === 'customer'"
+                  (click)="role.set('customer')"
+                >
+                  <strong>I want to buy</strong>
+                  <span>Order produce and join livestock pools</span>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="role() === 'farmer'"
+                  [class.is-chosen]="role() === 'farmer'"
+                  (click)="role.set('farmer')"
+                >
+                  <strong>I'm a farmer</strong>
+                  <span>List produce and receive orders</span>
+                </button>
+              </div>
+              <label class="wide">
+                Full name
+                <input
+                  #fullName
+                  name="name"
+                  autocomplete="name"
+                  required
+                  maxlength="120"
+                  (input)="name.set(fullName.value)"
+                />
+              </label>
+              @if (role() === 'farmer') {
+                <label>
+                  Farm name
+                  <input
+                    #farm
+                    name="farm"
+                    required
+                    maxlength="120"
+                    (input)="farmName.set(farm.value)"
+                  />
+                </label>
+                <label>
+                  Farm location
+                  <input
+                    #place
+                    name="location"
+                    placeholder="Town, State"
+                    maxlength="160"
+                    (input)="farmLocation.set(place.value)"
+                  />
+                </label>
+              }
+            }
+            <label class="wide">
+              Email
+              <input
+                #mail
+                type="email"
+                name="email"
+                autocomplete="email"
+                required
+                (input)="email.set(mail.value)"
+              />
+            </label>
+            <label class="wide">
+              Password
+              <input
+                #pass
+                type="password"
+                name="password"
+                required
+                minlength="8"
+                [attr.autocomplete]="mode() === 'in' ? 'current-password' : 'new-password'"
+                (input)="password.set(pass.value)"
+              />
+              @if (mode() === 'up') {
+                <small>At least 8 characters.</small>
+              }
+            </label>
+
+            <div class="form__foot">
+              <button type="submit" class="btn btn--primary" [disabled]="busy()">
+                {{ busy() ? 'Please wait…' : mode() === 'in' ? 'Sign In' : 'Create Account' }}
+              </button>
+              @if (error()) {
+                <span class="form__error" role="alert">{{ error() }}</span>
+              }
+            </div>
+          </form>
         </div>
+
+        <p class="switch">
+          @if (mode() === 'in') {
+            New to FarmDirect?
+            <button type="button" (click)="setMode('up')">Create an account</button>
+          } @else {
+            Already have an account?
+            <button type="button" (click)="setMode('in')">Sign in</button>
+          }
+        </p>
       </div>
     </section>
   `,
   styles: `
     .login {
-      max-width: 900px;
-      text-align: center;
+      max-width: 560px;
     }
 
     h1 {
-      font-size: clamp(1.9rem, 4vw, 2.6rem);
-    }
-
-    p {
-      max-width: 52ch;
-      margin: 12px auto 40px;
+      margin-bottom: 24px;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      text-align: center;
     }
 
     .roles {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
 
-    .role {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 28px 24px;
+    .roles button {
+      padding: 14px 16px;
       border: 2px solid var(--line);
-      border-radius: var(--radius);
+      border-radius: var(--radius-sm);
       text-align: left;
-      font-size: 0.88rem;
-      color: var(--muted);
-      transition: border-color 0.15s;
     }
 
-    .role:hover {
+    .roles button.is-chosen {
       border-color: var(--green-900);
+      background: var(--cream);
     }
 
-    .role strong {
-      font-family: var(--font-display);
-      font-size: 1.2rem;
-      color: var(--ink);
+    .roles strong,
+    .roles span {
+      display: block;
     }
 
-    .role__icon {
-      display: grid;
-      place-items: center;
-      width: 52px;
-      height: 52px;
-      margin-bottom: 8px;
-      border-radius: 12px;
-      background: var(--lime);
-      color: var(--ink);
+    .roles span,
+    small {
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: var(--muted);
     }
 
-    .role__go {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 12px;
+    .switch {
+      text-align: center;
+      font-size: 0.92rem;
+    }
+
+    .switch button {
       font-weight: 600;
-      color: var(--ink);
-    }
-
-    @media (max-width: 720px) {
-      .roles {
-        grid-template-columns: 1fr;
-      }
+      text-decoration: underline;
     }
   `,
 })
 export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  protected readonly supabase = inject(Supabase);
 
   /** "?next=basket" sends a customer back to finish their order. */
   readonly next = input<string>();
 
-  protected readonly options: { role: Role; icon: IconName; title: string; text: string }[] = [
-    {
-      role: 'customer',
-      icon: 'basket',
-      title: 'Customer',
-      text: 'Track orders, follow your livestock shares and manage your delivery address.',
-    },
-    {
-      role: 'farmer',
-      icon: 'leaf',
-      title: 'Farmer',
-      text: 'List your produce, handle incoming orders and see your sales.',
-    },
-    {
-      role: 'admin',
-      icon: 'shield',
-      title: 'Admin',
-      text: 'Verify farms, approve listings and oversee orders, pools and customers.',
-    },
-  ];
+  protected readonly mode = signal<'in' | 'up'>('in');
+  protected readonly role = signal<'customer' | 'farmer'>('customer');
+  protected readonly name = signal('');
+  protected readonly farmName = signal('');
+  protected readonly farmLocation = signal('');
+  protected readonly email = signal('');
+  protected readonly password = signal('');
 
-  protected choose(role: Role): void {
-    this.auth.signIn(role);
-    if (role === 'customer' && this.next() === 'basket') this.router.navigate(['/basket']);
-    else this.router.navigateByUrl(this.auth.homePath());
+  protected readonly busy = signal(false);
+  protected readonly error = signal('');
+  protected readonly confirmEmail = signal(false);
+
+  protected setMode(mode: 'in' | 'up'): void {
+    this.mode.set(mode);
+    this.error.set('');
+  }
+
+  protected async submit(): Promise<void> {
+    const email = this.email().trim();
+    const password = this.password();
+    this.error.set('');
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) return this.error.set('Enter a valid email address.');
+    if (password.length < 8) return this.error.set('Your password needs at least 8 characters.');
+
+    this.busy.set(true);
+    try {
+      if (this.mode() === 'in') {
+        const error = await this.auth.signIn(email, password);
+        if (error) return this.error.set(error);
+      } else {
+        if (!this.name().trim()) return this.error.set('Enter your full name.');
+        if (this.role() === 'farmer' && this.farmName().trim().length < 2) {
+          return this.error.set('Enter your farm name.');
+        }
+        const result = await this.auth.signUp({
+          email,
+          password,
+          fullName: this.name().trim(),
+          role: this.role(),
+          farmName: this.farmName().trim(),
+          farmLocation: this.farmLocation().trim(),
+        });
+        if (result.error) return this.error.set(result.error);
+        if (result.confirmEmail) {
+          this.confirmEmail.set(true);
+          this.setMode('in');
+          return;
+        }
+      }
+
+      const profile = this.auth.profile();
+      if (profile?.role === 'customer' && this.next() === 'basket') {
+        await this.router.navigate(['/basket']);
+      } else {
+        await this.router.navigateByUrl(this.auth.homePath());
+      }
+    } finally {
+      this.busy.set(false);
+    }
   }
 }

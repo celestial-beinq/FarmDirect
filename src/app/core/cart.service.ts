@@ -3,23 +3,30 @@ import { Injectable, afterNextRender, computed, effect, signal } from '@angular/
 export interface CartItem {
   /** Unique per product + pack size, so the same choice merges into one line. */
   key: string;
+  productId: string;
+  kind: 'crop' | 'animal' | 'pool';
+  /** crop: the pack size label, e.g. "5kg" */
+  option?: string;
+  /** pool: the pool being joined. Missing on a pool line means "start a new pool". */
+  poolId?: string;
   title: string;
   detail: string;
   image: string;
+  /**
+   * Shown in the basket only. The amount actually charged is recalculated
+   * on the server at checkout (pool shares send `unitPrice` as the
+   * contribution, which the server validates against the pool).
+   */
   unitPrice: number;
   qty: number;
   /** Whole animals and pool shares are one-off — no quantity stepper. */
   fixedQty?: boolean;
   link: string;
-  kind: 'crop' | 'animal' | 'pool';
-  /** The farm that fulfils this line. */
-  farmerId: string;
-  /** Set when the line is a contribution to a livestock pool. */
-  poolId?: string;
 }
 
-const STORAGE_KEY = 'farmdirect.cart';
+const STORAGE_KEY = 'farmdirect.cart.v2';
 
+/** The basket. Kept in this browser until checkout; nothing sensitive is stored. */
 @Injectable({ providedIn: 'root' })
 export class CartService {
   readonly items = signal<CartItem[]>([]);
@@ -71,7 +78,9 @@ export class CartService {
 
   setQty(key: string, qty: number): void {
     if (qty < 1) return this.remove(key);
-    this.items.update((items) => items.map((i) => (i.key === key ? { ...i, qty } : i)));
+    this.items.update((items) =>
+      items.map((i) => (i.key === key ? { ...i, qty: Math.min(99, qty) } : i)),
+    );
   }
 
   remove(key: string): void {

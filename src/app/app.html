@@ -34,7 +34,7 @@
       <a
         [routerLink]="auth.homePath()"
         class="icon-btn"
-        [attr.aria-label]="auth.session() ? 'Your dashboard' : 'Sign in'"
+        [attr.aria-label]="auth.profile() ? 'Your dashboard' : 'Sign in'"
       >
         <app-icon name="user" [size]="22" />
       </a>
@@ -62,6 +62,12 @@
 </header>
 
 <main>
+  @if (!supabase.configured) {
+    <p class="setup-banner" role="status">
+      Supabase is not connected yet, so products, sign-in and orders are unavailable. Fill in the
+      .env file and restart — see SETUP.md.
+    </p>
+  }
   <router-outlet />
 </main>
 

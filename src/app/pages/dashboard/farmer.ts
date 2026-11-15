@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { tone } from '../../core/accounts';
+import { Review, tone } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
 import { CROP_CATEGORIES, Crop, UNIT_PLURALS } from '../../core/data';
 import { ProductForm, StoreService } from '../../core/store.service';
@@ -33,19 +33,20 @@ export class FarmerDashboard {
   protected readonly units = Object.keys(UNIT_PLURALS);
   protected readonly tone = tone;
 
+  /** My farm. */
   protected readonly me = computed(() =>
-    this.store.farmers().find((f) => f.id === this.auth.session()?.id),
+    this.store.farmers().find((f) => f.ownerId === this.auth.userId()),
   );
+  protected readonly suspended = computed(() => this.auth.profile()?.status === 'suspended');
 
   protected readonly products = computed(() =>
-    this.store.products().filter((p) => p.farmerId === this.me()?.id),
+    this.store.crops().filter((p) => p.farmerId === this.me()?.id),
   );
-  /** Orders for my farm, newest first. */
+  /** Paid orders for my farm, newest first. */
   protected readonly orders = computed(() =>
     this.store
       .orders()
-      .filter((o) => o.farmerId === this.me()?.id)
-      .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)),
+      .filter((o) => o.farmerId === this.me()?.id && o.status !== 'Awaiting payment'),
   );
   /** Orders that still need something from me. */
   protected readonly toFulfil = computed(() =>
@@ -69,10 +70,20 @@ export class FarmerDashboard {
       .reduce((sum, o) => sum + o.total, 0),
   );
 
+  /** What customers have said about my produce. */
+  protected readonly reviews = signal<Review[]>([]);
+  protected readonly averageRating = computed(() => {
+    const list = this.reviews();
+    return list.length
+      ? Math.round((list.reduce((sum, r) => sum + r.rating, 0) / list.length) * 10) / 10
+      : 0;
+  });
+
   protected readonly tabs = computed<DashTab[]>(() => [
     { id: 'overview', label: 'Overview' },
     { id: 'products', label: 'My Produce' },
     { id: 'orders', label: 'Orders', count: this.toFulfil().length },
+    { id: 'reviews', label: 'Reviews', count: this.reviews().length },
     { id: 'profile', label: 'Farm Profile' },
   ]);
 
@@ -82,6 +93,22 @@ export class FarmerDashboard {
   protected readonly form = signal<ProductForm>(EMPTY_FORM);
   protected readonly formError = signal('');
   protected readonly saved = signal(false);
+
+  constructor() {
+    // Load reviews for my products whenever the product list changes.
+    effect(() => {
+      const ids = this.products().map((p) => p.id);
+      untracked(async () => this.reviews.set(await this.store.loadReviews(ids)));
+    });
+  }
+
+  protected productName(id: string): string {
+    return this.products().find((p) => p.id === id)?.name ?? 'Removed listing';
+  }
+
+  protected stars(rating: number): string {
+    return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+  }
 
   protected startAdd(): void {
     this.form.set(EMPTY_FORM);
@@ -102,40 +129,47 @@ export class FarmerDashboard {
   }
 
   protected setField(field: keyof ProductForm, value: string): void {
-    this.form.update((f) => ({ ...f, [field]: field === 'price' ? Number(value) || 0 : value }));
+    this.form.update((f) => ({
+      ...f,
+      [field]: field === 'price' ? Math.floor(Number(value)) || 0 : value,
+    }));
   }
 
-  protected saveProduct(): void {
+  protected async saveProduct(): Promise<void> {
     const me = this.me();
+    const editing = this.editing();
     const form = { ...this.form(), name: this.form().name.trim() };
-    if (!me) return;
-    if (!form.name) return this.formError.set('Give the listing a name.');
+    if (!me || !editing) return;
+    if (form.name.length < 2) return this.formError.set('Give the listing a name.');
     if (form.price <= 0) return this.formError.set('Enter a price above ₦0.');
 
-    if (this.editing() === 'new') this.store.addProduct(me, form);
-    else this.store.updateProduct(this.editing()!, form);
+    const error =
+      editing === 'new'
+        ? await this.store.addProduct(me.id, form)
+        : await this.store.updateProduct(
+            editing,
+            form,
+            this.products().find((p) => p.id === editing)?.status === 'rejected',
+          );
+    if (error) return this.formError.set(error);
     this.editing.set(null);
   }
 
   protected togglePause(product: Crop): void {
-    this.store.setProductStatus(product.id, product.status === 'live' ? 'paused' : 'live');
+    void this.store.setProductStatus(product.id, product.status === 'live' ? 'paused' : 'live');
   }
 
   protected remove(product: Crop): void {
     if (confirm(`Delete "${product.name}"? This cannot be undone.`)) {
-      this.store.deleteProduct(product.id);
+      void this.store.deleteProduct(product.id);
     }
   }
 
-  protected saveProfile(name: string, owner: string, location: string, phone: string): void {
+  protected async saveProfile(name: string, location: string): Promise<void> {
     const me = this.me();
-    if (!me || !name.trim()) return;
-    this.store.updateFarmer(me.id, {
-      name: name.trim(),
-      owner: owner.trim(),
-      location: location.trim(),
-      phone: phone.trim(),
-    });
-    this.saved.set(true);
+    this.saved.set(false);
+    if (!me || name.trim().length < 2) return;
+    const error = await this.store.updateFarm(me.id, name.trim(), location.trim());
+    this.saved.set(!error);
   }
 }

@@ -131,6 +131,8 @@
               </button>
             </nav>
           }
+        } @else if (!store.loaded()) {
+          <div class="empty"><p class="muted">Loading…</p></div>
         } @else {
           <div class="empty">
             <h2>No crops match those filters</h2>

@@ -1,23 +1,11 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
-import { ANIMALS, CROPS } from './core/data';
 
 export const serverRoutes: ServerRoute[] = [
-  {
-    path: 'crops/:id',
-    renderMode: RenderMode.Prerender,
-    getPrerenderParams: async () => CROPS.map((c) => ({ id: c.id })),
-  },
-  {
-    path: 'livestock/:id',
-    renderMode: RenderMode.Prerender,
-    getPrerenderParams: async () => ANIMALS.map((a) => ({ id: a.id })),
-  },
-  // The basket depends on what is saved in this visitor's browser.
-  { path: 'basket', renderMode: RenderMode.Client },
-  // Sign-in and the dashboards depend on who is signed in on this device.
-  { path: 'login', renderMode: RenderMode.Client },
-  { path: 'account', renderMode: RenderMode.Client },
-  { path: 'farmer', renderMode: RenderMode.Client },
-  { path: 'admin', renderMode: RenderMode.Client },
-  { path: '**', renderMode: RenderMode.Prerender },
+  // Pages with no live data are built once, ahead of time.
+  { path: '', renderMode: RenderMode.Prerender },
+  { path: 'about', renderMode: RenderMode.Prerender },
+  { path: 'blog', renderMode: RenderMode.Prerender },
+  // Everything else shows data from Supabase that depends on the moment and
+  // on who is signed in, so it is rendered in the visitor's browser.
+  { path: '**', renderMode: RenderMode.Client },
 ];

@@ -73,7 +73,7 @@
         <h2>Share a cow, split the cost</h2>
         <p>Join other families in a buying pool and pay only for the portion you need.</p>
         <a
-          [routerLink]="['/livestock', 'friesian-cross-cow']"
+          [routerLink]="firstCow() ? ['/livestock', firstCow()!.id] : ['/livestock']"
           fragment="pools"
           class="btn btn--primary btn--block"
         >
@@ -117,6 +117,8 @@
           </article>
         }
       </div>
+    } @else if (!store.loaded()) {
+      <div class="empty"><p class="muted">Loading…</p></div>
     } @else {
       <div class="empty">
         <h2>No animals match those filters</h2>
