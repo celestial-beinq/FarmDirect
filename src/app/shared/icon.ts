@@ -47,6 +47,12 @@ const ICONS = {
   'chevron-right': ['M9 6l6 6l-6 6'],
   trash: ['M4 7h16', 'M9 7V4h6v3', 'M6 7l1 13h10l1-13'],
   user: ['M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8z', 'M4 21a8 8 0 0 1 16 0'],
+  grid: ['M4 4h7v7H4z', 'M13 4h7v7h-7z', 'M4 13h7v7H4z', 'M13 13h7v7h-7z'],
+  chart: ['M4 20h16', 'M7 20v-6', 'M12 20V6', 'M17 20v-9'],
+  file: ['M6 3h8l4 4v14H6z', 'M14 3v4h4', 'M9 13h6', 'M9 17h6'],
+  star: ['M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z'],
+  home: ['M4 11l8-7l8 7', 'M6 10v10h12V10'],
+  logout: ['M10 4H5v16h5', 'M15 8l4 4l-4 4', 'M19 12H9'],
   clock: ['M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z', 'M12 7v5l3 2'],
 } satisfies Record<string, string[]>;
 

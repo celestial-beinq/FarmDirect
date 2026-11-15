@@ -1,65 +1,67 @@
-<div class="topbar">
-  <div class="container topbar__inner">
-    <span>Order by Thursday · Delivered Sunday</span>
-    <a href="mailto:hello@farmdirect.example">hello&#64;farmdirect.example</a>
-  </div>
-</div>
-
-<header class="header">
-  <div class="container header__inner">
-    <a routerLink="/" class="logo" aria-label="FarmDirect home">
-      <svg viewBox="0 0 32 20" width="30" height="19" aria-hidden="true">
-        <path d="M16 20C16 9 9 3 0 2c1 9 6 15 16 18z" fill="#cfe86e" />
-        <path d="M16 20c0-9 6-16 16-20c0 10-6 17-16 20z" fill="#a9cc3c" />
-      </svg>
-      <span>FarmDirect</span>
-    </a>
-
-    <nav class="nav" [class.nav--open]="menuOpen()" aria-label="Main">
-      @for (link of links; track link.path) {
-        <a
-          [routerLink]="link.path"
-          routerLinkActive="is-active"
-          [routerLinkActiveOptions]="{ exact: link.exact }"
-          (click)="menuOpen.set(false)"
-          >{{ link.label }}</a
-        >
-      }
-    </nav>
-
-    <div class="header__actions">
-      <a routerLink="/crops" class="icon-btn" aria-label="Search crops">
-        <app-icon name="search" [size]="22" />
-      </a>
-      <a
-        [routerLink]="auth.homePath()"
-        class="icon-btn"
-        [attr.aria-label]="auth.profile() ? 'Your dashboard' : 'Sign in'"
-      >
-        <app-icon name="user" [size]="22" />
-      </a>
-      <a
-        routerLink="/basket"
-        class="icon-btn"
-        [attr.aria-label]="'Basket, ' + cart.count() + ' items'"
-      >
-        <app-icon name="basket" [size]="22" />
-        @if (cart.count() > 0) {
-          <span class="badge">{{ cart.count() }}</span>
-        }
-      </a>
-      <button
-        type="button"
-        class="icon-btn menu-btn"
-        [attr.aria-expanded]="menuOpen()"
-        aria-label="Menu"
-        (click)="menuOpen.set(!menuOpen())"
-      >
-        <app-icon [name]="menuOpen() ? 'close' : 'menu'" [size]="24" />
-      </button>
+@if (!bare()) {
+  <div class="topbar">
+    <div class="container topbar__inner">
+      <span>Order by Thursday · Delivered Sunday</span>
+      <a href="mailto:hello@farmdirect.example">hello&#64;farmdirect.example</a>
     </div>
   </div>
-</header>
+
+  <header class="header">
+    <div class="container header__inner">
+      <a routerLink="/" class="logo" aria-label="FarmDirect home">
+        <svg viewBox="0 0 32 20" width="30" height="19" aria-hidden="true">
+          <path d="M16 20C16 9 9 3 0 2c1 9 6 15 16 18z" fill="#cfe86e" />
+          <path d="M16 20c0-9 6-16 16-20c0 10-6 17-16 20z" fill="#a9cc3c" />
+        </svg>
+        <span>FarmDirect</span>
+      </a>
+
+      <nav class="nav" [class.nav--open]="menuOpen()" aria-label="Main">
+        @for (link of links; track link.path) {
+          <a
+            [routerLink]="link.path"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: link.exact }"
+            (click)="menuOpen.set(false)"
+            >{{ link.label }}</a
+          >
+        }
+      </nav>
+
+      <div class="header__actions">
+        <a routerLink="/crops" class="icon-btn" aria-label="Search crops">
+          <app-icon name="search" [size]="22" />
+        </a>
+        <a
+          [routerLink]="auth.homePath()"
+          class="icon-btn"
+          [attr.aria-label]="auth.profile() ? 'Your dashboard' : 'Sign in'"
+        >
+          <app-icon name="user" [size]="22" />
+        </a>
+        <a
+          routerLink="/basket"
+          class="icon-btn"
+          [attr.aria-label]="'Basket, ' + cart.count() + ' items'"
+        >
+          <app-icon name="basket" [size]="22" />
+          @if (cart.count() > 0) {
+            <span class="badge">{{ cart.count() }}</span>
+          }
+        </a>
+        <button
+          type="button"
+          class="icon-btn menu-btn"
+          [attr.aria-expanded]="menuOpen()"
+          aria-label="Menu"
+          (click)="menuOpen.set(!menuOpen())"
+        >
+          <app-icon [name]="menuOpen() ? 'close' : 'menu'" [size]="24" />
+        </button>
+      </div>
+    </div>
+  </header>
+}
 
 <main>
   @if (!supabase.configured) {
@@ -71,47 +73,49 @@
   <router-outlet />
 </main>
 
-<footer class="footer">
-  <div class="container footer__grid">
-    <div>
-      <a routerLink="/" class="logo logo--light">
-        <svg viewBox="0 0 32 20" width="30" height="19" aria-hidden="true">
-          <path d="M16 20C16 9 9 3 0 2c1 9 6 15 16 18z" fill="#cfe86e" />
-          <path d="M16 20c0-9 6-16 16-20c0 10-6 17-16 20z" fill="#a9cc3c" />
-        </svg>
-        <span>FarmDirect</span>
-      </a>
-      <p class="footer__about">
-        Real food from real farms. We connect Nigerian households directly to the farmers who grow
-        and rear what they eat.
-      </p>
+@if (!bare()) {
+  <footer class="footer">
+    <div class="container footer__grid">
+      <div>
+        <a routerLink="/" class="logo logo--light">
+          <svg viewBox="0 0 32 20" width="30" height="19" aria-hidden="true">
+            <path d="M16 20C16 9 9 3 0 2c1 9 6 15 16 18z" fill="#cfe86e" />
+            <path d="M16 20c0-9 6-16 16-20c0 10-6 17-16 20z" fill="#a9cc3c" />
+          </svg>
+          <span>FarmDirect</span>
+        </a>
+        <p class="footer__about">
+          Real food from real farms. We connect Nigerian households directly to the farmers who grow
+          and rear what they eat.
+        </p>
+      </div>
+      <div>
+        <h3>Company</h3>
+        <ul>
+          <li><a routerLink="/about">About Us</a></li>
+          <li><a routerLink="/blog">Blog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Shop</h3>
+        <ul>
+          <li><a routerLink="/crops">Crops</a></li>
+          <li><a routerLink="/livestock">Livestock</a></li>
+          <li><a routerLink="/basket">Your Basket</a></li>
+          <li><a [routerLink]="auth.homePath()">Your Account</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <ul>
+          <li><a href="mailto:hello@farmdirect.example">hello&#64;farmdirect.example</a></li>
+          <li>Lagos, Nigeria</li>
+        </ul>
+      </div>
     </div>
-    <div>
-      <h3>Company</h3>
-      <ul>
-        <li><a routerLink="/about">About Us</a></li>
-        <li><a routerLink="/blog">Blog</a></li>
-      </ul>
-    </div>
-    <div>
-      <h3>Shop</h3>
-      <ul>
-        <li><a routerLink="/crops">Crops</a></li>
-        <li><a routerLink="/livestock">Livestock</a></li>
-        <li><a routerLink="/basket">Your Basket</a></li>
-        <li><a [routerLink]="auth.homePath()">Your Account</a></li>
-      </ul>
-    </div>
-    <div>
-      <h3>Contact</h3>
-      <ul>
-        <li><a href="mailto:hello@farmdirect.example">hello&#64;farmdirect.example</a></li>
-        <li>Lagos, Nigeria</li>
-      </ul>
-    </div>
-  </div>
-  <p class="footer__copy">Copyright © {{ year }} FarmDirect. All rights reserved.</p>
-</footer>
+    <p class="footer__copy">Copyright © {{ year }} FarmDirect. All rights reserved.</p>
+  </footer>
+}
 
 <div class="toast-region" aria-live="polite">
   @if (cart.notice(); as notice) {

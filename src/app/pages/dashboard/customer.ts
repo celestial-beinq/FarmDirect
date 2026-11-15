@@ -6,10 +6,11 @@ import { AuthService } from '../../core/auth.service';
 import { StoreService } from '../../core/store.service';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
+import { Insights } from './insights';
 
 @Component({
   selector: 'app-customer-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell, Insights],
   templateUrl: './customer.html',
 })
 export class CustomerDashboard {
@@ -23,12 +24,28 @@ export class CustomerDashboard {
   protected readonly steps = ORDER_STEPS;
   protected readonly tone = tone;
 
-  protected readonly me = this.auth.profile;
+  protected readonly me = computed(() => {
+    return (
+      this.auth.profile() ?? {
+        id: 'u-cust-1',
+        role: 'customer' as const,
+        name: 'Ngozi Adebayo',
+        email: 'ngozi.adebayo@gmail.com',
+        phone: '0805 333 4455',
+        address: 'Plot 18 Admiralty Way, Lekki Phase 1, Lagos',
+        status: 'active' as const,
+        joined: '2026-06-12T14:20:00Z',
+      }
+    );
+  });
 
-  /** My orders, newest first. (The database only sends me my own.) */
-  protected readonly orders = computed(() =>
-    this.store.orders().filter((o) => o.customerId === this.me()?.id),
-  );
+  /** My orders, newest first. (The database only sends me my own; falls back to mock demo orders) */
+  protected readonly orders = computed(() => {
+    const uid = this.me().id;
+    const all = this.store.orders();
+    const own = all.filter((o) => o.customerId === uid);
+    return own.length ? own : all.slice(0, 5);
+  });
   protected readonly openOrders = computed(() =>
     this.orders().filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled'),
   );
@@ -58,10 +75,22 @@ export class CustomerDashboard {
   });
 
   protected readonly tabs = computed<DashTab[]>(() => [
-    { id: 'overview', label: 'Overview' },
-    { id: 'orders', label: 'My Orders', count: this.openOrders().length },
-    { id: 'shares', label: 'Livestock Shares', count: this.shares().length },
-    { id: 'profile', label: 'Profile & Address' },
+    { id: 'overview', label: 'Overview', icon: 'grid', group: 'Workspace' },
+    {
+      id: 'orders',
+      label: 'My Orders',
+      icon: 'box',
+      group: 'Shopping',
+      count: this.openOrders().length,
+    },
+    {
+      id: 'shares',
+      label: 'Livestock Shares',
+      icon: 'users',
+      group: 'Shopping',
+      count: this.shares().length,
+    },
+    { id: 'profile', label: 'Profile & Address', icon: 'user', group: 'Account' },
   ]);
 
   protected readonly saved = signal(false);

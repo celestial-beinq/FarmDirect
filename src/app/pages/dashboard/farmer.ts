@@ -7,6 +7,7 @@ import { CROP_CATEGORIES, Crop, UNIT_PLURALS } from '../../core/data';
 import { ProductForm, StoreService } from '../../core/store.service';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
+import { Insights } from './insights';
 
 const EMPTY_FORM: ProductForm = {
   name: '',
@@ -18,7 +19,7 @@ const EMPTY_FORM: ProductForm = {
 
 @Component({
   selector: 'app-farmer-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell, Insights],
   templateUrl: './farmer.html',
 })
 export class FarmerDashboard {
@@ -35,7 +36,7 @@ export class FarmerDashboard {
 
   /** My farm. */
   protected readonly me = computed(() =>
-    this.store.farmers().find((f) => f.ownerId === this.auth.userId()),
+    this.store.farmers().find((f) => f.ownerId === this.auth.userId()) ?? this.store.farmers()[0],
   );
   protected readonly suspended = computed(() => this.auth.profile()?.status === 'suspended');
 
@@ -80,11 +81,19 @@ export class FarmerDashboard {
   });
 
   protected readonly tabs = computed<DashTab[]>(() => [
-    { id: 'overview', label: 'Overview' },
-    { id: 'products', label: 'My Produce' },
-    { id: 'orders', label: 'Orders', count: this.toFulfil().length },
-    { id: 'reviews', label: 'Reviews', count: this.reviews().length },
-    { id: 'profile', label: 'Farm Profile' },
+    { id: 'overview', label: 'Overview', icon: 'grid', group: 'Workspace' },
+    { id: 'analytics', label: 'Analytics', icon: 'chart', group: 'Workspace' },
+    { id: 'reports', label: 'Reports', icon: 'file', group: 'Workspace' },
+    { id: 'orders', label: 'Orders', icon: 'box', group: 'Farm', count: this.toFulfil().length },
+    { id: 'products', label: 'My Produce', icon: 'tag', group: 'Farm' },
+    {
+      id: 'reviews',
+      label: 'Reviews',
+      icon: 'star',
+      group: 'Farm',
+      count: this.reviews().length,
+    },
+    { id: 'profile', label: 'Farm Profile', icon: 'leaf', group: 'Account' },
   ]);
 
   /* ---- Add / edit listing form ---- */

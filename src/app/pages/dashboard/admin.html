@@ -1,5 +1,17 @@
 <app-dash-shell role="Admin" name="FarmDirect HQ" [tabs]="tabs()" [active]="active()">
   @switch (active()) {
+    @case ('analytics') {
+      <h1>Analytics</h1>
+      <p>Sales across every farm, updating as orders come in.</p>
+      <app-insights view="analytics" byFarm [orders]="orders()" />
+    }
+
+    @case ('reports') {
+      <h1>Reports</h1>
+      <p>The numbers behind the charts, ready to print or download.</p>
+      <app-insights view="reports" byFarm [orders]="orders()" />
+    }
+
     @case ('farmers') {
       <h1>Farmers</h1>
       <p>Only verified farms can sell. Suspending a farm hides all of its listings.</p>
@@ -148,6 +160,35 @@
         order here does not refund it — issue the refund from your Paystack dashboard.
       </p>
 
+      <div class="dash-tools">
+        <div class="seg" role="group" aria-label="Filter by status">
+          @for (filter of orderFilters(); track filter.status) {
+            <button
+              type="button"
+              [attr.aria-pressed]="filter.status === orderStatus()"
+              (click)="filterOrders(filter.status)"
+            >
+              {{ filter.status }} <span>{{ filter.count }}</span>
+            </button>
+          }
+        </div>
+      </div>
+      <div class="dash-tools">
+        <label class="dash-search">
+          <app-icon name="search" [size]="18" />
+          <input
+            type="search"
+            placeholder="Search by order number, customer or farm"
+            aria-label="Search orders"
+            [value]="orderSearch()"
+            (input)="searchOrders($any($event.target).value)"
+          />
+        </label>
+        <span class="dash-count" role="status">
+          <b>{{ matchingOrders().length }}</b> of {{ orders().length }} orders
+        </span>
+      </div>
+
       <div class="panel">
         <div class="table-wrap">
           <table class="table">
@@ -156,19 +197,33 @@
                 <th>Order</th>
                 <th>Customer</th>
                 <th>Farm</th>
-                <th class="num">Total</th>
+                <th>Date</th>
                 <th>Status</th>
+                <th class="num">Amount</th>
+                <th>Change status</th>
               </tr>
             </thead>
             <tbody>
-              @for (order of orders(); track order.id) {
+              @for (order of pageOrders(); track order.id) {
                 <tr>
                   <td>
-                    {{ order.code }} <small>{{ order.date | date: 'mediumDate' }}</small>
+                    <strong>{{ order.code }}</strong>
+                    <small
+                      >{{ order.items.length }}
+                      {{ order.items.length === 1 ? 'item' : 'items' }}</small
+                    >
                   </td>
                   <td>{{ order.customerName || store.profileName(order.customerId) }}</td>
                   <td>{{ store.farmerName(order.farmerId) }}</td>
-                  <td class="num">{{ order.total | naira }}</td>
+                  <td>{{ order.date | date: 'mediumDate' }}</td>
+                  <td>
+                    <span class="badge-status" [class]="'badge-status--' + tone(order.status)">{{
+                      order.status
+                    }}</span>
+                  </td>
+                  <td class="num">
+                    <strong>{{ order.total | naira }}</strong>
+                  </td>
                   <td>
                     <select
                       [attr.aria-label]="'Status of order ' + order.code"
@@ -184,12 +239,59 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="5" class="panel__empty">No orders yet.</td>
+                  <td colspan="7" class="panel__empty">
+                    {{ orders().length ? 'No orders match.' : 'No orders yet.' }}
+                  </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
+
+        @if (matchingOrders().length > 0) {
+          <div class="pager">
+            <label>
+              Rows per page
+              <select (change)="setPageSize($any($event.target).value)">
+                @for (size of pageSizes; track size) {
+                  <option [value]="size" [selected]="size === pageSize()">{{ size }}</option>
+                }
+              </select>
+            </label>
+            <div>
+              <span>
+                {{ pageStart() + 1 }}–{{ pageStart() + pageOrders().length }} of
+                {{ matchingOrders().length }}
+              </span>
+              <button
+                type="button"
+                aria-label="Previous page"
+                [disabled]="page() === 1"
+                (click)="goToPage(page() - 1)"
+              >
+                <app-icon name="chevron-left" [size]="16" />
+              </button>
+              @for (number of pageNumbers(); track number) {
+                <button
+                  type="button"
+                  [attr.aria-label]="'Page ' + number"
+                  [attr.aria-current]="number === page() ? 'page' : null"
+                  (click)="goToPage(number)"
+                >
+                  {{ number }}
+                </button>
+              }
+              <button
+                type="button"
+                aria-label="Next page"
+                [disabled]="page() === pageCount()"
+                (click)="goToPage(page() + 1)"
+              >
+                <app-icon name="chevron-right" [size]="16" />
+              </button>
+            </div>
+          </div>
+        }
       </div>
     }
 
@@ -388,6 +490,8 @@
         </div>
       </div>
 
+      <app-insights [orders]="orders()" />
+
       <div class="panel">
         <div class="panel__head"><h2>Needs your attention</h2></div>
         @if (pendingFarmers().length + pendingProducts().length > 0) {
@@ -447,31 +551,6 @@
         } @else {
           <p class="panel__empty">Nothing is waiting for approval.</p>
         }
-      </div>
-
-      <div class="panel">
-        <div class="panel__head">
-          <h2>Orders by status</h2>
-          <a [routerLink]="[]" [queryParams]="{ tab: 'orders' }" class="btn btn--sm btn--soft"
-            >All Orders</a
-          >
-        </div>
-        <div class="table-wrap">
-          <table class="table" style="min-width: 0">
-            <tbody>
-              @for (row of byStatus(); track row.status) {
-                <tr>
-                  <td>
-                    <span class="badge-status" [class]="'badge-status--' + tone(row.status)">{{
-                      row.status
-                    }}</span>
-                  </td>
-                  <td class="num">{{ row.count }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
       </div>
     }
   }

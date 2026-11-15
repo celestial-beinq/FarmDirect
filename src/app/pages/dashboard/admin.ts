@@ -1,14 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { ORDER_STATUSES, OrderStatus, Review, tone } from '../../core/accounts';
 import { StoreService } from '../../core/store.service';
+import { Icon } from '../../shared/icon';
 import { NairaPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
+import { Insights } from './insights';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, DashShell],
+  imports: [DatePipe, NairaPipe, Icon, DashShell, Insights],
   templateUrl: './admin.html',
 })
 export class AdminDashboard {
@@ -46,14 +47,6 @@ export class AdminDashboard {
       .filter((o) => o.status !== 'Cancelled' && o.status !== 'Awaiting payment')
       .reduce((sum, o) => sum + o.total, 0),
   );
-  /** How many orders sit at each status, for the overview breakdown. */
-  protected readonly byStatus = computed(() =>
-    ORDER_STATUSES.map((status) => ({
-      status,
-      count: this.orders().filter((o) => o.status === status).length,
-    })),
-  );
-
   /** Customers with how many orders each has placed. */
   protected readonly customers = computed(() =>
     this.store
@@ -77,14 +70,98 @@ export class AdminDashboard {
   protected readonly reviews = signal<Review[]>([]);
 
   protected readonly tabs = computed<DashTab[]>(() => [
-    { id: 'overview', label: 'Overview' },
-    { id: 'farmers', label: 'Farmers', count: this.pendingFarmers().length },
-    { id: 'products', label: 'Listings', count: this.pendingProducts().length },
-    { id: 'orders', label: 'Orders', count: this.openOrders().length },
-    { id: 'pools', label: 'Livestock Pools' },
-    { id: 'reviews', label: 'Reviews' },
-    { id: 'customers', label: 'Customers' },
+    { id: 'overview', label: 'Overview', icon: 'grid', group: 'Workspace' },
+    { id: 'analytics', label: 'Analytics', icon: 'chart', group: 'Workspace' },
+    { id: 'reports', label: 'Reports', icon: 'file', group: 'Workspace' },
+    {
+      id: 'orders',
+      label: 'Orders',
+      icon: 'box',
+      group: 'Marketplace',
+      count: this.openOrders().length,
+    },
+    {
+      id: 'products',
+      label: 'Listings',
+      icon: 'tag',
+      group: 'Marketplace',
+      count: this.pendingProducts().length,
+    },
+    { id: 'pools', label: 'Livestock Pools', icon: 'users', group: 'Marketplace' },
+    {
+      id: 'farmers',
+      label: 'Farmers',
+      icon: 'leaf',
+      group: 'People',
+      count: this.pendingFarmers().length,
+    },
+    { id: 'customers', label: 'Customers', icon: 'user', group: 'People' },
+    { id: 'reviews', label: 'Reviews', icon: 'star', group: 'People' },
   ]);
+
+  /* ---- Orders table: filter by status, search, and page through ---- */
+  protected readonly orderStatus = signal<OrderStatus | 'All'>('All');
+  protected readonly orderSearch = signal('');
+  protected readonly pageSizes = [12, 25, 50];
+  protected readonly pageSize = signal(12);
+  private readonly pageWanted = signal(1);
+
+  /** "All" and each status, with how many orders it holds. */
+  protected readonly orderFilters = computed(() => [
+    { status: 'All' as const, count: this.orders().length },
+    ...ORDER_STATUSES.map((status) => ({
+      status,
+      count: this.orders().filter((o) => o.status === status).length,
+    })),
+  ]);
+
+  protected readonly matchingOrders = computed(() => {
+    const status = this.orderStatus();
+    const words = this.orderSearch().trim().toLowerCase();
+    return this.orders().filter(
+      (o) =>
+        (status === 'All' || o.status === status) &&
+        (!words ||
+          [o.code, o.customerName, this.store.farmerName(o.farmerId)].some((text) =>
+            text?.toLowerCase().includes(words),
+          )),
+    );
+  });
+
+  protected readonly pageCount = computed(() =>
+    Math.max(1, Math.ceil(this.matchingOrders().length / this.pageSize())),
+  );
+  /** The page on show; never past the last page, even when the list shrinks. */
+  protected readonly page = computed(() => Math.min(this.pageWanted(), this.pageCount()));
+  protected readonly pageStart = computed(() => (this.page() - 1) * this.pageSize());
+  protected readonly pageOrders = computed(() =>
+    this.matchingOrders().slice(this.pageStart(), this.pageStart() + this.pageSize()),
+  );
+  /** Up to five page numbers around the current one. */
+  protected readonly pageNumbers = computed(() => {
+    const first = Math.max(1, Math.min(this.page() - 2, this.pageCount() - 4));
+    const length = Math.min(5, this.pageCount());
+    return Array.from({ length }, (_, i) => first + i);
+  });
+
+  protected filterOrders(status: OrderStatus | 'All'): void {
+    this.orderStatus.set(status);
+    this.pageWanted.set(1);
+  }
+
+  protected searchOrders(words: string): void {
+    this.orderSearch.set(words);
+    this.pageWanted.set(1);
+  }
+
+  protected setPageSize(size: string): void {
+    this.pageSize.set(Number(size));
+    this.pageWanted.set(1);
+  }
+
+  protected goToPage(page: number): void {
+    this.pageWanted.set(page);
+  }
 
   constructor() {
     // Load reviews the first time the Reviews tab is opened.

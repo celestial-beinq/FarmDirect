@@ -2,16 +2,35 @@
 -- FarmDirect database: tables, row level security (RLS) and the
 -- server-side rules that keep the marketplace safe.
 --
--- Security model in one paragraph:
---   * Every table has RLS switched on. With no matching policy, a request
+-- Security model:
+--   * Every table has RLS enabled. With no matching policy, a request
 --     is refused, so anything not explicitly allowed below is denied.
 --   * The browser only ever holds the public "anon" key. Orders, payments
 --     and pool totals are written ONLY by edge functions that use the
 --     service-role key, which never leaves Supabase.
+--   * Role enforcement:
+--       - Customers and Farmers sign up directly from the website.
+--       - Admin accounts CANNOT be created from the website. They can
+--         ONLY be created or promoted from Supabase (Dashboard, Admin API,
+--         or SQL Editor using make_admin).
 --   * Things a user must not change about themselves (role, account
 --     status, a farm's verification, a listing's approval) are locked by
 --     triggers, so even a hand-crafted API request cannot change them.
 -- =====================================================================
+
+-- ------------------------ Clean Table Reset ------------------------
+-- Safely drop old tables if they exist with mismatched column types
+-- (e.g. legacy text IDs vs new UUID primary keys)
+drop table if exists public.order_items cascade;
+drop table if exists public.orders cascade;
+drop table if exists public.reviews cascade;
+drop table if exists public.rate_limits cascade;
+drop table if exists public.pools cascade;
+drop table if exists public.products cascade;
+drop table if exists public.payments cascade;
+drop table if exists public.farms cascade;
+drop table if exists public.profiles cascade;
+drop sequence if exists public.order_code_seq;
 
 -- ------------------------------ Tables ------------------------------
 
@@ -133,23 +152,21 @@ create table public.rate_limits (
   primary key (key, window_start)
 );
 
-create index on public.products (farm_id);
-create index on public.products (status);
-create index on public.pools (product_id);
-create index on public.orders (customer_id);
-create index on public.orders (farm_id);
-create index on public.orders (payment_id);
-create index on public.order_items (order_id);
-create index on public.order_items (product_id);
-create index on public.reviews (product_id);
-create index on public.payments (customer_id);
+create index idx_products_farm_id on public.products (farm_id);
+create index idx_products_status on public.products (status);
+create index idx_pools_product_id on public.pools (product_id);
+create index idx_orders_customer_id on public.orders (customer_id);
+create index idx_orders_farm_id on public.orders (farm_id);
+create index idx_orders_payment_id on public.orders (payment_id);
+create index idx_order_items_order_id on public.order_items (order_id);
+create index idx_order_items_product_id on public.order_items (product_id);
+create index idx_reviews_product_id on public.reviews (product_id);
+create index idx_payments_customer_id on public.payments (customer_id);
 
 -- -------------------------- Helper functions --------------------------
--- "security definer" functions run with the owner's rights, so they can
--- look things up that the caller cannot. Each pins search_path so it
--- cannot be tricked into using a look-alike table.
 
-create function public.is_admin()
+-- Checks if the signed-in user is an active admin.
+create or replace function public.is_admin()
 returns boolean
 language sql stable security definer set search_path = ''
 as $$
@@ -160,7 +177,7 @@ as $$
 $$;
 
 -- The farm owned by the signed-in user (null if none, or if suspended).
-create function public.my_farm_id()
+create or replace function public.my_farm_id()
 returns uuid
 language sql stable security definer set search_path = ''
 as $$
@@ -170,28 +187,107 @@ as $$
   where f.owner_id = (select auth.uid()) and p.status = 'active';
 $$;
 
+-- Helper to make any existing user an Admin directly from Supabase SQL Editor.
+-- Usage: select public.make_admin('admin@farmdirect.ng');
+create or replace function public.make_admin(p_email text)
+returns text
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_uid uuid;
+begin
+  if (select auth.uid()) is not null and not public.is_admin() then
+    raise exception 'Only administrators can promote accounts.';
+  end if;
+
+  select id into v_uid from auth.users where lower(trim(email)) = lower(trim(p_email));
+  if v_uid is null then
+    raise exception 'No user found with email "%" in auth.users. Create the account in Supabase Auth first.', p_email;
+  end if;
+
+  update public.profiles
+  set role = 'admin', status = 'active'
+  where id = v_uid;
+
+  update auth.users
+  set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role": "admin"}'::jsonb
+  where id = v_uid;
+
+  return 'User ' || p_email || ' (ID: ' || v_uid || ') is now an active FarmDirect Administrator.';
+end;
+$$;
+
+-- Helper to set any user role from Supabase SQL Editor or by an admin.
+create or replace function public.set_user_role(p_email text, p_role text)
+returns text
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_uid uuid;
+begin
+  if p_role not in ('customer', 'farmer', 'admin') then
+    raise exception 'Invalid role "%". Allowed: customer, farmer, admin.', p_role;
+  end if;
+
+  if (select auth.uid()) is not null and not public.is_admin() then
+    raise exception 'Only administrators can change account roles.';
+  end if;
+
+  select id into v_uid from auth.users where lower(trim(email)) = lower(trim(p_email));
+  if v_uid is null then
+    raise exception 'No user found with email "%" in auth.users.', p_email;
+  end if;
+
+  update public.profiles
+  set role = p_role
+  where id = v_uid;
+
+  update auth.users
+  set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || jsonb_build_object('role', p_role)
+  where id = v_uid;
+
+  return 'User ' || p_email || ' role updated to ' || p_role;
+end;
+$$;
+
 -- ------------------------------ Triggers ------------------------------
 
--- A new sign-up gets a profile (and a farm awaiting verification, for
--- farmers). Nobody can sign themselves up as an admin.
-create function public.handle_new_user()
+-- Trigger on auth.users: creates a profile and farm (for farmers).
+-- STRICT SECURITY RULE:
+--   - Web sign-ups (anon JWT) can only register as 'customer' or 'farmer'.
+--     Attempting to sign up as 'admin' from the website is refused/forced to 'customer'.
+--   - Admin accounts can ONLY be created from Supabase (Dashboard, Admin API, or SQL Editor).
+create or replace function public.handle_new_user()
 returns trigger
 language plpgsql security definer set search_path = ''
 as $$
 declare
-  v_role text := coalesce(new.raw_user_meta_data ->> 'role', 'customer');
+  v_role text := coalesce(new.raw_app_meta_data ->> 'role', new.raw_user_meta_data ->> 'role', 'customer');
+  v_jwt_role text := nullif(current_setting('request.jwt.claim.role', true), '');
 begin
-  if v_role not in ('customer', 'farmer') then
-    v_role := 'customer';
+  -- Public signups through the website (anon) can only register as customer or farmer.
+  if v_jwt_role = 'anon' then
+    if v_role not in ('customer', 'farmer') then
+      v_role := 'customer';
+    end if;
+  else
+    -- Created within Supabase: allow 'admin', 'customer', or 'farmer'
+    if v_role not in ('customer', 'farmer', 'admin') then
+      v_role := 'customer';
+    end if;
   end if;
 
   insert into public.profiles (id, role, full_name, email)
   values (
     new.id,
     v_role,
-    left(coalesce(new.raw_user_meta_data ->> 'full_name', ''), 120),
+    left(coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_app_meta_data ->> 'full_name', ''), 120),
     left(coalesce(new.email, ''), 320)
-  );
+  )
+  on conflict (id) do update set
+    role = excluded.role,
+    full_name = case when excluded.full_name <> '' then excluded.full_name else public.profiles.full_name end,
+    email = case when excluded.email <> '' then excluded.email else public.profiles.email end;
 
   if v_role = 'farmer' then
     insert into public.farms (owner_id, name, location)
@@ -199,20 +295,36 @@ begin
       new.id,
       left(coalesce(nullif(trim(new.raw_user_meta_data ->> 'farm_name'), ''), 'My Farm'), 120),
       left(coalesce(new.raw_user_meta_data ->> 'farm_location', ''), 160)
-    );
+    )
+    on conflict (owner_id) do nothing;
   end if;
 
   return new;
 end;
 $$;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Backfill profiles for any existing users in auth.users
+insert into public.profiles (id, role, full_name, email)
+select
+  u.id,
+  case
+    when coalesce(u.raw_app_meta_data ->> 'role', u.raw_user_meta_data ->> 'role') = 'admin' then 'admin'
+    when coalesce(u.raw_app_meta_data ->> 'role', u.raw_user_meta_data ->> 'role') = 'farmer' then 'farmer'
+    else 'customer'
+  end as role,
+  left(coalesce(u.raw_user_meta_data ->> 'full_name', u.raw_app_meta_data ->> 'full_name', ''), 120),
+  left(coalesce(u.email, ''), 320)
+from auth.users u
+on conflict (id) do nothing;
+
 -- Users may edit their name, phone and address — never their role,
 -- status or email. Only admins (or the server) can change those.
-create function public.protect_profile()
+create or replace function public.protect_profile()
 returns trigger
 language plpgsql security definer set search_path = ''
 as $$
@@ -228,12 +340,13 @@ begin
 end;
 $$;
 
+drop trigger if exists protect_profile on public.profiles;
 create trigger protect_profile
   before update on public.profiles
   for each row execute function public.protect_profile();
 
 -- Farmers may rename their farm — never verify it or hand it to someone else.
-create function public.protect_farm()
+create or replace function public.protect_farm()
 returns trigger
 language plpgsql security definer set search_path = ''
 as $$
@@ -248,13 +361,14 @@ begin
 end;
 $$;
 
+drop trigger if exists protect_farm on public.farms;
 create trigger protect_farm
   before update on public.farms
   for each row execute function public.protect_farm();
 
 -- New listings always start as "pending" and farmers cannot approve
 -- their own. Also stops a farm flooding the marketplace with listings.
-create function public.protect_product_insert()
+create or replace function public.protect_product_insert()
 returns trigger
 language plpgsql security definer set search_path = ''
 as $$
@@ -273,11 +387,12 @@ begin
 end;
 $$;
 
+drop trigger if exists protect_product_insert on public.products;
 create trigger protect_product_insert
   before insert on public.products
   for each row execute function public.protect_product_insert();
 
-create function public.protect_product_update()
+create or replace function public.protect_product_update()
 returns trigger
 language plpgsql security definer set search_path = ''
 as $$
@@ -300,12 +415,13 @@ begin
 end;
 $$;
 
+drop trigger if exists protect_product_update on public.products;
 create trigger protect_product_update
   before update on public.products
   for each row execute function public.protect_product_update();
 
 -- A review is always written as the signed-in customer, under their real name.
-create function public.stamp_review()
+create or replace function public.stamp_review()
 returns trigger
 language plpgsql security definer set search_path = ''
 as $$
@@ -327,6 +443,7 @@ begin
 end;
 $$;
 
+drop trigger if exists stamp_review on public.reviews;
 create trigger stamp_review
   before insert or update on public.reviews
   for each row execute function public.stamp_review();
@@ -342,33 +459,53 @@ alter table public.orders      enable row level security;
 alter table public.order_items enable row level security;
 alter table public.reviews     enable row level security;
 alter table public.rate_limits enable row level security;
--- rate_limits has no policies on purpose: only the server can touch it.
 
--- profiles: you see and edit your own; admins see and edit all.
+-- profiles
+drop policy if exists "profiles: read own or admin" on public.profiles;
 create policy "profiles: read own or admin" on public.profiles
   for select to authenticated
   using (id = (select auth.uid()) or public.is_admin());
 
+drop policy if exists "profiles: update own or admin" on public.profiles;
 create policy "profiles: update own or admin" on public.profiles
   for update to authenticated
   using (id = (select auth.uid()) or public.is_admin())
   with check (id = (select auth.uid()) or public.is_admin());
 
--- farms: everyone sees verified farms; owners see their own; admins see all.
+drop policy if exists "profiles: admin insert" on public.profiles;
+create policy "profiles: admin insert" on public.profiles
+  for insert to authenticated
+  with check (public.is_admin());
+
+drop policy if exists "profiles: admin delete" on public.profiles;
+create policy "profiles: admin delete" on public.profiles
+  for delete to authenticated
+  using (public.is_admin());
+
+-- farms
+drop policy if exists "farms: read verified, own or admin" on public.farms;
 create policy "farms: read verified, own or admin" on public.farms
   for select to anon, authenticated
   using (status = 'verified' or owner_id = (select auth.uid()) or public.is_admin());
 
+drop policy if exists "farms: update own or admin" on public.farms;
 create policy "farms: update own or admin" on public.farms
   for update to authenticated
   using (owner_id = (select auth.uid()) or public.is_admin())
   with check (owner_id = (select auth.uid()) or public.is_admin());
 
+drop policy if exists "farms: admin insert" on public.farms;
+create policy "farms: admin insert" on public.farms
+  for insert to authenticated
+  with check (public.is_admin());
+
+drop policy if exists "farms: admin delete" on public.farms;
 create policy "farms: admin delete" on public.farms
   for delete to authenticated
   using (public.is_admin());
 
--- products: shoppers see live listings from verified farms only.
+-- products
+drop policy if exists "products: read live, own or admin" on public.products;
 create policy "products: read live, own or admin" on public.products
   for select to anon, authenticated
   using (
@@ -380,41 +517,56 @@ create policy "products: read live, own or admin" on public.products
     )
   );
 
+drop policy if exists "products: farm owner or admin insert" on public.products;
 create policy "products: farm owner or admin insert" on public.products
   for insert to authenticated
   with check (farm_id = public.my_farm_id() or public.is_admin());
 
+drop policy if exists "products: farm owner or admin update" on public.products;
 create policy "products: farm owner or admin update" on public.products
   for update to authenticated
   using (farm_id = public.my_farm_id() or public.is_admin())
   with check (farm_id = public.my_farm_id() or public.is_admin());
 
+drop policy if exists "products: farm owner or admin delete" on public.products;
 create policy "products: farm owner or admin delete" on public.products
   for delete to authenticated
   using (farm_id = public.my_farm_id() or public.is_admin());
 
--- pools: public to read. Created and funded only by the checkout /
--- payment functions; admins can edit or remove them.
+-- pools
+drop policy if exists "pools: public read" on public.pools;
 create policy "pools: public read" on public.pools
   for select to anon, authenticated
   using (true);
 
+drop policy if exists "pools: admin insert" on public.pools;
+create policy "pools: admin insert" on public.pools
+  for insert to authenticated
+  with check (public.is_admin());
+
+drop policy if exists "pools: admin update" on public.pools;
 create policy "pools: admin update" on public.pools
   for update to authenticated
   using (public.is_admin()) with check (public.is_admin());
 
+drop policy if exists "pools: admin delete" on public.pools;
 create policy "pools: admin delete" on public.pools
   for delete to authenticated
   using (public.is_admin());
 
--- payments: read-only for the payer and admins. Written by the server.
+-- payments
+drop policy if exists "payments: read own or admin" on public.payments;
 create policy "payments: read own or admin" on public.payments
   for select to authenticated
   using (customer_id = (select auth.uid()) or public.is_admin());
 
--- orders: the customer, the farm fulfilling it, and admins can read.
--- There are NO insert/update policies: orders are created by the
--- checkout function and moved along by advance_order() below.
+drop policy if exists "payments: admin update" on public.payments;
+create policy "payments: admin update" on public.payments
+  for update to authenticated
+  using (public.is_admin());
+
+-- orders
+drop policy if exists "orders: read own, own farm or admin" on public.orders;
 create policy "orders: read own, own farm or admin" on public.orders
   for select to authenticated
   using (
@@ -423,16 +575,35 @@ create policy "orders: read own, own farm or admin" on public.orders
     or public.is_admin()
   );
 
+drop policy if exists "orders: admin update" on public.orders;
+create policy "orders: admin update" on public.orders
+  for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "orders: admin delete" on public.orders;
+create policy "orders: admin delete" on public.orders
+  for delete to authenticated
+  using (public.is_admin());
+
+-- order items
+drop policy if exists "order_items: read if the order is readable" on public.order_items;
 create policy "order_items: read if the order is readable" on public.order_items
   for select to authenticated
   using (exists (select 1 from public.orders o where o.id = order_id));
 
--- reviews: anyone can read. You can only review a product you have
--- actually received (a Delivered order containing it).
+drop policy if exists "order_items: admin delete" on public.order_items;
+create policy "order_items: admin delete" on public.order_items
+  for delete to authenticated
+  using (public.is_admin());
+
+-- reviews
+drop policy if exists "reviews: public read" on public.reviews;
 create policy "reviews: public read" on public.reviews
   for select to anon, authenticated
   using (true);
 
+drop policy if exists "reviews: verified buyers insert" on public.reviews;
 create policy "reviews: verified buyers insert" on public.reviews
   for insert to authenticated
   with check (
@@ -451,11 +622,13 @@ create policy "reviews: verified buyers insert" on public.reviews
     )
   );
 
+drop policy if exists "reviews: update own" on public.reviews;
 create policy "reviews: update own" on public.reviews
   for update to authenticated
   using (customer_id = (select auth.uid()))
   with check (customer_id = (select auth.uid()));
 
+drop policy if exists "reviews: delete own or admin" on public.reviews;
 create policy "reviews: delete own or admin" on public.reviews
   for delete to authenticated
   using (customer_id = (select auth.uid()) or public.is_admin());
@@ -466,7 +639,7 @@ create policy "reviews: delete own or admin" on public.reviews
 --   customer: cancel before paying; confirm receipt once dispatched
 --   farmer:   confirm a paid order; mark it dispatched
 --   admin:    any status
-create function public.advance_order(p_order_id uuid, p_status text)
+create or replace function public.advance_order(p_order_id uuid, p_status text)
 returns void
 language plpgsql security definer set search_path = ''
 as $$
@@ -514,8 +687,7 @@ grant execute on function public.advance_order(uuid, text) to authenticated;
 
 -- Marks a payment as paid and releases its orders. Called only by the
 -- payment functions after Paystack has confirmed the money arrived.
--- Safe to call twice: the second call does nothing.
-create function public.confirm_payment(p_reference text, p_amount_kobo bigint)
+create or replace function public.confirm_payment(p_reference text, p_amount_kobo bigint)
 returns text
 language plpgsql security definer set search_path = ''
 as $$
@@ -561,7 +733,7 @@ $$;
 
 -- Returns true if the caller identified by p_key is still under p_max
 -- requests in the current window, and counts this request.
-create function public.check_rate_limit(p_key text, p_max integer, p_window_seconds integer)
+create or replace function public.check_rate_limit(p_key text, p_max integer, p_window_seconds integer)
 returns boolean
 language plpgsql security definer set search_path = ''
 as $$
@@ -584,13 +756,12 @@ begin
 end;
 $$;
 
--- These two are for the server only.
+-- Permissions
 revoke execute on function public.confirm_payment(text, bigint) from public, anon, authenticated;
 revoke execute on function public.check_rate_limit(text, integer, integer) from public, anon, authenticated;
 grant execute on function public.confirm_payment(text, bigint) to service_role;
 grant execute on function public.check_rate_limit(text, integer, integer) to service_role;
 
--- Trigger functions are never meant to be called directly.
 revoke execute on function public.handle_new_user() from public, anon, authenticated;
 revoke execute on function public.protect_profile() from public, anon, authenticated;
 revoke execute on function public.protect_farm() from public, anon, authenticated;
@@ -598,5 +769,10 @@ revoke execute on function public.protect_product_insert() from public, anon, au
 revoke execute on function public.protect_product_update() from public, anon, authenticated;
 revoke execute on function public.stamp_review() from public, anon, authenticated;
 
--- The order-number sequence is used by the server only.
+revoke execute on function public.make_admin(text) from public, anon;
+grant execute on function public.make_admin(text) to authenticated, service_role;
+
+revoke execute on function public.set_user_role(text, text) from public, anon;
+grant execute on function public.set_user_role(text, text) to authenticated, service_role;
+
 revoke all on sequence public.order_code_seq from anon, authenticated;

@@ -56,18 +56,22 @@ export const routes: Routes = [
   {
     path: 'account',
     title: 'My Account — FarmDirect',
+    // "bare" hides the shop's header and footer: dashboards fill the screen (see app.ts).
+    data: { bare: true },
     canActivate: [roleGuard('customer')],
     loadComponent: () => import('./pages/dashboard/customer').then((m) => m.CustomerDashboard),
   },
   {
     path: 'farmer',
     title: 'Farmer Dashboard — FarmDirect',
+    data: { bare: true },
     canActivate: [roleGuard('farmer')],
     loadComponent: () => import('./pages/dashboard/farmer').then((m) => m.FarmerDashboard),
   },
   {
     path: 'admin',
     title: 'Admin Dashboard — FarmDirect',
+    data: { bare: true },
     canActivate: [roleGuard('admin')],
     loadComponent: () => import('./pages/dashboard/admin').then((m) => m.AdminDashboard),
   },

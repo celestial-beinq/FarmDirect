@@ -129,6 +129,21 @@ import { Supabase } from '../../core/supabase';
             <button type="button" (click)="setMode('in')">Sign in</button>
           }
         </p>
+
+        <div class="demo-bar">
+          <p class="demo-bar__label">Instant preview with mock data:</p>
+          <div class="demo-bar__btns">
+            <button type="button" class="btn btn--sm btn--soft" (click)="quickDemo('admin')">
+              Admin Workspace
+            </button>
+            <button type="button" class="btn btn--sm btn--soft" (click)="quickDemo('farmer')">
+              Farmer Dashboard
+            </button>
+            <button type="button" class="btn btn--sm btn--soft" (click)="quickDemo('customer')">
+              Customer Account
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   `,
@@ -182,6 +197,29 @@ import { Supabase } from '../../core/supabase';
       font-weight: 600;
       text-decoration: underline;
     }
+
+    .demo-bar {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px dashed var(--line);
+      text-align: center;
+    }
+
+    .demo-bar__label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .demo-bar__btns {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
   `,
 })
 export class Login {
@@ -204,9 +242,22 @@ export class Login {
   protected readonly error = signal('');
   protected readonly confirmEmail = signal(false);
 
+  constructor() {
+    void this.auth.ready.then(() => {
+      if (this.auth.profile()) {
+        void this.router.navigateByUrl(this.auth.homePath());
+      }
+    });
+  }
+
   protected setMode(mode: 'in' | 'up'): void {
     this.mode.set(mode);
     this.error.set('');
+  }
+
+  protected async quickDemo(role: 'admin' | 'farmer' | 'customer'): Promise<void> {
+    this.auth.signInDemo(role);
+    await this.router.navigateByUrl(this.auth.homePath());
   }
 
   protected async submit(): Promise<void> {

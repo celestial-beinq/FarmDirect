@@ -17,6 +17,18 @@
     }
 
     @switch (active()) {
+      @case ('analytics') {
+        <h1>Analytics</h1>
+        <p>How your produce is selling, updating as orders come in.</p>
+        <app-insights view="analytics" noun="Sales" [orders]="orders()" />
+      }
+
+      @case ('reports') {
+        <h1>Reports</h1>
+        <p>The numbers behind the charts, ready to print or download.</p>
+        <app-insights view="reports" noun="Sales" [orders]="orders()" />
+      }
+
       @case ('products') {
         <h1>My Produce</h1>
         <p>New listings go live once an admin has approved them.</p>
@@ -327,6 +339,8 @@
           </div>
         </div>
 
+        <app-insights noun="Sales" [orders]="orders()" />
+
         <div class="panel">
           <div class="panel__head">
             <h2>Orders to fulfil</h2>
@@ -393,6 +407,7 @@
       <div class="empty">
         <h2>We couldn't find your farm</h2>
         <p class="muted">Please contact support so we can link a farm to your account.</p>
+        <a routerLink="/" class="btn btn--primary">Back to Shop</a>
       </div>
     </div>
   </section>

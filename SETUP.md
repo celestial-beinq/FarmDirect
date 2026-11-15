@@ -87,17 +87,27 @@ In **Authentication → Rate Limits**, keep the defaults or tighten them; this
 is what slows down password guessing. Keep **Confirm email** switched on
 (under Sign In / Providers → Email) so accounts need a real email address.
 
-## 6. Make yourself an admin
+## 6. Create an Admin Account (Supabase Only)
 
-Nobody can sign up as an admin. Create a normal account on the site first,
-then run this in the Supabase **SQL Editor** with your email:
+Nobody can sign up as an admin from the website. An admin account can **only** be created from Supabase:
 
+### Method A: Direct creation in Supabase Dashboard (Recommended)
+1. In your Supabase Dashboard, go to **Authentication → Users → Add User → Create User**.
+2. Enter the admin email and password.
+3. Check **Auto Confirm User?** (so you don't need to verify via email).
+4. Under **User Metadata**, paste:
+   ```json
+   { "role": "admin", "full_name": "Admin Name" }
+   ```
+5. Click **Create User**. The server trigger will automatically assign the `admin` role.
+
+### Method B: Promote any existing registered user via SQL Editor
+Run this single line in the Supabase **SQL Editor**:
 ```sql
-update public.profiles set role = 'admin'
-where id = (select id from auth.users where email = 'you@example.com');
+select public.make_admin('your-email@example.com');
 ```
 
-Sign out and back in; the account icon now opens the admin dashboard.
+When this user signs in on the website, they are immediately authenticated with the admin role and redirected to `/admin`.
 
 ## 7. Try the whole flow
 

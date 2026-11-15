@@ -66,7 +66,13 @@ export class AuthService {
   async reloadProfile(userId = this.userId()): Promise<void> {
     const client = this.supabase.client;
     if (!client || !userId) return;
-    const { data } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
+    let { data } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
+    // Safety retry in case auth trigger is still committing profile
+    if (!data) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      const retry = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
+      data = retry.data;
+    }
     this.profile.set(
       data
         ? {
@@ -123,6 +129,44 @@ export class AuthService {
   async signOut(): Promise<void> {
     await this.supabase.client?.auth.signOut();
     this.profile.set(null);
+  }
+
+  /** Quick sign-in with mock profile for instant testing of all 3 dashboards. */
+  signInDemo(role: Role): void {
+    if (role === 'admin') {
+      this.profile.set({
+        id: 'u-admin-1',
+        role: 'admin',
+        name: 'FarmDirect HQ',
+        email: 'admin@farmdirect.ng',
+        phone: '0802 000 0001',
+        address: '14 Kofo Abayomi Street, Victoria Island, Lagos',
+        status: 'active',
+        joined: '2026-01-10T09:00:00Z',
+      });
+    } else if (role === 'farmer') {
+      this.profile.set({
+        id: 'u-farmer-1',
+        role: 'farmer',
+        name: 'Segun Adeleke',
+        email: 'segun@ogunvalley.ng',
+        phone: '0803 111 2233',
+        address: 'KM 14 Abeokuta-Ibadan Expressway, Ogun State',
+        status: 'active',
+        joined: '2026-03-02T10:00:00Z',
+      });
+    } else {
+      this.profile.set({
+        id: 'u-cust-1',
+        role: 'customer',
+        name: 'Ngozi Adebayo',
+        email: 'ngozi.adebayo@gmail.com',
+        phone: '0805 333 4455',
+        address: 'Plot 18 Admiralty Way, Lekki Phase 1, Lagos',
+        status: 'active',
+        joined: '2026-06-12T14:20:00Z',
+      });
+    }
   }
 }
 

@@ -1,36 +1,57 @@
-import { Component, inject, input } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, DestroyRef, computed, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { StoreService } from '../../core/store.service';
+import { Icon, IconName } from '../../shared/icon';
 
 export interface DashTab {
   id: string;
   label: string;
+  icon: IconName;
+  /** Heading the tab sits under in the menu, e.g. "Workspace". */
+  group: string;
   /** Optional number shown beside the label, e.g. items waiting for action. */
   count?: number;
 }
 
 /**
- * The frame shared by all three dashboards: a side menu of tabs plus the
- * page content. The open tab is kept in the URL as "?tab=...".
- * Its styles live in the global styles.css under "Dashboards".
+ * The frame shared by all three dashboards: a full-height side menu of tabs
+ * plus the page content, filling the whole screen (the shop's header and
+ * footer are hidden on these routes). The open tab is kept in the URL as
+ * "?tab=...". Its styles live in the global styles.css under "Dashboards".
  */
 @Component({
   selector: 'app-dash-shell',
-  imports: [RouterLink],
+  imports: [RouterLink, DatePipe, Icon],
   template: `
-    <section class="container dash">
+    <section class="dash">
       <aside class="dash__side">
-        <p class="dash__role">{{ role() }}</p>
-        <p class="dash__name">{{ name() }}</p>
+        <a routerLink="/" class="dash__brand" aria-label="FarmDirect home">
+          <span class="dash__mark">
+            <svg viewBox="0 0 32 20" width="22" height="14" aria-hidden="true">
+              <path d="M16 20C16 9 9 3 0 2c1 9 6 15 16 18z" fill="#cfe86e" />
+              <path d="M16 20c0-9 6-16 16-20c0 10-6 17-16 20z" fill="#a9cc3c" />
+            </svg>
+          </span>
+          <span>
+            <strong>FarmDirect</strong>
+            <small>{{ role() }} workspace</small>
+          </span>
+        </a>
+
         <nav aria-label="Dashboard sections">
-          @for (tab of tabs(); track tab.id) {
+          @for (tab of tabs(); track tab.id; let i = $index) {
+            @if (tab.group !== tabs()[i - 1]?.group) {
+              <p class="dash__group">{{ tab.group }}</p>
+            }
             <a
               [routerLink]="[]"
               [queryParams]="{ tab: tab.id }"
               [class.is-current]="tab.id === active()"
               [attr.aria-current]="tab.id === active() ? 'page' : null"
             >
+              <app-icon [name]="tab.icon" [size]="18" />
               {{ tab.label }}
               @if (tab.count) {
                 <span>{{ tab.count }}</span>
@@ -38,9 +59,41 @@ export interface DashTab {
             </a>
           }
         </nav>
-        <button type="button" class="dash__out" (click)="signOut()">Sign out</button>
+
+        <div class="dash__foot">
+          <button type="button" (click)="signOut()">
+            <app-icon name="logout" [size]="18" /> Sign out
+          </button>
+        </div>
+        <div class="dash__user">
+          <span class="dash__avatar" aria-hidden="true">{{ initials() }}</span>
+          <span>
+            <strong>{{ name() }}</strong>
+            <small>{{ role() }}</small>
+          </span>
+        </div>
       </aside>
+
       <div class="dash__main">
+        <div class="dash__top">
+          <p class="dash__crumb">
+            {{ role() }} <span aria-hidden="true">/</span> <b>{{ activeLabel() }}</b>
+          </p>
+          <div>
+            <!-- "Live" while the realtime connection is up; otherwise data is re-fetched on a timer. -->
+            <span class="live" [class.live--on]="store.live()" role="status">
+              <i></i>
+              {{ store.live() ? 'Live' : 'Auto-refresh' }}
+              @if (store.updatedAt(); as at) {
+                · updated {{ at | date: 'mediumTime' }}
+              }
+            </span>
+            <a routerLink="/" class="dash__pill">
+              <app-icon name="home" [size]="16" /> Back to shop
+            </a>
+          </div>
+        </div>
+
         @if (store.error()) {
           <p class="notice notice--bad" role="alert">{{ store.error() }}</p>
         }
@@ -62,6 +115,23 @@ export class DashShell {
   readonly name = input.required<string>();
   readonly tabs = input.required<DashTab[]>();
   readonly active = input.required<string>();
+
+  protected readonly activeLabel = computed(
+    () => this.tabs().find((tab) => tab.id === this.active())?.label ?? 'Overview',
+  );
+  /** "Ada Obi" → "AO", for the round badge beside the name. */
+  protected readonly initials = computed(() =>
+    this.name()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((word) => word.charAt(0).toUpperCase())
+      .join(''),
+  );
+
+  constructor() {
+    // Keep the numbers and charts up to date for as long as a dashboard is open.
+    inject(DestroyRef).onDestroy(this.store.watch());
+  }
 
   protected async signOut(): Promise<void> {
     await this.auth.signOut();

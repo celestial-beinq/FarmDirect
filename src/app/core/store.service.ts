@@ -3,6 +3,15 @@ import { Farmer, FarmerStatus, Order, OrderStatus, Profile, Review } from './acc
 import { AuthService } from './auth.service';
 import { CartItem } from './cart.service';
 import { Animal, Crop, CropCategory, DEFAULT_IMAGE, Pool, ProductStatus } from './data';
+import {
+  MOCK_ANIMALS,
+  MOCK_CROPS,
+  MOCK_FARMERS,
+  MOCK_ORDERS,
+  MOCK_POOLS,
+  MOCK_PROFILES,
+  MOCK_REVIEWS,
+} from './mock-data';
 import { Supabase, friendlyError } from './supabase';
 
 export interface ProductForm {
@@ -45,19 +54,23 @@ export class StoreService {
   private readonly supabase = inject(Supabase);
   private readonly auth = inject(AuthService);
 
-  readonly farmers = signal<Farmer[]>([]);
+  readonly farmers = signal<Farmer[]>(MOCK_FARMERS);
   /** Every crop listing this user is allowed to see. */
-  readonly crops = signal<Crop[]>([]);
-  readonly animals = signal<Animal[]>([]);
-  readonly pools = signal<Pool[]>([]);
-  readonly orders = signal<Order[]>([]);
+  readonly crops = signal<Crop[]>(MOCK_CROPS);
+  readonly animals = signal<Animal[]>(MOCK_ANIMALS);
+  readonly pools = signal<Pool[]>(MOCK_POOLS);
+  readonly orders = signal<Order[]>(MOCK_ORDERS);
   /** Profiles this user may see: just their own, or everyone for admins. */
-  readonly profiles = signal<Profile[]>([]);
+  readonly profiles = signal<Profile[]>(MOCK_PROFILES);
 
   /** False until the first load has finished. */
   readonly loaded = signal(false);
   /** The last problem talking to the server, for pages to show. */
   readonly error = signal('');
+  /** When the data was last fetched, for the dashboards' "updated" note. */
+  readonly updatedAt = signal<Date | null>(null);
+  /** True while the realtime connection opened by `watch()` is up. */
+  readonly live = signal(false);
 
   /** What shoppers can buy: approved listings from verified farms. */
   readonly liveCrops = computed(() => {
@@ -110,105 +123,155 @@ export class StoreService {
     const location = new Map(farmRows.map((f) => [f.id, f.location]));
 
     this.farmers.set(
-      farmRows.map((f) => ({
-        id: f.id,
-        ownerId: f.owner_id,
-        name: f.name,
-        location: f.location,
-        status: f.status,
-        joined: f.created_at,
-      })),
+      farmRows.length
+        ? farmRows.map((f) => ({
+            id: f.id,
+            ownerId: f.owner_id,
+            name: f.name,
+            location: f.location,
+            status: f.status,
+            joined: f.created_at,
+          }))
+        : MOCK_FARMERS,
     );
 
     const productRows: any[] = products.data ?? [];
+    const cropRows = productRows.filter((p) => p.kind === 'crop');
     this.crops.set(
-      productRows
-        .filter((p) => p.kind === 'crop')
-        .map((p) => ({
-          id: p.id,
-          name: p.name,
-          category: p.category,
-          price: p.price,
-          unit: p.unit,
-          tags: p.tags,
-          image: p.image,
-          gallery: p.gallery.length ? p.gallery : [p.image],
-          origin: location.get(p.farm_id) ?? '',
-          description: p.description,
-          highlights: p.highlights,
-          farmerId: p.farm_id,
-          status: p.status,
-        })),
+      cropRows.length
+        ? cropRows.map((p) => ({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            price: p.price,
+            unit: p.unit,
+            tags: p.tags,
+            image: p.image,
+            gallery: p.gallery.length ? p.gallery : [p.image],
+            origin: location.get(p.farm_id) ?? '',
+            description: p.description,
+            highlights: p.highlights,
+            farmerId: p.farm_id,
+            status: p.status,
+          }))
+        : MOCK_CROPS,
     );
+
+    const animalRows = productRows.filter((p) => p.kind === 'livestock' && p.status === 'live');
     this.animals.set(
-      productRows
-        .filter((p) => p.kind === 'livestock' && p.status === 'live')
-        .map((p) => ({
-          id: p.id,
-          name: p.name,
-          type: p.category,
-          price: p.price,
-          weight: p.weight,
-          yieldKg: Number(p.yield_kg),
-          origin: location.get(p.farm_id) ?? '',
-          image: p.image,
-          gallery: p.gallery.length ? p.gallery : [p.image],
-          minShare: p.min_share,
-          farmerId: p.farm_id,
-        })),
+      animalRows.length
+        ? animalRows.map((p) => ({
+            id: p.id,
+            name: p.name,
+            type: p.category,
+            price: p.price,
+            weight: p.weight,
+            yieldKg: Number(p.yield_kg),
+            origin: location.get(p.farm_id) ?? '',
+            image: p.image,
+            gallery: p.gallery.length ? p.gallery : [p.image],
+            minShare: p.min_share,
+            farmerId: p.farm_id,
+          }))
+        : MOCK_ANIMALS,
     );
 
+    const poolRows: any[] = pools.data ?? [];
     this.pools.set(
-      ((pools.data ?? []) as any[]).map((p) => ({
-        id: p.id,
-        animalId: p.product_id,
-        name: p.name,
-        target: p.target,
-        raised: p.raised,
-        members: p.members,
-        closesIn: timeLeft(p.closes_at),
-        status: p.status,
-      })),
+      poolRows.length
+        ? poolRows.map((p) => ({
+            id: p.id,
+            animalId: p.product_id,
+            name: p.name,
+            target: p.target,
+            raised: p.raised,
+            members: p.members,
+            closesIn: timeLeft(p.closes_at),
+            status: p.status,
+          }))
+        : MOCK_POOLS,
     );
 
+    const orderRows: any[] = orders.data ?? [];
     this.orders.set(
-      ((orders.data ?? []) as any[]).map((o) => ({
-        id: o.id,
-        code: o.code,
-        customerId: o.customer_id,
-        customerName: o.customer_name,
-        farmerId: o.farm_id,
-        date: o.created_at,
-        total: o.total,
-        status: o.status,
-        address: o.address,
-        items: (o.order_items ?? []).map((i: any) => ({
-          productId: i.product_id,
-          poolId: i.pool_id,
-          kind: i.kind,
-          title: i.title,
-          detail: i.detail,
-          image: i.image,
-          unitPrice: i.unit_price,
-          qty: i.qty,
-        })),
-      })),
+      orderRows.length
+        ? orderRows.map((o) => ({
+            id: o.id,
+            code: o.code,
+            customerId: o.customer_id,
+            customerName: o.customer_name,
+            farmerId: o.farm_id,
+            date: o.created_at,
+            total: o.total,
+            status: o.status,
+            address: o.address,
+            items: (o.order_items ?? []).map((i: any) => ({
+              productId: i.product_id,
+              poolId: i.pool_id,
+              kind: i.kind,
+              title: i.title,
+              detail: i.detail,
+              image: i.image,
+              unitPrice: i.unit_price,
+              qty: i.qty,
+            })),
+          }))
+        : MOCK_ORDERS,
     );
 
+    const profileRows: any[] = profiles.data ?? [];
     this.profiles.set(
-      ((profiles.data ?? []) as any[]).map((p) => ({
-        id: p.id,
-        role: p.role,
-        name: p.full_name,
-        email: p.email,
-        phone: p.phone,
-        address: p.address,
-        status: p.status,
-        joined: p.created_at,
-      })),
+      profileRows.length
+        ? profileRows.map((p) => ({
+            id: p.id,
+            role: p.role,
+            name: p.full_name,
+            email: p.email,
+            phone: p.phone,
+            address: p.address,
+            status: p.status,
+            joined: p.created_at,
+          }))
+        : MOCK_PROFILES,
     );
 
+    this.updatedAt.set(new Date());
     this.loaded.set(true);
+  }
+
+  /**
+   * Keeps the data fresh while a dashboard is open, so its charts update
+   * on their own. Supabase Realtime tells us the moment a row changes; a
+   * slow timer covers the case where Realtime is not switched on for the
+   * tables (see supabase/migrations/20261115000100_realtime.sql).
+   * Returns a function that stops watching.
+   */
+  watch(): () => void {
+    const client = this.supabase.client;
+    if (!client) return () => {};
+
+    // Several rows often change together (an order and its items), so wait
+    // a moment and reload once.
+    let pending: ReturnType<typeof setTimeout> | undefined;
+    const reloadSoon = () => {
+      clearTimeout(pending);
+      pending = setTimeout(() => void this.refresh(), 400);
+    };
+
+    const channel = client
+      .channel('dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public' }, reloadSoon)
+      .subscribe((status) => this.live.set(status === 'SUBSCRIBED'));
+    const timer = setInterval(() => {
+      if (!document.hidden) void this.refresh();
+    }, 30_000);
+
+    return () => {
+      clearTimeout(pending);
+      clearInterval(timer);
+      this.live.set(false);
+      void client.removeChannel(channel);
+    };
   }
 
   /* ----------------------------- Lookups ----------------------------- */
@@ -363,11 +426,19 @@ export class StoreService {
   /** Reviews for the given products, newest first. With no ids, all reviews. */
   async loadReviews(productIds?: string[]): Promise<Review[]> {
     const client = this.supabase.client;
-    if (!client || productIds?.length === 0) return [];
-    let query = client.from('reviews').select('*').order('created_at', { ascending: false });
-    if (productIds) query = query.in('product_id', productIds);
-    const { data } = await query.limit(200);
-    return (data ?? []).map(toReview);
+    let list: Review[] = [];
+    if (client && productIds?.length !== 0) {
+      let query = client.from('reviews').select('*').order('created_at', { ascending: false });
+      if (productIds) query = query.in('product_id', productIds);
+      const { data } = await query.limit(200);
+      list = (data ?? []).map(toReview);
+    }
+    if (list.length === 0) {
+      list = productIds
+        ? MOCK_REVIEWS.filter((r) => productIds.includes(r.productId))
+        : MOCK_REVIEWS;
+    }
+    return list;
   }
 
   /**
