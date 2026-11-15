@@ -5,6 +5,7 @@ import { Review, tone } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
 import { CROP_CATEGORIES, Crop, UNIT_PLURALS } from '../../core/data';
 import { ProductForm, StoreService } from '../../core/store.service';
+import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
 import { Insights } from './insights';
@@ -19,7 +20,7 @@ const EMPTY_FORM: ProductForm = {
 
 @Component({
   selector: 'app-farmer-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell, Insights],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, Icon, DashShell, Insights],
   templateUrl: './farmer.html',
 })
 export class FarmerDashboard {
@@ -79,6 +80,104 @@ export class FarmerDashboard {
       ? Math.round((list.reduce((sum, r) => sum + r.rating, 0) / list.length) * 10) / 10
       : 0;
   });
+
+  /** Selected rating filter: 0 = all ratings, 1-5 = specific star rating. */
+  protected readonly filterRating = signal<number>(0);
+  /** Search query for review comment, author, or product name. */
+  protected readonly searchQuery = signal<string>('');
+  /** Active review id being replied to by the farmer. */
+  protected readonly replyingTo = signal<string | null>(null);
+  /** Farmer replies stored locally / by review id. */
+  protected readonly replies = signal<Record<string, string>>({
+    'rev-1': 'Thank you so much Ngozi! We harvested these tomatoes at daybreak right before dispatch. So thrilled your jollof turned out wonderful!',
+    'rev-2': 'Thank you Emeka! Our Ofada is processed with modern destoning machinery to guarantee that pristine, stone-free authentic quality.',
+  });
+  /** Review ID recently copied to clipboard for visual feedback. */
+  protected readonly copiedId = signal<string | null>(null);
+
+  protected readonly filteredReviews = computed(() => {
+    let list = this.reviews();
+    const star = this.filterRating();
+    if (star > 0) {
+      list = list.filter((r) => r.rating === star);
+    }
+    const q = this.searchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (r) =>
+          r.author.toLowerCase().includes(q) ||
+          r.comment.toLowerCase().includes(q) ||
+          this.productName(r.productId).toLowerCase().includes(q),
+      );
+    }
+    return list;
+  });
+
+  protected readonly satisfactionRate = computed(() => {
+    const list = this.reviews();
+    if (!list.length) return 100;
+    const positive = list.filter((r) => r.rating >= 4).length;
+    return Math.round((positive / list.length) * 100);
+  });
+
+  protected readonly Math = Math;
+
+  protected ratingCount(star: number): number {
+    return this.reviews().filter((r) => r.rating === star).length;
+  }
+
+  protected ratingPercent(star: number): number {
+    const total = this.reviews().length;
+    return total ? Math.round((this.ratingCount(star) / total) * 100) : 0;
+  }
+
+  protected product(id: string) {
+    return (
+      this.products().find((p) => p.id === id) ??
+      this.store.crops().find((p) => p.id === id) ??
+      this.store.animals().find((a) => a.id === id)
+    );
+  }
+
+  protected productLink(id: string): string[] {
+    if (id.startsWith('animal-')) return ['/livestock', id];
+    return ['/crops', id];
+  }
+
+  protected initials(name: string): string {
+    return name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase())
+      .join('');
+  }
+
+  protected copyTestimonial(review: Review): void {
+    const text = `"${review.comment}" — ${review.author} on ${this.productName(review.productId)} (FarmDirect ★★★★★)`;
+    if (navigator?.clipboard?.writeText) {
+      void navigator.clipboard.writeText(text);
+    }
+    this.copiedId.set(review.id);
+    setTimeout(() => {
+      if (this.copiedId() === review.id) {
+        this.copiedId.set(null);
+      }
+    }, 2500);
+  }
+
+  protected toggleReply(reviewId: string): void {
+    this.replyingTo.update((current) => (current === reviewId ? null : reviewId));
+  }
+
+  protected saveReply(reviewId: string, replyText: string): void {
+    const trimmed = replyText.trim();
+    if (!trimmed) return;
+    this.replies.update((prev) => ({
+      ...prev,
+      [reviewId]: trimmed,
+    }));
+    this.replyingTo.set(null);
+  }
 
   protected readonly tabs = computed<DashTab[]>(() => [
     { id: 'overview', label: 'Overview', icon: 'grid', group: 'Workspace' },

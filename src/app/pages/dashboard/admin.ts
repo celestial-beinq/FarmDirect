@@ -1,15 +1,16 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ORDER_STATUSES, OrderStatus, Review, tone } from '../../core/accounts';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
-import { NairaPipe } from '../../shared/pipes';
+import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
 import { Insights } from './insights';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [DatePipe, NairaPipe, Icon, DashShell, Insights],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, Icon, DashShell, Insights],
   templateUrl: './admin.html',
 })
 export class AdminDashboard {
@@ -68,6 +69,73 @@ export class AdminDashboard {
   );
 
   protected readonly reviews = signal<Review[]>([]);
+  protected readonly averageRating = computed(() => {
+    const list = this.reviews();
+    return list.length
+      ? Math.round((list.reduce((sum, r) => sum + r.rating, 0) / list.length) * 10) / 10
+      : 0;
+  });
+
+  /** Selected rating filter: 0 = all ratings, 1-5 = specific star rating. */
+  protected readonly filterRating = signal<number>(0);
+  /** Search query for review comment, author, or product name. */
+  protected readonly searchQuery = signal<string>('');
+
+  protected readonly filteredReviews = computed(() => {
+    let list = this.reviews();
+    const star = this.filterRating();
+    if (star > 0) {
+      list = list.filter((r) => r.rating === star);
+    }
+    const q = this.searchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (r) =>
+          r.author.toLowerCase().includes(q) ||
+          r.comment.toLowerCase().includes(q) ||
+          this.productName(r.productId).toLowerCase().includes(q),
+      );
+    }
+    return list;
+  });
+
+  protected readonly satisfactionRate = computed(() => {
+    const list = this.reviews();
+    if (!list.length) return 100;
+    const positive = list.filter((r) => r.rating >= 4).length;
+    return Math.round((positive / list.length) * 100);
+  });
+
+  protected readonly Math = Math;
+
+  protected ratingCount(star: number): number {
+    return this.reviews().filter((r) => r.rating === star).length;
+  }
+
+  protected ratingPercent(star: number): number {
+    const total = this.reviews().length;
+    return total ? Math.round((this.ratingCount(star) / total) * 100) : 0;
+  }
+
+  protected product(id: string) {
+    return (
+      this.store.crops().find((p) => p.id === id) ??
+      this.store.animals().find((a) => a.id === id)
+    );
+  }
+
+  protected productLink(id: string): string[] {
+    if (id.startsWith('animal-')) return ['/livestock', id];
+    return ['/crops', id];
+  }
+
+  protected initials(name: string): string {
+    return name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase())
+      .join('');
+  }
 
   protected readonly tabs = computed<DashTab[]>(() => [
     { id: 'overview', label: 'Overview', icon: 'grid', group: 'Workspace' },
