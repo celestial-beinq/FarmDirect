@@ -88,6 +88,7 @@
                 <th>Produce</th>
                 <th>Farm</th>
                 <th>Price</th>
+                <th>Stock</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -100,6 +101,15 @@
                   </td>
                   <td>{{ store.farmerName(product.farmerId) }}</td>
                   <td>{{ product.price | naira }} / {{ product.unit }}</td>
+                  <td>
+                    @if (product.quantity <= 0) {
+                      <span class="badge-status badge-status--bad">0 (Finished)</span>
+                    } @else if (product.quantity < 5) {
+                      <span class="badge-status badge-status--warn">{{ product.quantity }} {{ product.unit }} (Low)</span>
+                    } @else {
+                      <span class="badge-status badge-status--good">{{ product.quantity }} {{ product.unit }}</span>
+                    }
+                  </td>
                   <td>
                     <span class="badge-status" [class]="'badge-status--' + tone(product.status)">
                       {{ product.status }}

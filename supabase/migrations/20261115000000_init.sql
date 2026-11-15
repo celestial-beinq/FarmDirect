@@ -46,13 +46,20 @@ create table public.profiles (
 );
 
 create table public.farms (
-  id          uuid primary key default gen_random_uuid(),
+  id                  uuid primary key default gen_random_uuid(),
   -- null for sample farms that have no login
-  owner_id    uuid unique references public.profiles (id) on delete set null,
-  name        text not null check (char_length(name) between 2 and 120),
-  location    text not null default '' check (char_length(location) <= 160),
-  status      text not null default 'pending' check (status in ('pending', 'verified', 'suspended')),
-  created_at  timestamptz not null default now()
+  owner_id            uuid unique references public.profiles (id) on delete set null,
+  name                text not null check (char_length(name) between 2 and 120),
+  location            text not null default '' check (char_length(location) <= 160),
+  status              text not null default 'pending' check (status in ('pending', 'verified', 'rejected', 'suspended')),
+  nin                 text not null default '' check (char_length(nin) <= 20),
+  residential_address text not null default '' check (char_length(residential_address) <= 300),
+  farm_size           text not null default '' check (char_length(farm_size) <= 100),
+  crop_produces       text not null default '' check (char_length(crop_produces) <= 300),
+  state_of_origin     text not null default '' check (char_length(state_of_origin) <= 60),
+  document_url        text not null default '' check (char_length(document_url) <= 500),
+  verification_notes  text not null default '' check (char_length(verification_notes) <= 1000),
+  created_at          timestamptz not null default now()
 );
 
 create table public.products (
@@ -345,7 +352,7 @@ create trigger protect_profile
   before update on public.profiles
   for each row execute function public.protect_profile();
 
--- Farmers may rename their farm — never verify it or hand it to someone else.
+-- Farmers may submit or update their verification documents — only admins can verify or suspend.
 create or replace function public.protect_farm()
 returns trigger
 language plpgsql security definer set search_path = ''
@@ -354,7 +361,13 @@ begin
   if (select auth.uid()) is not null and not public.is_admin() then
     new.id := old.id;
     new.owner_id := old.owner_id;
-    new.status := old.status;
+    -- If a farmer resubmits after rejection, status moves back to pending for re-vetting
+    if old.status = 'rejected' then
+      new.status := 'pending';
+    else
+      new.status := old.status;
+    end if;
+    new.verification_notes := old.verification_notes;
     new.created_at := old.created_at;
   end if;
   return new;
@@ -366,14 +379,17 @@ create trigger protect_farm
   before update on public.farms
   for each row execute function public.protect_farm();
 
--- New listings always start as "pending" and farmers cannot approve
--- their own. Also stops a farm flooding the marketplace with listings.
+-- Only vetted & verified farms can add listings. New listings start as "pending".
 create or replace function public.protect_product_insert()
 returns trigger
 language plpgsql security definer set search_path = ''
 as $$
 begin
   if (select auth.uid()) is not null and not public.is_admin() then
+    if (select status from public.farms where id = new.farm_id) != 'verified' then
+      raise exception 'Your farm must be vetted and verified by an administrator before listing products on the marketplace.';
+    end if;
+
     new.status := 'pending';
     new.created_at := now();
     if (

@@ -22,6 +22,7 @@ export const UNIT_PLURALS: Record<string, string> = {
   basket: 'baskets',
   box: 'boxes',
   tuber: 'tubers',
+  bag: 'bags',
 };
 
 const round50 = (n: number) => Math.round(n / 50) * 50;

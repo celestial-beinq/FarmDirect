@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ORDER_STATUSES, OrderStatus, Review, tone } from '../../core/accounts';
+import { Farmer, FarmerStatus, ORDER_STATUSES, OrderStatus, Review, tone } from '../../core/accounts';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
@@ -33,6 +33,83 @@ export class AdminDashboard {
   protected readonly pendingFarmers = computed(() =>
     this.store.farmers().filter((f) => f.status === 'pending'),
   );
+
+  /* ---- Farmers Vetting & Management ---- */
+  protected readonly farmerFilter = signal<FarmerStatus | 'all'>('all');
+  protected readonly farmerSearch = signal('');
+  protected readonly inspectingFarmer = signal<Farmer | null>(null);
+  protected readonly rejectionReason = signal('');
+  protected readonly copiedNin = signal<string | null>(null);
+
+  protected readonly filteredFarmers = computed(() => {
+    let list = this.farmers();
+    const filter = this.farmerFilter();
+    if (filter !== 'all') {
+      list = list.filter((f) => f.farmer.status === filter);
+    }
+    const q = this.farmerSearch().trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (f) =>
+          f.farmer.name.toLowerCase().includes(q) ||
+          f.owner.toLowerCase().includes(q) ||
+          f.farmer.location.toLowerCase().includes(q) ||
+          (f.farmer.nin && f.farmer.nin.includes(q)) ||
+          (f.farmer.stateOfOrigin && f.farmer.stateOfOrigin.toLowerCase().includes(q)),
+      );
+    }
+    return list;
+  });
+
+  protected readonly farmerCounts = computed(() => ({
+    all: this.farmers().length,
+    pending: this.farmers().filter((f) => f.farmer.status === 'pending').length,
+    verified: this.farmers().filter((f) => f.farmer.status === 'verified').length,
+    rejected: this.farmers().filter((f) => f.farmer.status === 'rejected').length,
+    suspended: this.farmers().filter((f) => f.farmer.status === 'suspended').length,
+  }));
+
+  protected openDossier(farmer: Farmer): void {
+    this.inspectingFarmer.set(farmer);
+    this.rejectionReason.set(farmer.verificationNotes || '');
+  }
+
+  protected closeDossier(): void {
+    this.inspectingFarmer.set(null);
+    this.rejectionReason.set('');
+  }
+
+  protected copyNin(nin?: string): void {
+    if (!nin) return;
+    if (navigator?.clipboard?.writeText) {
+      void navigator.clipboard.writeText(nin);
+    }
+    this.copiedNin.set(nin);
+    setTimeout(() => {
+      if (this.copiedNin() === nin) {
+        this.copiedNin.set(null);
+      }
+    }, 2000);
+  }
+
+  protected verifyFarmer(farmer: Farmer): void {
+    void this.store.setFarmerStatus(farmer.id, 'verified', 'Vetted & Verified by Administrator');
+    this.closeDossier();
+  }
+
+  protected rejectFarmer(farmer: Farmer, reason: string): void {
+    const note = reason.trim() || 'Verification documents require correction or re-submission.';
+    void this.store.setFarmerStatus(farmer.id, 'rejected', note);
+    this.closeDossier();
+  }
+
+  protected suspendFarmer(farmer: Farmer): void {
+    if (confirm(`Suspend ${farmer.name}? All active listings will be hidden from shoppers.`)) {
+      void this.store.setFarmerStatus(farmer.id, 'suspended', 'Suspended by Administrator');
+      this.closeDossier();
+    }
+  }
+
   protected readonly pendingProducts = computed(() =>
     this.store.crops().filter((p) => p.status === 'pending'),
   );

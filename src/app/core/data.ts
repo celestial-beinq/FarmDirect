@@ -75,11 +75,13 @@ export const DEFAULT_IMAGE: Record<CropCategory, string> = {
 
 export const STORAGE_TIPS: Record<CropCategory, string> = {
   Vegetables:
-    'Keep in a cool, airy place and use within 5–7 days. Refrigerate leafy greens in a loose bag; keep tomatoes out of the fridge until fully ripe.',
+    'Store leafy greens (Ugu, Ewedu, Shoko) wrapped loosely in dry paper or airy bags in your crisper drawer. Keep plum tomatoes, tatashe and rodo in a ventilated basket at room temperature until fully ripe.',
   Fruits:
-    'Leave at room temperature to finish ripening, then refrigerate. Wash only just before eating.',
-  Tubers: 'Store in a dark, dry, well-ventilated place — not the fridge. Keep away from onions.',
-  Grains: 'Keep sealed in an airtight container in a cool, dry place, away from sunlight.',
+    'Allow Benue mangoes, sweet plantains and papayas to ripen naturally at room temperature. Never refrigerate green cooking plantains. Wash fruits only right before eating.',
+  Tubers:
+    'Store Benue yams, sweet potatoes and Irish potatoes in a dry, dark, well-ventilated space elevated on slats or baskets — never on damp concrete floors. Keep away from onions.',
+  Grains:
+    'Store honey beans, Ofada rice, egusi and ogbono in airtight dry containers. Adding dry dried chilies or bay leaves naturally protects beans against weevils without chemicals.',
 };
 
 /* ---------------------------- Livestock ---------------------------- */

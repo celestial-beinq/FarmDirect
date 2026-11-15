@@ -135,6 +135,13 @@ export class StoreService {
             location: f.location,
             status: f.status,
             joined: f.created_at,
+            nin: f.nin,
+            residentialAddress: f.residential_address,
+            farmSize: f.farm_size,
+            cropProduces: f.crop_produces,
+            stateOfOrigin: f.state_of_origin,
+            documentUrl: f.document_url,
+            verificationNotes: f.verification_notes,
           }))
         : MOCK_FARMERS,
     );
@@ -366,8 +373,58 @@ export class StoreService {
     return this.change((c) => c.from('products').delete().eq('id', id));
   }
 
-  setFarmerStatus(id: string, status: FarmerStatus) {
-    return this.change((c) => c.from('farms').update({ status }).eq('id', id));
+  setFarmerStatus(id: string, status: FarmerStatus, notes?: string) {
+    this.farmers.update((list) =>
+      list.map((f) =>
+        f.id === id ? { ...f, status, verificationNotes: notes ?? f.verificationNotes } : f,
+      ),
+    );
+    return this.change((c) =>
+      c
+        .from('farms')
+        .update({ status, verification_notes: notes ?? '' })
+        .eq('id', id),
+    );
+  }
+
+  submitFarmerVerification(
+    id: string,
+    data: {
+      nin: string;
+      residentialAddress: string;
+      location: string;
+      farmSize: string;
+      cropProduces: string;
+      stateOfOrigin: string;
+      documentUrl?: string;
+    },
+  ) {
+    this.farmers.update((list) =>
+      list.map((f) =>
+        f.id === id
+          ? {
+              ...f,
+              ...data,
+              status: 'pending' as FarmerStatus,
+            }
+          : f,
+      ),
+    );
+    return this.change((c) =>
+      c
+        .from('farms')
+        .update({
+          nin: data.nin,
+          residential_address: data.residentialAddress,
+          location: data.location,
+          farm_size: data.farmSize,
+          crop_produces: data.cropProduces,
+          state_of_origin: data.stateOfOrigin,
+          document_url: data.documentUrl ?? '',
+          status: 'pending',
+        })
+        .eq('id', id),
+    );
   }
 
   updateFarm(id: string, name: string, location: string) {

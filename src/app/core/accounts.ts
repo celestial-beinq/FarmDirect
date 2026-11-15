@@ -13,7 +13,15 @@ export interface Profile {
   joined: string;
 }
 
-export type FarmerStatus = 'verified' | 'pending' | 'suspended';
+export type FarmerStatus = 'verified' | 'pending' | 'rejected' | 'suspended';
+
+export const NIGERIAN_STATES = [
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
+  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT - Abuja', 'Gombe',
+  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara',
+  'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau',
+  'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
+] as const;
 
 /** A farm. Sample farms have no owner account. */
 export interface Farmer {
@@ -23,6 +31,14 @@ export interface Farmer {
   location: string;
   status: FarmerStatus;
   joined: string;
+  // Verification & Vetting Dossier fields
+  nin?: string;
+  residentialAddress?: string;
+  farmSize?: string;
+  cropProduces?: string;
+  stateOfOrigin?: string;
+  documentUrl?: string;
+  verificationNotes?: string;
 }
 
 export const ORDER_STEPS = ['Placed', 'Confirmed', 'Dispatched', 'Delivered'] as const;
