@@ -25,6 +25,9 @@ export class Supabase {
 /** Turns a Supabase / network error into a sentence fit to show a person. */
 export function friendlyError(error: unknown): string {
   const message = (error as { message?: string })?.message ?? '';
+  if (/email rate limit/i.test(message) || /over_email_send_rate_limit/i.test(message)) {
+    return 'Email rate limit exceeded. In your Supabase Dashboard, go to Authentication → Providers → Email and disable "Confirm email" for development.';
+  }
   if (/row-level security|permission denied|not allowed/i.test(message)) {
     return "You don't have permission to do that.";
   }

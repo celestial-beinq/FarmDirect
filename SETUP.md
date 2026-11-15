@@ -27,7 +27,9 @@ first push, run `git status` and check none of them appear.
 2. Open **SQL Editor**, paste the whole of
    `supabase/migrations/20261115000000_init.sql` and run it. This creates the
    tables, the security policies and the server-side rules.
-3. Optional: paste and run `supabase/seed.sql` to add sample farms, produce
+3. **Turn off Email Confirmation during development** to avoid email rate limits:
+   In your dashboard, go to **Authentication → Providers → Email** and toggle **Confirm email** to **OFF** (click Save). This allows instant sign-ups without hitting Supabase's email rate limit.
+4. Optional: paste and run `supabase/seed.sql` to add sample farms, produce
    and livestock so the marketplace is not empty. It is placeholder data.
 
 ## 2. Connect the website
