@@ -673,10 +673,12 @@ ul {
 }
 
 .table .actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 5px;
+  white-space: nowrap;
 }
 
 /* Modern Status Pills with Glowing Micro-dots */
@@ -721,45 +723,81 @@ ul {
 
 /* Compact Buttons */
 .btn--sm {
-  height: 26px;
+  min-height: 28px !important;
+  height: 28px;
   padding: 0 10px;
   border-radius: 6px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  gap: 5px;
+  white-space: nowrap;
+  box-sizing: border-box;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn--sm svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 .btn--primary {
   background: #059669;
+  border: 1px solid #047857;
   color: #ffffff;
 }
 
 .btn--primary:hover {
   background: #047857;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.25);
+}
+
+.btn--primary:active {
+  background: #065f46;
+  transform: translateY(1px);
 }
 
 .btn--danger {
-  background: #fee2e2;
-  color: #991b1b;
+  background: #ffffff;
   border: 1px solid #fecaca;
+  color: #dc2626;
 }
 
 .btn--danger:hover {
-  background: #fecdd3;
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.1);
+}
+
+.btn--danger:active {
+  background: #fee2e2;
+  transform: translateY(1px);
 }
 
 .btn--soft {
   background: #ffffff;
-  border: 1px solid var(--dash-border);
+  border: 1px solid #e2e8f0;
   color: #334155;
 }
 
 .btn--soft:hover {
   background: #f8fafc;
   border-color: #cbd5e1;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.btn--soft:active {
+  background: #f1f5f9;
+  transform: translateY(1px);
 }
 
 /* Search Bar & Segment Controls */
