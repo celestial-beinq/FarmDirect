@@ -1,0 +1,132 @@
+@if (crop(); as crop) {
+  <section class="page-hero">
+    <h1>Crops</h1>
+    <nav aria-label="Breadcrumb">
+      <a routerLink="/">Home</a> / <a routerLink="/crops">Crops</a> / {{ crop.name }}
+    </nav>
+  </section>
+
+  <section class="section">
+    <div class="container detail">
+      <div class="gallery">
+        <img
+          class="gallery__main"
+          [src]="crop.gallery[photoIndex()] | photo: 1100"
+          [alt]="crop.name"
+        />
+        <div class="gallery__thumbs">
+          @for (image of crop.gallery; track $index) {
+            <button
+              type="button"
+              [class.is-current]="$index === photoIndex()"
+              [attr.aria-label]="'Show photo ' + ($index + 1)"
+              (click)="photoIndex.set($index)"
+            >
+              <img [src]="image | photo: 240" alt="" />
+            </button>
+          }
+        </div>
+      </div>
+
+      <div>
+        <h2 class="detail__title">{{ crop.name }}</h2>
+        <p class="detail__origin"><app-icon name="pin" [size]="18" /> Direct from {{ crop.origin }}</p>
+        <p class="delivery">
+          <app-icon name="truck" [size]="22" />
+          <span><strong>Delivery: Sunday</strong><br />Order before the end of Thursday</span>
+        </p>
+
+        <h3 class="label">How much do you need?</h3>
+        <div class="options">
+          @for (group of groups(); track group.name) {
+            <div class="options__group">
+              <span>{{ group.name }}</span>
+              <div>
+                @for (option of group.options; track option.label) {
+                  <button
+                    type="button"
+                    class="pill"
+                    [class.is-chosen]="option.label === chosen().label"
+                    [attr.aria-pressed]="option.label === chosen().label"
+                    (click)="chosenLabel.set(option.label)"
+                  >
+                    {{ option.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="units">
+          <span>Units</span>
+          <div class="stepper">
+            <button type="button" aria-label="Fewer units" [disabled]="units() === 1" (click)="changeUnits(-1)">
+              <app-icon name="minus" [size]="16" />
+            </button>
+            <output aria-live="polite">{{ units() }}</output>
+            <button type="button" class="stepper__add" aria-label="More units" (click)="changeUnits(1)">
+              <app-icon name="plus" [size]="16" />
+            </button>
+          </div>
+          <span class="muted">× {{ chosen().label }} at {{ chosen().price | naira }}</span>
+        </div>
+
+        <div class="total">
+          <span>Estimated Total</span>
+          <strong class="price">{{ total() | naira }}</strong>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--block cta" (click)="addToBasket()">
+          <app-icon name="basket" [size]="20" /> Add to Basket
+        </button>
+        <a routerLink="/crops" class="btn btn--ghost btn--block">Continue Shopping</a>
+
+        <div class="tabs" role="tablist">
+          @for (name of tabs; track name) {
+            <button
+              type="button"
+              role="tab"
+              [class.is-current]="name === tab()"
+              [attr.aria-selected]="name === tab()"
+              (click)="tab.set(name)"
+            >
+              {{ name }}
+            </button>
+          }
+        </div>
+        <div class="tabpanel" role="tabpanel">
+          @switch (tab()) {
+            @case ('Details') {
+              <p>{{ crop.description }}</p>
+              <ul>
+                @for (point of crop.highlights; track point) {
+                  <li><app-icon name="check" [size]="16" /> {{ point }}</li>
+                }
+              </ul>
+            }
+            @case ('Storage Tips') {
+              <p>{{ storageTip() }}</p>
+            }
+            @case ('Delivery Info') {
+              <p>
+                Orders close every Thursday. Farmers harvest on Friday and Saturday, and your order
+                is delivered to your door on Sunday.
+              </p>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+} @else {
+  <section class="section">
+    <div class="container">
+      <div class="empty">
+        <h2>We couldn't find that crop</h2>
+        <p class="muted">It may be out of season or the link may be wrong.</p>
+        <a routerLink="/crops" class="btn btn--primary">Browse All Crops</a>
+      </div>
+    </div>
+  </section>
+}

@@ -1,1 +1,308 @@
-/* You can add global styles to this file, and also import other style files */
+/* ---------- Design tokens ---------- */
+:root {
+  --green-900: #12281a;
+  --green-800: #1b3a26;
+  --green-600: #3d5a45;
+  --lime: #cfe86e;
+  --lime-soft: #e8f4b8;
+  --cream: #f3f4ee;
+  --sand: #e6e8e0;
+  --white: #ffffff;
+  --ink: #111a14;
+  --muted: #5d665f;
+  --line: #e1e4da;
+  --danger: #b3261e;
+
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --shadow: 0 6px 24px rgba(18, 40, 26, 0.08);
+
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Manrope', var(--font-body);
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 90px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--white);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  background: var(--sand);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--green-900);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Layout ---------- */
+.container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.section {
+  padding: 72px 0;
+}
+
+.section--tint {
+  background: var(--cream);
+}
+
+.section-head {
+  text-align: center;
+  margin-bottom: 44px;
+}
+
+.section-head h2 {
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+  max-width: 18ch;
+  margin: 14px auto 0;
+}
+
+.section-head p {
+  color: var(--muted);
+  max-width: 46ch;
+  margin: 12px auto 0;
+}
+
+.eyebrow {
+  display: inline-block;
+  padding: 5px 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 22px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--primary {
+  background: var(--green-900);
+  color: var(--white);
+}
+.btn--primary:hover {
+  background: var(--green-800);
+}
+
+.btn--lime {
+  background: var(--lime);
+  color: var(--ink);
+}
+.btn--lime:hover {
+  background: #c3df58;
+}
+
+.btn--soft {
+  background: var(--sand);
+  color: var(--ink);
+}
+.btn--soft:hover {
+  background: #d9dcd1;
+}
+
+.btn--white {
+  background: var(--white);
+  color: var(--ink);
+}
+
+.btn--ghost {
+  color: var(--ink);
+}
+.btn--ghost:hover {
+  background: var(--cream);
+}
+
+.btn--pill {
+  border-radius: 999px;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- Small pieces ---------- */
+.chip {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: var(--sand);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #3c453e;
+}
+
+.price {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--green-900);
+}
+
+.per {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* ---------- Inner page banner ---------- */
+.page-hero {
+  background: var(--green-900);
+  color: var(--white);
+  text-align: center;
+  padding: 64px 20px;
+}
+
+.page-hero h1 {
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+}
+
+.page-hero nav {
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.page-hero nav a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Progress bar ---------- */
+.progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sand);
+  overflow: hidden;
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green-900);
+}
+
+/* ---------- Empty states ---------- */
+.empty {
+  text-align: center;
+  padding: 64px 20px;
+  background: var(--cream);
+  border-radius: var(--radius);
+}
+
+.empty h2 {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+}
+
+.empty .btn {
+  margin-top: 20px;
+}

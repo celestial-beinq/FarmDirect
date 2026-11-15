@@ -1,0 +1,165 @@
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <span class="hero__badge"><app-icon name="shield" [size]="16" /> Verified farms only</span>
+    <h1>Fresh Farm Produce<br />Delivered to your Doorstep</h1>
+    <p class="hero__lead">
+      Real food from verified Nigerian farms — nothing fake, nothing in between. Order Thursday.
+      Enjoy Sunday. It's that simple.
+    </p>
+    <div class="hero__cta">
+      <a routerLink="/crops" class="btn btn--primary btn--pill">
+        Marketplace <app-icon name="arrow-right" [size]="18" />
+      </a>
+      <a routerLink="/" fragment="how-it-works" class="btn btn--ghost btn--pill">
+        How it works <app-icon name="arrow-right" [size]="18" />
+      </a>
+    </div>
+
+    <div class="hero__frame">
+      <img [src]="img.harvest | photo: 700" alt="Farm workers harvesting vegetables in a field" />
+      <img [src]="img.farmer | photo: 700" alt="Farmers working a rice field" />
+      <img [src]="img.wheat | photo: 700" alt="Two farmers shaking hands in a grain field" />
+    </div>
+  </div>
+</section>
+
+<!-- Ticker -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker__track">
+    @for (pass of [1, 2, 3, 4]; track pass) {
+      @for (item of ticker; track item) {
+        <span><app-icon name="leaf" [size]="18" /> {{ item }}</span>
+      }
+    }
+  </div>
+</div>
+
+<!-- How it works -->
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">How it Works</span>
+      <h2>How to order on FarmDirect and get your delivery</h2>
+    </div>
+    <ol class="steps">
+      @for (step of steps; track step.title; let i = $index) {
+        <li>
+          <div class="steps__icon">
+            <app-icon [name]="step.icon" [size]="24" />
+            <span>{{ i + 1 }}</span>
+          </div>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.text }}</p>
+        </li>
+      }
+    </ol>
+  </div>
+</section>
+
+<!-- Categories -->
+<section class="section categories">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">What we Offer</span>
+      <h2>Our Market Categories</h2>
+    </div>
+    <div class="categories__grid">
+      <a routerLink="/crops" class="category">
+        <img [src]="img.vegMix | photo: 1000" alt="" loading="lazy" />
+        <div class="category__body">
+          <h3>Fresh Vegetables, Fruits and Grains</h3>
+          <p>Seasonal crops harvested at peak ripeness, delivered.</p>
+          <span class="btn btn--white btn--pill">Shop Harvest <app-icon name="arrow-right" [size]="16" /></span>
+        </div>
+      </a>
+      <a routerLink="/livestock" class="category">
+        <img [src]="img.sunset | photo: 1000" alt="" loading="lazy" />
+        <div class="category__body">
+          <h3>Ram, Goat, Cow. Full or Shared.</h3>
+          <p>Healthy animals bought whole, or split with other families.</p>
+          <span class="btn btn--white btn--pill">Buy Livestock <app-icon name="arrow-right" [size]="16" /></span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Why trust us -->
+<section class="section section--tint">
+  <div class="container why">
+    <div class="why__photo">
+      <img [src]="img.seedlings | photo: 800" alt="Seedlings growing in pots" loading="lazy" />
+    </div>
+    <div>
+      <span class="eyebrow">Why choose us</span>
+      <h2>Know exactly where your food comes from</h2>
+      <ul class="why__grid">
+        @for (reason of reasons; track reason.title) {
+          <li>
+            <app-icon [name]="reason.icon" [size]="28" />
+            <h3>{{ reason.title }}</h3>
+            <p>{{ reason.text }}</p>
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Trending -->
+<section class="section">
+  <div class="container">
+    <div class="row-head">
+      <h2>Trending Harvest</h2>
+      <a routerLink="/crops">View All Market Items</a>
+    </div>
+    <div class="trending">
+      @for (item of trending; track item.crop.id) {
+        <article class="product">
+          <a [routerLink]="['/crops', item.crop.id]">
+            <img [src]="item.crop.image | photo: 700" [alt]="item.crop.name" loading="lazy" />
+          </a>
+          <div class="product__top">
+            <div>
+              <span class="product__origin">{{ item.crop.origin }}</span>
+              <h3>
+                <a [routerLink]="['/crops', item.crop.id]">{{ item.crop.name }}</a>
+              </h3>
+            </div>
+            <span class="price">{{ item.option.price | naira }}</span>
+          </div>
+          <p>{{ item.crop.blurb }}</p>
+          <button type="button" class="btn btn--primary btn--block" (click)="add(item.crop)">
+            <app-icon name="basket" [size]="18" /> Add {{ item.option.label }} to Basket
+          </button>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Blog -->
+<section class="section section--tint">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Blog Posts</span>
+      <h2>Fresh Ideas from the Farm</h2>
+    </div>
+    <div class="posts">
+      @for (post of posts; track post.title) {
+        <article class="post">
+          <img [src]="post.image | photo: 700" alt="" loading="lazy" />
+          <p class="post__meta">
+            <strong>{{ post.topic }}</strong> {{ post.minutes }} min read
+          </p>
+          <h3>{{ post.title }}</h3>
+          <p>{{ post.excerpt }}</p>
+        </article>
+      }
+    </div>
+    <div class="center">
+      <a routerLink="/blog" class="btn btn--primary btn--pill">See More Blog Posts</a>
+    </div>
+  </div>
+</section>

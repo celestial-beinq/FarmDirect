@@ -1,0 +1,142 @@
+<section class="page-hero">
+  <h1>Crops</h1>
+  <nav aria-label="Breadcrumb"><a routerLink="/">Home</a> / Crops</nav>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="toolbar">
+      <p class="muted" aria-live="polite">
+        Showing {{ filtered().length }} {{ filtered().length === 1 ? 'item' : 'items' }} from
+        verified local farmers
+      </p>
+      <div class="toolbar__controls">
+        <label class="field">
+          <app-icon name="search" [size]="18" />
+          <input
+            type="search"
+            placeholder="Search harvests..."
+            aria-label="Search harvests"
+            [value]="search()"
+            (input)="setSearch($any($event.target).value)"
+          />
+        </label>
+        <select
+          class="field field--select"
+          aria-label="Sort by"
+          [value]="sort()"
+          (change)="setSort($any($event.target).value)"
+        >
+          <option value="popular">Sort by: Popular</option>
+          <option value="low">Price: Low to High</option>
+          <option value="high">Price: High to Low</option>
+          <option value="name">Name: A to Z</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="filters" aria-label="Filters">
+        <fieldset>
+          <legend>Categories</legend>
+          @for (category of categories; track category) {
+            <label class="check">
+              <input
+                type="checkbox"
+                [checked]="selected().includes(category)"
+                (change)="toggle(category)"
+              />
+              {{ category }}
+            </label>
+          }
+        </fieldset>
+
+        <fieldset>
+          <legend>Price Range</legend>
+          <input
+            type="range"
+            min="0"
+            step="100"
+            aria-label="Maximum price"
+            [max]="priceCeiling"
+            [value]="maxPrice()"
+            (input)="setMaxPrice($any($event.target).value)"
+          />
+          <div class="range-labels">
+            <span>₦0</span>
+            <span>Up to {{ maxPrice() | naira }}</span>
+          </div>
+        </fieldset>
+
+        @if (hasFilters()) {
+          <button type="button" class="btn btn--soft btn--block" (click)="clear()">Clear All</button>
+        }
+      </aside>
+
+      <div>
+        @if (visible().length > 0) {
+          <div class="grid">
+            @for (crop of visible(); track crop.id) {
+              <article class="card crop">
+                <a [routerLink]="['/crops', crop.id]" tabindex="-1" aria-hidden="true">
+                  <img [src]="crop.image | photo: 600" alt="" loading="lazy" />
+                </a>
+                <div class="crop__body">
+                  <h2>{{ crop.name }}</h2>
+                  <p class="price">
+                    {{ crop.price | naira }} <span class="per">/ {{ crop.unit }}</span>
+                  </p>
+                  <div class="crop__tags">
+                    @for (tag of crop.tags; track tag) {
+                      <span class="chip">{{ tag }}</span>
+                    }
+                  </div>
+                  <a [routerLink]="['/crops', crop.id]" class="btn btn--soft btn--block">
+                    View Details <app-icon name="arrow-right" [size]="16" />
+                  </a>
+                </div>
+              </article>
+            }
+          </div>
+
+          @if (pageCount() > 1) {
+            <nav class="pager" aria-label="Pages">
+              <button
+                type="button"
+                aria-label="Previous page"
+                [disabled]="page() === 1"
+                (click)="page.set(page() - 1)"
+              >
+                <app-icon name="chevron-left" [size]="18" />
+              </button>
+              @for (n of pages(); track n) {
+                <button
+                  type="button"
+                  [class.is-current]="n === page()"
+                  [attr.aria-current]="n === page() ? 'page' : null"
+                  (click)="page.set(n)"
+                >
+                  {{ n }}
+                </button>
+              }
+              <button
+                type="button"
+                aria-label="Next page"
+                [disabled]="page() === pageCount()"
+                (click)="page.set(page() + 1)"
+              >
+                <app-icon name="chevron-right" [size]="18" />
+              </button>
+            </nav>
+          }
+        } @else {
+          <div class="empty">
+            <h2>No crops match those filters</h2>
+            <p class="muted">Try a different search, category or a higher price limit.</p>
+            <button type="button" class="btn btn--primary" (click)="clear()">Clear All Filters</button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,153 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 40px;
+  align-items: start;
+}
+
+.line {
+  display: flex;
+  gap: 18px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.line:first-child {
+  padding-top: 0;
+}
+
+.line img {
+  width: 92px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.line__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.line h2 {
+  font-size: 1.05rem;
+}
+
+.line p {
+  font-size: 0.85rem;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--sand);
+}
+
+.stepper button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+.stepper button:hover {
+  background: var(--white);
+}
+
+.stepper output {
+  min-width: 26px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.line__end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.line__end .price {
+  font-size: 1.1rem;
+}
+
+.line__end button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.line__end button:hover {
+  background: var(--cream);
+  color: var(--danger);
+}
+
+.summary {
+  padding: 28px;
+  border-radius: var(--radius);
+  background: var(--cream);
+}
+
+.summary h2 {
+  font-size: 1.25rem;
+}
+
+.summary dl {
+  margin: 20px 0;
+}
+
+.summary dl div {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.92rem;
+}
+
+.summary dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.summary__total {
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 16px !important;
+  border-top: 1px solid var(--line);
+}
+
+.summary__total .price {
+  font-size: 1.6rem;
+}
+
+.summary__note {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-size: 0.82rem;
+}
+
+.summary__pending {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--lime-soft);
+  font-size: 0.82rem;
+}
+
+.summary .btn--ghost {
+  margin-top: 6px;
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

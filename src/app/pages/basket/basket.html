@@ -1,0 +1,68 @@
+<section class="page-hero">
+  <h1>Your Basket</h1>
+  <nav aria-label="Breadcrumb"><a routerLink="/">Home</a> / Basket</nav>
+</section>
+
+<section class="section">
+  <div class="container">
+    @if (cart.items().length > 0) {
+      <div class="layout">
+        <ul class="lines">
+          @for (item of cart.items(); track item.key) {
+            <li class="line">
+              <a [routerLink]="item.link"><img [src]="item.image | photo: 240" alt="" /></a>
+              <div class="line__info">
+                <a [routerLink]="item.link"><h2>{{ item.title }}</h2></a>
+                <p class="muted">{{ item.detail }}</p>
+                @if (!item.fixedQty) {
+                  <div class="stepper">
+                    <button type="button" aria-label="Fewer" (click)="cart.setQty(item.key, item.qty - 1)">
+                      <app-icon name="minus" [size]="14" />
+                    </button>
+                    <output>{{ item.qty }}</output>
+                    <button type="button" aria-label="More" (click)="cart.setQty(item.key, item.qty + 1)">
+                      <app-icon name="plus" [size]="14" />
+                    </button>
+                  </div>
+                }
+              </div>
+              <div class="line__end">
+                <strong class="price">{{ item.unitPrice * item.qty | naira }}</strong>
+                <button type="button" [attr.aria-label]="'Remove ' + item.title" (click)="cart.remove(item.key)">
+                  <app-icon name="trash" [size]="18" />
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <aside class="summary">
+          <h2>Order Summary</h2>
+          <dl>
+            <div><dt>Items</dt><dd>{{ cart.count() }}</dd></div>
+            <div><dt>Delivery</dt><dd>Sunday</dd></div>
+            <div class="summary__total"><dt>Total</dt><dd class="price">{{ cart.total() | naira }}</dd></div>
+          </dl>
+          <p class="summary__note">
+            <app-icon name="truck" [size]="18" /> Order before the end of Thursday for Sunday delivery.
+          </p>
+          <button type="button" class="btn btn--primary btn--block" (click)="checkoutNotice.set(true)">
+            Proceed to Checkout
+          </button>
+          @if (checkoutNotice()) {
+            <p class="summary__pending" role="status">
+              Online payment isn't connected yet. Your basket is saved on this device.
+            </p>
+          }
+          <a routerLink="/crops" class="btn btn--ghost btn--block">Continue Shopping</a>
+        </aside>
+      </div>
+    } @else {
+      <div class="empty">
+        <h2>Your basket is empty</h2>
+        <p class="muted">Add fresh crops or a livestock share to get started.</p>
+        <a routerLink="/crops" class="btn btn--primary">Shop the Harvest</a>
+      </div>
+    }
+  </div>
+</section>

@@ -1,0 +1,262 @@
+.intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.intro p {
+  max-width: 44ch;
+}
+
+.vet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--lime);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ---------- Filters ---------- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 40px;
+}
+
+.control {
+  height: 42px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  font-size: 0.88rem;
+}
+
+.segment {
+  display: flex;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+}
+
+.segment button {
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.segment button.is-current {
+  background: var(--green-900);
+  color: var(--white);
+}
+
+/* ---------- How it works + offer ---------- */
+.explain {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 28px;
+  align-items: start;
+}
+
+.how {
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  background: var(--cream);
+}
+
+.how h2 {
+  font-size: 1.4rem;
+}
+
+.how ol {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.how__num {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--green-900);
+  color: var(--white);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.how h3 {
+  margin: 12px 0 6px;
+  font-size: 1rem;
+}
+
+.how li p {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.how__ask {
+  align-self: end;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.how__ask a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.offer {
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  background: var(--lime);
+}
+
+.offer__tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--white);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.offer h2 {
+  margin: 14px 0 8px;
+  font-size: 1.5rem;
+}
+
+.offer p {
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+}
+
+/* ---------- Animal cards ---------- */
+.list-title {
+  margin: 56px 0 20px;
+  font-size: 1.3rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+
+.animal__photo {
+  position: relative;
+  display: block;
+}
+
+.animal__photo img {
+  width: 100%;
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+}
+
+.tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--green-900);
+  color: var(--white);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.tag--lime {
+  left: auto;
+  right: 10px;
+  background: var(--lime);
+  color: var(--ink);
+  text-transform: none;
+}
+
+.animal__body {
+  padding: 18px;
+}
+
+.animal h3 {
+  font-size: 1.05rem;
+}
+
+.animal__body > p {
+  margin-top: 4px;
+  font-size: 0.78rem;
+}
+
+.animal__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.animal__label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.animal .price {
+  font-size: 1.15rem;
+}
+
+.animal .btn {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 0.8rem;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1040px) {
+  .explain {
+    grid-template-columns: 1fr;
+  }
+
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .how {
+    padding: 24px 20px;
+  }
+
+  .how ol {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 460px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

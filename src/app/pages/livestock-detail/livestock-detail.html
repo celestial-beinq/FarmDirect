@@ -1,0 +1,259 @@
+@if (animal(); as animal) {
+  <section class="page-hero">
+    <h1>Livestock</h1>
+    <nav aria-label="Breadcrumb">
+      <a routerLink="/">Home</a> / <a routerLink="/livestock">Livestock</a> / {{ animal.name }}
+    </nav>
+  </section>
+
+  <section class="section">
+    <div class="container detail">
+      <div class="gallery">
+        <img class="gallery__main" [src]="animal.gallery[photoIndex()] | photo: 1100" [alt]="animal.name" />
+        <div class="gallery__thumbs">
+          @for (image of animal.gallery; track $index) {
+            <button
+              type="button"
+              [class.is-current]="$index === photoIndex()"
+              [attr.aria-label]="'Show photo ' + ($index + 1)"
+              (click)="photoIndex.set($index)"
+            >
+              <img [src]="image | photo: 240" alt="" />
+            </button>
+          }
+        </div>
+      </div>
+
+      <div>
+        <h2 class="detail__title">{{ animal.name }}</h2>
+        <dl class="facts">
+          <div><dt>Type</dt><dd>{{ animal.type }}</dd></div>
+          <div><dt>Weight</dt><dd>{{ animal.weight }}</dd></div>
+          <div><dt>Meat yield</dt><dd>≈{{ animal.yieldKg }}kg</dd></div>
+          <div><dt>Origin</dt><dd>{{ animal.origin }}</dd></div>
+        </dl>
+
+        <div class="buy card">
+          <h3>Buy entire animal</h3>
+          <p class="price">{{ animal.price | naira }}</p>
+          <ul>
+            <li><app-icon name="check" [size]="16" /> Full ownership and custom butchering</li>
+            <li><app-icon name="check" [size]="16" /> Direct farm-to-door delivery</li>
+            <li><app-icon name="check" [size]="16" /> Vet health check included</li>
+          </ul>
+          <button type="button" class="btn btn--primary btn--block" (click)="buyWhole()">
+            Secure Entire Animal
+          </button>
+        </div>
+
+        <div class="buy buy--shared">
+          <span class="buy__flag">Popular</span>
+          <h3>Join shared purchase</h3>
+          <p class="price">From {{ animal.minShare | naira }} <span class="per">/ share</span></p>
+          <ul>
+            <li><app-icon name="users" [size]="16" /> Split the animal with other families</li>
+            <li><app-icon name="box" [size]="16" /> Portioned and vacuum packed</li>
+          </ul>
+          <div class="buy__actions">
+            <a [routerLink]="[]" fragment="pools" class="btn btn--lime">
+              <app-icon name="eye" [size]="18" /> View Pools
+            </a>
+            <button type="button" class="btn btn--primary" (click)="openStart()">
+              <app-icon name="plus" [size]="18" /> Start New
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container pools" id="pools">
+      <h2>Active Buying Pools</h2>
+      <p class="muted">Join an existing group to finalise a purchase faster.</p>
+
+      @if (pools().length > 0) {
+        <div class="pools__grid">
+          @for (row of pools(); track row.pool.id) {
+            <article class="pool" [class.pool--closing]="row.percent >= 90">
+              <div class="pool__top">
+                <span class="pool__members">
+                  <app-icon name="users" [size]="16" /> {{ row.pool.members }}
+                  {{ row.pool.members === 1 ? 'member' : 'members' }}
+                </span>
+                <span class="pool__funded">{{ row.percent }}% funded</span>
+              </div>
+              <h3>{{ row.pool.name }}</h3>
+              <div class="progress"><span [style.width.%]="row.percent"></span></div>
+              <dl class="pool__stats">
+                <div><dt>Remaining</dt><dd>{{ row.remaining | naira }}</dd></div>
+                <div><dt>Closing in</dt><dd>{{ row.pool.closesIn }}</dd></div>
+              </dl>
+              <button
+                type="button"
+                class="btn btn--block"
+                [class.btn--white]="row.percent >= 90"
+                [class.btn--soft]="row.percent < 90"
+                [disabled]="row.remaining === 0"
+                (click)="openJoin(row.pool)"
+              >
+                {{ row.remaining === 0 ? 'Pool Full' : row.percent >= 90 ? 'Complete This Pool' : 'Join This Pool' }}
+              </button>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty">
+          <h2>No pools yet for this animal</h2>
+          <p class="muted">Start one and share the link with family and friends.</p>
+          <button type="button" class="btn btn--primary" (click)="openStart()">Start New Pool</button>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Start New Pool dialog -->
+  @if (startOpen()) {
+    <div class="overlay" (click)="closeDialog()">
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="start-title" (click)="$event.stopPropagation()">
+        <header class="dialog__head">
+          <div>
+            <h2 id="start-title">Start New Pool</h2>
+            <p class="dialog__sub">{{ animal.type }} – {{ animal.price | naira }}</p>
+          </div>
+          <button type="button" class="dialog__close" aria-label="Close" (click)="closeDialog()">
+            <app-icon name="close" [size]="22" />
+          </button>
+        </header>
+
+        <label class="dialog__label" for="start-amount">How much will you contribute?</label>
+        <div class="money money--large">
+          <span>₦</span>
+          <input
+            #startField
+            id="start-amount"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            [value]="amountText()"
+            (input)="onAmountInput(startField)"
+          />
+        </div>
+        @if (startError()) {
+          <p class="dialog__error" role="alert">{{ startError() }}</p>
+        }
+
+        <div class="portion">
+          <div class="ring" [style.--pct]="percent()"><span>{{ percent() }}%</span></div>
+          <div>
+            <small>Your Portion</small>
+            <strong>{{ portionName() }}</strong>
+            <span>{{ animal.price - amount() > 0 ? (animal.price - amount() | naira) : '₦0' }} remaining for others</span>
+          </div>
+        </div>
+
+        <span class="dialog__label">Share Your Pool</span>
+        <div class="share">
+          <span><app-icon name="link" [size]="16" /> {{ shareLink() }}</span>
+          <button type="button" [attr.aria-label]="copied() ? 'Link copied' : 'Copy link'" (click)="copyLink()">
+            <app-icon [name]="copied() ? 'check' : 'copy'" [size]="18" />
+          </button>
+        </div>
+
+        <p class="note">
+          <app-icon name="info" [size]="20" />
+          <span>
+            Your pool completes when the full amount is raised. Funds are held until the livestock is
+            fully funded and ready for processing.
+          </span>
+        </p>
+
+        <footer class="dialog__foot">
+          <button type="button" class="btn btn--ghost" (click)="closeDialog()">Cancel</button>
+          <button type="button" class="btn btn--primary" [disabled]="!!startError()" (click)="createPool()">
+            Create Pool <app-icon name="arrow-right" [size]="18" />
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+
+  <!-- Join Pool dialog -->
+  @if (joining(); as pool) {
+    <div class="overlay" (click)="closeDialog()">
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="join-title" (click)="$event.stopPropagation()">
+        <header class="dialog__head">
+          <div>
+            <h2 id="join-title">Join Pool</h2>
+            <p class="dialog__sub">{{ pool.name }}</p>
+          </div>
+          <button type="button" class="dialog__close" aria-label="Close" (click)="closeDialog()">
+            <app-icon name="close" [size]="22" />
+          </button>
+        </header>
+
+        <div class="funding">
+          <strong>Pool Funding</strong>
+          <strong>{{ joinPercent() }}% Funded</strong>
+        </div>
+        <div class="progress"><span [style.width.%]="joinPercent()"></span></div>
+        <p class="funding__sub">
+          {{ pool.raised | naira }} contributed of {{ animal.price | naira }} target
+        </p>
+
+        <label class="dialog__label" for="join-amount">How much would you like to contribute?</label>
+        <div class="money">
+          <span>₦</span>
+          <input
+            #joinField
+            id="join-amount"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            [value]="amountText()"
+            (input)="onAmountInput(joinField)"
+          />
+        </div>
+        @if (joinError()) {
+          <p class="dialog__error" role="alert">{{ joinError() }}</p>
+        } @else {
+          <p class="dialog__hint">
+            <app-icon name="info" [size]="14" /> Minimum contribution: {{ joinMinimum() | naira }}
+          </p>
+        }
+
+        <div class="tiles">
+          <div><small>Meat Yield</small><strong>~{{ meatYield() }} kg</strong><span>Your share of ≈{{ animal.yieldKg }}kg</span></div>
+          <div><small>Packaging</small><strong>Vacuum Packed</strong><span>Sealed in portions</span></div>
+        </div>
+        <div class="tiles tiles--one">
+          <div>
+            <small>Delivery</small>
+            <strong>First Sunday after the pool completes</strong>
+          </div>
+          <app-icon name="truck" [size]="22" />
+        </div>
+
+        <div class="dialog__total">
+          <span>Total:</span>
+          <strong class="price">{{ amount() | naira }}</strong>
+        </div>
+
+        <footer class="dialog__foot dialog__foot--plain">
+          <button type="button" class="btn btn--ghost" (click)="closeDialog()">Cancel</button>
+          <button type="button" class="btn btn--primary" [disabled]="!!joinError()" (click)="joinPool()">
+            <app-icon name="basket" [size]="18" /> Add to Basket
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+} @else {
+  <section class="section">
+    <div class="container">
+      <div class="empty">
+        <h2>We couldn't find that animal</h2>
+        <p class="muted">It may have been sold or the link may be wrong.</p>
+        <a routerLink="/livestock" class="btn btn--primary">Browse All Livestock</a>
+      </div>
+    </div>
+  </section>
+}
