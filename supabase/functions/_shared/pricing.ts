@@ -44,3 +44,21 @@ export function buyOptions(price: number, unit: string): BuyOption[] {
     { group: 'Pack Size', label: `10 ${plural}`, price: round50(price * 10 * 0.9) },
   ];
 }
+
+/** Works out how many base units (e.g. baskets or kg) an option label + qty consumes. */
+export function unitsFromOption(optionLabel: string | undefined, qty: number, unit: string): number {
+  if (!optionLabel || qty <= 0) return Math.max(1, qty);
+  if (unit === 'kg') {
+    if (optionLabel.startsWith('5kg')) return 5 * qty;
+    if (optionLabel.startsWith('10kg')) return 10 * qty;
+    if (optionLabel.startsWith('25kg')) return 25 * qty;
+    if (optionLabel.includes('1 basket')) return 15 * qty;
+    if (optionLabel.includes('3 baskets')) return 45 * qty;
+  }
+  const match = optionLabel.match(/^(\d+)/);
+  if (match) {
+    return parseInt(match[1], 10) * qty;
+  }
+  return qty;
+}
+

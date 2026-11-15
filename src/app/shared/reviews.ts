@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { Review } from '../core/accounts';
 import { AuthService } from '../core/auth.service';
 import { StoreService } from '../core/store.service';
+import { Icon } from './icon';
 
 /**
  * Reviews for one product. Anyone can read them. Only a customer who has
@@ -12,20 +13,33 @@ import { StoreService } from '../core/store.service';
  */
 @Component({
   selector: 'app-reviews',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, Icon],
   template: `
     <section class="reviews" id="reviews">
       <div class="reviews__head">
         <h2>Customer Reviews</h2>
         @if (reviews().length > 0) {
-          <p>
-            <span class="stars" [attr.aria-label]="average() + ' out of 5 stars'">{{
-              stars(average())
-            }}</span>
-            {{ average() }} · {{ reviews().length }}
-            {{ reviews().length === 1 ? 'review' : 'reviews' }}
-            from verified buyers
-          </p>
+          <div class="reviews__summary-bar">
+            <div class="reviews__summary-score">
+              <span class="reviews__score-num">{{ average().toFixed(1) }}</span>
+              <div class="reviews__summary-stars" [attr.aria-label]="average() + ' out of 5 stars'">
+                @for (star of [1, 2, 3, 4, 5]; track star) {
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    [attr.fill]="star <= Math.round(average()) ? '#f59e0b' : '#e2e8f0'"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                }
+              </div>
+            </div>
+            <p class="reviews__summary-meta">
+              Based on <strong>{{ reviews().length }}</strong> {{ reviews().length === 1 ? 'verified purchase review' : 'verified purchase reviews' }}
+            </p>
+          </div>
         }
       </div>
 
@@ -83,21 +97,41 @@ import { StoreService } from '../core/store.service';
       }
 
       @for (review of reviews(); track review.id) {
-        <article class="review">
-          <p class="review__top">
-            <strong>{{ review.author }}</strong>
-            <span class="stars" [attr.aria-label]="review.rating + ' out of 5 stars'">{{
-              stars(review.rating)
-            }}</span>
-          </p>
-          <p class="review__meta">Verified buyer · {{ review.date | date: 'mediumDate' }}</p>
+        <article class="review-box">
+          <div class="review-box__head">
+            <div class="review-box__user">
+              <span class="review-box__avatar" aria-hidden="true">{{ initials(review.author) }}</span>
+              <div>
+                <p class="review-box__name">
+                  <strong>{{ review.author }}</strong>
+                  <span class="review-box__badge">
+                    <app-icon name="check" [size]="10" /> Verified Buyer
+                  </span>
+                </p>
+                <p class="review-box__meta">{{ review.date | date: 'mediumDate' }}</p>
+              </div>
+            </div>
+            <div class="review-box__stars" [attr.aria-label]="review.rating + ' out of 5 stars'">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  [attr.fill]="star <= review.rating ? '#f59e0b' : '#e2e8f0'"
+                  aria-hidden="true"
+                >
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              }
+            </div>
+          </div>
           @if (review.comment) {
-            <p>{{ review.comment }}</p>
+            <blockquote class="review-box__comment">"{{ review.comment }}"</blockquote>
           }
         </article>
       } @empty {
         @if (loaded()) {
-          <p class="hint">No reviews yet.</p>
+          <p class="hint">No reviews yet. Be the first to try this fresh produce!</p>
         }
       }
     </section>
@@ -110,17 +144,42 @@ import { StoreService } from '../core/store.service';
 
     .reviews__head h2 {
       font-size: clamp(1.4rem, 3vw, 1.8rem);
+      color: var(--ink);
     }
 
-    .reviews__head p {
-      margin-top: 6px;
-      font-size: 0.9rem;
+    .reviews__summary-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      margin-top: 10px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .reviews__summary-score {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .reviews__score-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1;
+    }
+
+    .reviews__summary-stars {
+      display: inline-flex;
+      gap: 2px;
+      color: #f59e0b;
+    }
+
+    .reviews__summary-meta {
+      font-size: 0.875rem;
       color: var(--muted);
-    }
-
-    .stars {
-      color: #b7791f;
-      letter-spacing: 2px;
+      margin: 0;
     }
 
     form {
@@ -144,7 +203,7 @@ import { StoreService } from '../core/store.service';
     }
 
     .rating button.is-on {
-      color: #b7791f;
+      color: #f59e0b;
     }
 
     textarea {
@@ -170,22 +229,91 @@ import { StoreService } from '../core/store.service';
       color: var(--ink);
     }
 
-    .review {
-      padding: 18px 0;
+    .review-box {
+      padding: 20px 0;
       border-bottom: 1px solid var(--line);
     }
 
-    .review__top {
+    .review-box__head {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
     }
 
-    .review__meta {
-      margin-bottom: 6px;
-      font-size: 0.78rem;
+    .review-box__user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-box__avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #ffffff;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .review-box__name {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9375rem;
+      color: var(--ink);
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    .review-box__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .review-box__meta {
+      font-size: 0.75rem;
       color: var(--muted);
+      margin: 2px 0 0;
+    }
+
+    .review-box__stars {
+      display: inline-flex;
+      gap: 2px;
+      color: #f59e0b;
+    }
+
+    .review-box__comment {
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: #334155;
+      margin: 12px 0 0 48px;
+      padding: 6px 0 6px 14px;
+      border-left: 2px solid #10b981;
+      background: rgba(240, 253, 244, 0.4);
+      border-radius: 0 6px 6px 0;
+    }
+
+    @media (max-width: 600px) {
+      .review-box__comment {
+        margin-left: 0;
+      }
     }
   `,
 })
@@ -200,6 +328,15 @@ export class Reviews {
   protected readonly rating = signal(5);
   protected readonly busy = signal(false);
   protected readonly error = signal('');
+  protected readonly Math = Math;
+
+  protected initials(name: string): string {
+    return name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase())
+      .join('');
+  }
 
   protected readonly average = computed(() => {
     const list = this.reviews();

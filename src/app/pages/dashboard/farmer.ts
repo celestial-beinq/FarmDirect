@@ -139,6 +139,14 @@ export class FarmerDashboard {
     );
   }
 
+  protected productCategory(prod: Crop | { name: string }): string {
+    return 'category' in prod ? (prod as Crop).category : 'Livestock';
+  }
+
+  protected productOrigin(prod: Crop | { name: string }): string {
+    return 'origin' in prod ? (prod as Crop).origin : '';
+  }
+
   protected productLink(id: string): string[] {
     if (id.startsWith('animal-')) return ['/livestock', id];
     return ['/crops', id];

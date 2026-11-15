@@ -463,13 +463,13 @@
                       <a [routerLink]="productLink(review.productId)">{{ prod.name }}</a>
                     </h3>
                     <p class="review-card__product-meta">
-                      {{ prod.category }}
-                      @if (prod.origin) {
-                        · Origin: {{ prod.origin }}
+                      {{ productCategory(prod) }}
+                      @if (productOrigin(prod)) {
+                        · Origin: {{ productOrigin(prod) }}
                       }
                     </p>
                   </div>
-                  <span class="review-card__product-badge">{{ prod.category }}</span>
+                  <span class="review-card__product-badge">{{ productCategory(prod) }}</span>
                   <a
                     [routerLink]="productLink(review.productId)"
                     class="btn btn--sm btn--soft"
@@ -499,7 +499,7 @@
                 <div class="review-card__reply">
                   <div class="review-card__reply-head">
                     <app-icon name="leaf" [size]="14" />
-                    <span>Response from {{ me()?.name || 'Your Farm' }}</span>
+                    <span>Response from {{ me.name || 'Your Farm' }}</span>
                   </div>
                   <p class="review-card__reply-text">{{ replyText }}</p>
                 </div>
