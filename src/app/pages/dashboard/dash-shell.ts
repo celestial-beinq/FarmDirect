@@ -95,7 +95,10 @@ export interface DashTab {
         </div>
 
         @if (store.error()) {
-          <p class="notice notice--bad" role="alert">{{ store.error() }}</p>
+          <div class="notice notice--bad" role="alert" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>{{ store.error() }}</span>
+            <button type="button" class="btn btn--ghost btn--sm" style="padding: 2px 8px; min-height: unset; color: inherit; font-size: 1.1rem; border: none;" (click)="store.error.set('')" aria-label="Dismiss error">✕</button>
+          </div>
         }
         @if (store.loaded()) {
           <ng-content />

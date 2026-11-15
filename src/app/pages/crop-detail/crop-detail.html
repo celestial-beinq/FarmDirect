@@ -38,6 +38,31 @@
           <span><strong>Delivery: Sunday</strong><br />Order before the end of Thursday</span>
         </p>
 
+        <div class="stock-banner">
+          @if (isOutOfStock()) {
+            <div class="stock-notice stock-notice--out" role="alert">
+              <span class="badge-stock badge-stock--out">Not Available</span>
+              <div>
+                <strong>Produce Finished</strong>
+                <p>This harvest is currently sold out. It will be available again once the farmer updates their harvest quantity.</p>
+              </div>
+            </div>
+          } @else if (isLowStock()) {
+            <div class="stock-notice stock-notice--low" role="status">
+              <span class="badge-stock badge-stock--low">Low Stock</span>
+              <div>
+                <strong>Only {{ remainingQuantity() }} {{ crop.unit }}s remaining!</strong>
+                <p>Limited baskets/units left from this harvest. Order soon before it sells out.</p>
+              </div>
+            </div>
+          } @else {
+            <div class="stock-notice stock-notice--in" role="status">
+              <span class="badge-stock badge-stock--in">In Stock</span>
+              <span><strong>{{ remainingQuantity() }} {{ crop.unit }}s</strong> remaining from this harvest</span>
+            </div>
+          }
+        </div>
+
         <h3 class="label">How much do you need?</h3>
         <div class="options">
           @for (group of groups(); track group.name) {
@@ -50,6 +75,7 @@
                     class="pill"
                     [class.is-chosen]="option.label === chosen().label"
                     [attr.aria-pressed]="option.label === chosen().label"
+                    [disabled]="isOutOfStock()"
                     (click)="chosenLabel.set(option.label)"
                   >
                     {{ option.label }}
@@ -66,32 +92,46 @@
             <button
               type="button"
               aria-label="Fewer units"
-              [disabled]="units() === 1"
+              [disabled]="isOutOfStock() || units() <= 1"
               (click)="changeUnits(-1)"
             >
               <app-icon name="minus" [size]="16" />
             </button>
-            <output aria-live="polite">{{ units() }}</output>
+            <output aria-live="polite">{{ isOutOfStock() ? 0 : units() }}</output>
             <button
               type="button"
               class="stepper__add"
               aria-label="More units"
+              [disabled]="isOutOfStock() || units() >= maxUnits()"
               (click)="changeUnits(1)"
             >
               <app-icon name="plus" [size]="16" />
             </button>
           </div>
-          <span class="muted">× {{ chosen().label }} at {{ chosen().price | naira }}</span>
+          @if (!isOutOfStock()) {
+            <span class="muted">× {{ chosen().label }} at {{ chosen().price | naira }}</span>
+          } @else {
+            <span class="muted">Sold out</span>
+          }
         </div>
 
-        <div class="total">
-          <span>Estimated Total</span>
-          <strong class="price">{{ total() | naira }}</strong>
-        </div>
-
-        <button type="button" class="btn btn--primary btn--block cta" (click)="addToBasket()">
-          <app-icon name="basket" [size]="20" /> Add to Basket
-        </button>
+        @if (isOutOfStock()) {
+          <div class="total">
+            <span>Status</span>
+            <strong class="price price--out">Not Available</strong>
+          </div>
+          <button type="button" class="btn btn--block cta btn--disabled" disabled aria-disabled="true">
+            Produce Finished · Not Available
+          </button>
+        } @else {
+          <div class="total">
+            <span>Estimated Total</span>
+            <strong class="price">{{ total() | naira }}</strong>
+          </div>
+          <button type="button" class="btn btn--primary btn--block cta" (click)="addToBasket()">
+            <app-icon name="basket" [size]="20" /> Add to Basket
+          </button>
+        }
         <a routerLink="/crops" class="btn btn--ghost btn--block">Continue Shopping</a>
 
         <div class="tabs" role="tablist">

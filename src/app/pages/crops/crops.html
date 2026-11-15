@@ -85,6 +85,15 @@
                 </a>
                 <div class="crop__body">
                   <h2>{{ crop.name }}</h2>
+                  <div class="crop__stock">
+                    @if (crop.quantity <= 0) {
+                      <span class="stock-tag stock-tag--out">Not Available</span>
+                    } @else if (crop.quantity < 5) {
+                      <span class="stock-tag stock-tag--low">Only {{ crop.quantity }} {{ crop.unit }} left</span>
+                    } @else {
+                      <span class="stock-tag stock-tag--in">{{ crop.quantity }} {{ crop.unit }}s left</span>
+                    }
+                  </div>
                   <p class="price">
                     {{ crop.price | naira }} <span class="per">/ {{ crop.unit }}</span>
                   </p>

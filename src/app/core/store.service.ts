@@ -2,7 +2,7 @@ import { Injectable, computed, effect, inject, signal, untracked } from '@angula
 import { Farmer, FarmerStatus, Order, OrderStatus, Profile, Review } from './accounts';
 import { AuthService } from './auth.service';
 import { CartItem } from './cart.service';
-import { Animal, Crop, CropCategory, DEFAULT_IMAGE, Pool, ProductStatus } from './data';
+import { Animal, Crop, CropCategory, DEFAULT_IMAGE, Pool, ProductStatus, unitsFromOption } from './data';
 import {
   MOCK_ANIMALS,
   MOCK_CROPS,
@@ -14,11 +14,15 @@ import {
 } from './mock-data';
 import { Supabase, friendlyError } from './supabase';
 
+const isUuid = (id: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
 export interface ProductForm {
   name: string;
   category: CropCategory;
   price: number;
   unit: string;
+  quantity?: number;
   description: string;
 }
 
@@ -145,6 +149,7 @@ export class StoreService {
             category: p.category,
             price: p.price,
             unit: p.unit,
+            quantity: Number(p.quantity ?? 0),
             tags: p.tags,
             image: p.image,
             gallery: p.gallery.length ? p.gallery : [p.image],
@@ -306,6 +311,7 @@ export class StoreService {
 
   /** A farmer's new listing waits for admin approval (the database enforces this). */
   addProduct(farmId: string, form: ProductForm) {
+    const quantity = Math.max(0, Math.floor(form.quantity ?? 0));
     return this.change((c) =>
       c.from('products').insert({
         farm_id: farmId,
@@ -314,6 +320,7 @@ export class StoreService {
         category: form.category,
         price: form.price,
         unit: form.unit,
+        quantity,
         description: form.description,
         image: DEFAULT_IMAGE[form.category],
       }),
@@ -321,6 +328,7 @@ export class StoreService {
   }
 
   updateProduct(id: string, form: ProductForm, wasRejected: boolean) {
+    const quantity = Math.max(0, Math.floor(form.quantity ?? 0));
     return this.change((c) =>
       c
         .from('products')
@@ -329,12 +337,25 @@ export class StoreService {
           category: form.category,
           price: form.price,
           unit: form.unit,
+          quantity,
           description: form.description,
           // An edited listing that was rejected goes back for another review.
           ...(wasRejected ? { status: 'pending' } : {}),
         })
         .eq('id', id),
     );
+  }
+
+  /** Quick inline update for product stock quantity. */
+  async updateStock(id: string, quantity: number): Promise<string | null> {
+    const qty = Math.max(0, Math.floor(quantity));
+    // Optimistically update local crop list
+    this.crops.update((crops) =>
+      crops.map((c) => (c.id === id ? { ...c, quantity: qty } : c)),
+    );
+    const client = this.supabase.client;
+    if (!client || !isUuid(id)) return null;
+    return this.change((c) => c.from('products').update({ quantity: qty }).eq('id', id));
   }
 
   setProductStatus(id: string, status: ProductStatus) {
@@ -369,6 +390,13 @@ export class StoreService {
 
   /** Moves an order along. The database only allows the steps your role may take. */
   advanceOrder(id: string, status: OrderStatus) {
+    if (!isUuid(id)) {
+      this.orders.update((list) =>
+        list.map((o) => (o.id === id ? { ...o, status } : o)),
+      );
+      this.error.set('');
+      return Promise.resolve(null);
+    }
     return this.change((c) => c.rpc('advance_order', { p_order_id: id, p_status: status }));
   }
 
@@ -402,6 +430,22 @@ export class StoreService {
    * Only ids and quantities are sent — never prices.
    */
   checkout(items: CartItem[]) {
+    // Decrement stock optimistically so the remaining counter updates immediately
+    for (const item of items) {
+      if (item.kind === 'crop') {
+        const crop = this.crops().find((c) => c.id === item.productId);
+        const unit = crop?.unit ?? 'kg';
+        const needed = unitsFromOption(item.option, item.qty, unit);
+        this.crops.update((crops) =>
+          crops.map((c) =>
+            c.id === item.productId
+              ? { ...c, quantity: Math.max(0, c.quantity - needed) }
+              : c,
+          ),
+        );
+      }
+    }
+
     return this.callFunction<{ authorizationUrl: string; reference: string }>('checkout', {
       items: items.map((item) => ({
         kind: item.kind,

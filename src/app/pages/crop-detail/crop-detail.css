@@ -216,3 +216,88 @@
     gap: 32px;
   }
 }
+
+/* ---------- Stock & Inventory Status ---------- */
+.stock-banner {
+  margin-top: 18px;
+}
+
+.stock-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.stock-notice p {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.stock-notice--in {
+  background: #f0f7f1;
+  border: 1px solid #c2e2c7;
+  color: #1e5628;
+}
+
+.stock-notice--low {
+  background: #fff8eb;
+  border: 1px solid #f9dfad;
+  color: #8c5700;
+}
+
+.stock-notice--out {
+  background: #fdf2f2;
+  border: 1px solid #f8b4b4;
+  color: #9b1c1c;
+}
+
+.badge-stock {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.badge-stock--in {
+  background: #def7ec;
+  color: #03543f;
+}
+
+.badge-stock--low {
+  background: #fde8e8;
+  color: #c81e1e;
+  animation: pulse-warn 2s infinite ease-in-out;
+}
+
+.badge-stock--out {
+  background: #e02424;
+  color: #ffffff;
+}
+
+.price--out {
+  color: #c81e1e !important;
+  font-size: 1.35rem !important;
+  font-weight: 700;
+}
+
+.btn--disabled {
+  background: #e5e7eb !important;
+  color: #9ca3af !important;
+  cursor: not-allowed !important;
+  border: 1px solid #d1d5db !important;
+}
+
+@keyframes pulse-warn {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+

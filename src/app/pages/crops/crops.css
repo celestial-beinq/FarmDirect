@@ -124,6 +124,36 @@
   font-size: 1.1rem;
 }
 
+.crop__stock {
+  margin-top: 4px;
+}
+
+.stock-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.stock-tag--in {
+  background: #def7ec;
+  color: #03543f;
+}
+
+.stock-tag--low {
+  background: #fff8eb;
+  color: #a05a00;
+  border: 1px solid #f9dfad;
+}
+
+.stock-tag--out {
+  background: #fde8e8;
+  color: #9b1c1c;
+  border: 1px solid #f8b4b4;
+}
+
 .crop .price {
   margin-top: 6px;
   font-size: 1.3rem;

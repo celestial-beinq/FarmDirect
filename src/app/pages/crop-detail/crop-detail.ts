@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/cart.service';
-import { BuyOption, STORAGE_TIPS, buyOptions } from '../../core/data';
+import { BuyOption, STORAGE_TIPS, buyOptions, unitsFromOption } from '../../core/data';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
@@ -46,6 +46,23 @@ export class CropDetail {
   protected readonly chosen = computed(
     () => this.options().find((o) => o.label === this.chosenLabel()) ?? this.options()[0],
   );
+
+  protected readonly remainingQuantity = computed(() => this.crop()?.quantity ?? 0);
+  protected readonly isOutOfStock = computed(() => this.remainingQuantity() <= 0);
+  protected readonly isLowStock = computed(
+    () => this.remainingQuantity() > 0 && this.remainingQuantity() < 5,
+  );
+
+  protected readonly maxUnits = computed(() => {
+    const crop = this.crop();
+    const option = this.chosen();
+    if (!crop || !option) return 1;
+    if (crop.quantity <= 0) return 0;
+    const perUnit = unitsFromOption(option.label, 1, crop.unit);
+    const max = Math.floor(crop.quantity / perUnit);
+    return Math.max(1, Math.min(99, max));
+  });
+
   protected readonly total = computed(() => (this.chosen()?.price ?? 0) * this.units());
   protected readonly storageTip = computed(() => {
     const crop = this.crop();
@@ -53,13 +70,14 @@ export class CropDetail {
   });
 
   protected changeUnits(by: number): void {
-    this.units.update((n) => Math.min(99, Math.max(1, n + by)));
+    if (this.isOutOfStock()) return;
+    this.units.update((n) => Math.min(this.maxUnits(), Math.max(1, n + by)));
   }
 
   protected addToBasket(): void {
     const crop = this.crop();
     const option = this.chosen();
-    if (!crop || !option) return;
+    if (!crop || !option || this.isOutOfStock()) return;
     this.cart.add({
       key: `crop:${crop.id}:${option.label}`,
       productId: crop.id,
