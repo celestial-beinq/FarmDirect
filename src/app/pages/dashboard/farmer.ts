@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Review, tone } from '../../core/accounts';
+import { NIGERIAN_STATES, Review, tone } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
 import { CROP_CATEGORIES, Crop, UNIT_PLURALS } from '../../core/data';
 import { ProductForm, StoreService } from '../../core/store.service';
@@ -34,6 +34,7 @@ export class FarmerDashboard {
 
   protected readonly categories = CROP_CATEGORIES;
   protected readonly units = Object.keys(UNIT_PLURALS);
+  protected readonly nigerianStates = NIGERIAN_STATES;
   protected readonly tone = tone;
 
   /** My farm. */
@@ -215,8 +216,27 @@ export class FarmerDashboard {
       group: 'Farm',
       count: this.reviews().length,
     },
+    {
+      id: 'verification',
+      label: 'KYC & Verification',
+      icon: 'shield',
+      group: 'Farm',
+      count: this.me()?.status !== 'verified' ? 1 : undefined,
+    },
     { id: 'profile', label: 'Farm Profile', icon: 'leaf', group: 'Account' },
   ]);
+
+  /* ---- KYC & Verification Form State ---- */
+  protected readonly kycNin = signal('');
+  protected readonly kycResidentialAddress = signal('');
+  protected readonly kycFarmLocation = signal('');
+  protected readonly kycFarmSize = signal('');
+  protected readonly kycCropProduces = signal('');
+  protected readonly kycStateOfOrigin = signal('Ogun');
+  protected readonly kycDocumentUrl = signal('');
+  protected readonly kycSaving = signal(false);
+  protected readonly kycSuccess = signal(false);
+  protected readonly kycError = signal('');
 
   /* ---- Quick Restock State ---- */
   protected readonly restockingId = signal<string | null>(null);
@@ -252,6 +272,84 @@ export class FarmerDashboard {
       const ids = this.products().map((p) => p.id);
       untracked(async () => this.reviews.set(await this.store.loadReviews(ids)));
     });
+
+    // Populate KYC form fields from farm record
+    effect(() => {
+      const farm = this.me();
+      if (farm) {
+        untracked(() => {
+          if (!this.kycNin() && farm.nin) this.kycNin.set(farm.nin);
+          if (!this.kycResidentialAddress() && farm.residentialAddress) {
+            this.kycResidentialAddress.set(farm.residentialAddress);
+          }
+          if (!this.kycFarmLocation() && farm.location) {
+            this.kycFarmLocation.set(farm.location);
+          }
+          if (!this.kycFarmSize() && farm.farmSize) {
+            this.kycFarmSize.set(farm.farmSize);
+          }
+          if (!this.kycCropProduces() && farm.cropProduces) {
+            this.kycCropProduces.set(farm.cropProduces);
+          }
+          if (farm.stateOfOrigin) {
+            this.kycStateOfOrigin.set(farm.stateOfOrigin);
+          }
+          if (!this.kycDocumentUrl() && farm.documentUrl) {
+            this.kycDocumentUrl.set(farm.documentUrl);
+          }
+        });
+      }
+    });
+  }
+
+  protected async submitKyc(): Promise<void> {
+    const me = this.me();
+    if (!me) return;
+
+    const nin = this.kycNin().trim();
+    const residentialAddress = this.kycResidentialAddress().trim();
+    const location = this.kycFarmLocation().trim();
+    const farmSize = this.kycFarmSize().trim();
+    const cropProduces = this.kycCropProduces().trim();
+    const stateOfOrigin = this.kycStateOfOrigin().trim();
+    const documentUrl = this.kycDocumentUrl().trim();
+
+    this.kycError.set('');
+    this.kycSuccess.set(false);
+
+    if (!/^\d{11}$/.test(nin)) {
+      return this.kycError.set('National Identity Number (NIN) must be exactly 11 digits.');
+    }
+    if (residentialAddress.length < 5) {
+      return this.kycError.set('Please enter your complete residential address.');
+    }
+    if (location.length < 5) {
+      return this.kycError.set('Please enter the location/address of your farmland.');
+    }
+    if (farmSize.length < 2) {
+      return this.kycError.set('Please specify your farm size (e.g. 5 Hectares, 10 Acres).');
+    }
+    if (cropProduces.length < 2) {
+      return this.kycError.set('Please list your primary crop produces (e.g. Tomatoes, Cassava, Yam).');
+    }
+
+    this.kycSaving.set(true);
+    const error = await this.store.submitFarmerVerification(me.id, {
+      nin,
+      residentialAddress,
+      location,
+      farmSize,
+      cropProduces,
+      stateOfOrigin,
+      documentUrl,
+    });
+    this.kycSaving.set(false);
+
+    if (error) {
+      this.kycError.set(error);
+    } else {
+      this.kycSuccess.set(true);
+    }
   }
 
   protected productName(id: string): string {
@@ -263,6 +361,10 @@ export class FarmerDashboard {
   }
 
   protected startAdd(): void {
+    if (this.me()?.status !== 'verified') {
+      this.formError.set('Your farm must be vetted and verified by an administrator before you can list produce on the marketplace.');
+      return;
+    }
     this.form.set(EMPTY_FORM);
     this.formError.set('');
     this.editing.set('new');

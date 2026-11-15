@@ -13,31 +13,105 @@
     }
 
     @case ('farmers') {
-      <h1>Farmers</h1>
-      <p>Only verified farms can sell. Suspending a farm hides all of its listings.</p>
+      <div class="dash-header">
+        <div>
+          <h1>Farmer Verification & Vetting</h1>
+          <p>
+            Vett and verify farmers before their produce can be listed on the marketplace.
+            Inspect their national identity (NIN), residential addresses, farmland size, and produce output.
+          </p>
+        </div>
+      </div>
+
+      <div class="dash-tools">
+        <div class="seg" role="group" aria-label="Filter by verification status">
+          <button
+            type="button"
+            [attr.aria-pressed]="farmerFilter() === 'all'"
+            (click)="farmerFilter.set('all')"
+          >
+            All Farms <span>{{ farmerCounts().all }}</span>
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="farmerFilter() === 'pending'"
+            (click)="farmerFilter.set('pending')"
+          >
+            Pending Vetting <span>{{ farmerCounts().pending }}</span>
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="farmerFilter() === 'verified'"
+            (click)="farmerFilter.set('verified')"
+          >
+            Verified <span>{{ farmerCounts().verified }}</span>
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="farmerFilter() === 'rejected'"
+            (click)="farmerFilter.set('rejected')"
+          >
+            Rejected <span>{{ farmerCounts().rejected }}</span>
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="farmerFilter() === 'suspended'"
+            (click)="farmerFilter.set('suspended')"
+          >
+            Suspended <span>{{ farmerCounts().suspended }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="dash-tools">
+        <label class="dash-search">
+          <app-icon name="search" [size]="18" />
+          <input
+            type="search"
+            placeholder="Search farm, owner, NIN or state of origin..."
+            aria-label="Search farmers"
+            [value]="farmerSearch()"
+            (input)="farmerSearch.set($any($event.target).value)"
+          />
+        </label>
+        <span class="dash-count" role="status">
+          <b>{{ filteredFarmers().length }}</b> of {{ farmers().length }} farms
+        </span>
+      </div>
 
       <div class="panel">
         <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
-                <th>Farm</th>
-                <th>Location</th>
-                <th>Listings</th>
-                <th>Joined</th>
+                <th>Farm & Owner</th>
+                <th>State & NIN</th>
+                <th>Farmland & Size</th>
+                <th>Main Produces</th>
                 <th>Status</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              @for (row of farmers(); track row.farmer.id) {
+              @for (row of filteredFarmers(); track row.farmer.id) {
                 <tr>
                   <td>
-                    {{ row.farmer.name }} <small>{{ row.owner }}</small>
+                    <strong>{{ row.farmer.name }}</strong>
+                    <small>{{ row.owner }}</small>
                   </td>
-                  <td>{{ row.farmer.location }}</td>
-                  <td>{{ row.listings }}</td>
-                  <td>{{ row.farmer.joined | date: 'mediumDate' }}</td>
+                  <td>
+                    <div>{{ row.farmer.stateOfOrigin || '—' }}</div>
+                    <small class="mono">NIN: {{ row.farmer.nin || 'Not submitted' }}</small>
+                  </td>
+                  <td>
+                    <div>{{ row.farmer.location }}</div>
+                    <small>{{ row.farmer.farmSize || 'Size unlisted' }}</small>
+                  </td>
+                  <td>
+                    <small style="display: block; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                      {{ row.farmer.cropProduces || 'General produce' }}
+                    </small>
+                  </td>
                   <td>
                     <span class="badge-status" [class]="'badge-status--' + tone(row.farmer.status)">
                       {{ row.farmer.status }}
@@ -45,35 +119,157 @@
                   </td>
                   <td>
                     <div class="actions">
-                      @if (row.farmer.status === 'verified') {
-                        <button
-                          type="button"
-                          class="btn btn--sm btn--danger"
-                          (click)="store.setFarmerStatus(row.farmer.id, 'suspended')"
-                        >
-                          Suspend
-                        </button>
-                      } @else {
-                        <button
-                          type="button"
-                          class="btn btn--sm btn--primary"
-                          (click)="store.setFarmerStatus(row.farmer.id, 'verified')"
-                        >
-                          {{ row.farmer.status === 'pending' ? 'Verify' : 'Reinstate' }}
-                        </button>
-                      }
+                      <button
+                        type="button"
+                        class="btn btn--sm btn--soft"
+                        (click)="openDossier(row.farmer)"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <span>Vetting Dossier</span>
+                      </button>
                     </div>
                   </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="6" class="panel__empty">No farms yet.</td>
+                  <td colspan="6" class="panel__empty">No farms match the selected filter.</td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
       </div>
+
+      <!-- Vetting Dossier Modal -->
+      @if (inspectingFarmer(); as f) {
+        <div class="vetting-backdrop" (click)="closeDossier()">
+          <div class="vetting-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+            <header class="vetting-card__head">
+              <div>
+                <h2 style="font-size: 1.15rem; margin: 0;">{{ f.name }}</h2>
+                <small style="color: #64748b;">Farmer Verification Dossier</small>
+              </div>
+              <span class="badge-status" [class]="'badge-status--' + tone(f.status)">
+                {{ f.status }}
+              </span>
+            </header>
+
+            <div class="vetting-card__body">
+              <div class="vetting-section-title">Farmer Identification</div>
+              <div class="vetting-grid">
+                <div class="vetting-field">
+                  <label>Owner / Farmer Name</label>
+                  <div class="value">{{ store.profileName(f.ownerId) }}</div>
+                </div>
+                <div class="vetting-field">
+                  <label>State of Origin</label>
+                  <div class="value">{{ f.stateOfOrigin || 'Not provided' }}</div>
+                </div>
+                <div class="vetting-field">
+                  <label>National Identity Number (NIN)</label>
+                  <div class="value" style="display: flex; align-items: center; justify-content: space-between;">
+                    <span class="mono" style="font-weight: 600;">
+                      {{ f.nin || 'Not submitted' }}
+                    </span>
+                    @if (f.nin) {
+                      <button
+                        type="button"
+                        class="btn btn--sm btn--soft"
+                        style="height: 22px; padding: 0 6px; font-size: 0.68rem;"
+                        (click)="copyNin(f.nin)"
+                      >
+                        {{ copiedNin() === f.nin ? 'Copied!' : 'Copy' }}
+                      </button>
+                    }
+                  </div>
+                </div>
+                <div class="vetting-field">
+                  <label>Residential Address</label>
+                  <div class="value">{{ f.residentialAddress || 'Not provided' }}</div>
+                </div>
+              </div>
+
+              <div class="vetting-section-title">Farmland & Operations</div>
+              <div class="vetting-grid">
+                <div class="vetting-field">
+                  <label>Farmland Location / Address</label>
+                  <div class="value">{{ f.location || 'Not provided' }}</div>
+                </div>
+                <div class="vetting-field">
+                  <label>Farm Size</label>
+                  <div class="value">{{ f.farmSize || 'Not specified' }}</div>
+                </div>
+                <div class="vetting-field" style="grid-column: 1 / -1;">
+                  <label>Primary Crop & Livestock Produces</label>
+                  <div class="value">{{ f.cropProduces || 'Not specified' }}</div>
+                </div>
+              </div>
+
+              @if (f.documentUrl) {
+                <div class="vetting-section-title">Submitted Identity & Land Documents</div>
+                <div class="vetting-doc-preview">
+                  <img [src]="f.documentUrl" alt="Verification proof document" style="max-height: 120px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: cover;" />
+                  <div>
+                    <strong style="display: block; font-size: 0.8125rem; color: #0f172a;">Official Identity / Land Deed</strong>
+                    <small style="color: #64748b; display: block; margin-bottom: 6px;">NIMC NIN slip or registered certificate</small>
+                    <a [href]="f.documentUrl" target="_blank" rel="noopener" class="btn btn--sm btn--soft">
+                      Open Full Document ↗
+                    </a>
+                  </div>
+                </div>
+              }
+
+              <div class="vetting-section-title">Admin Review & Audit Notes</div>
+              <div class="vetting-field">
+                <label>Vetting Feedback / Rejection Reason</label>
+                <textarea
+                  class="dash-textarea"
+                  rows="2"
+                  placeholder="Enter rejection reasons or verification notes for the farmer..."
+                  [value]="rejectionReason()"
+                  (input)="rejectionReason.set($any($event.target).value)"
+                ></textarea>
+              </div>
+            </div>
+
+            <footer class="vetting-card__foot">
+              <button type="button" class="btn btn--sm btn--soft" (click)="closeDossier()">
+                Close
+              </button>
+              @if (f.status === 'verified') {
+                <button
+                  type="button"
+                  class="btn btn--sm btn--danger"
+                  (click)="suspendFarmer(f)"
+                >
+                  Suspend Farm
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn--sm btn--danger"
+                  (click)="rejectFarmer(f, rejectionReason())"
+                >
+                  Reject Application
+                </button>
+                <button
+                  type="button"
+                  class="btn btn--sm btn--primary"
+                  (click)="verifyFarmer(f)"
+                >
+                  ✓ Approve & Verify Farm
+                </button>
+              }
+            </footer>
+          </div>
+        </div>
+      }
     }
 
     @case ('products') {

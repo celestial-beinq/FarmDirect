@@ -5,14 +5,44 @@
         Your account is suspended, so you can't change your listings. Please contact support.
       </p>
     } @else if (me.status === 'pending') {
-      <p class="notice">
-        Your farm is waiting to be verified. You can add listings now, but shoppers will only see
-        them once an admin has verified your farm.
-      </p>
+      <div class="banner banner--warn" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <strong style="color: #92400e;">Verification Dossier Pending Vetting</strong>
+          <p style="margin: 2px 0 0; color: #b45309; font-size: 0.8125rem;">
+            Your NIN, residential address, and farmland documents are under review by the admin desk. Produce listings will be published once vetted.
+          </p>
+        </div>
+        <a [routerLink]="[]" [queryParams]="{ tab: 'verification' }" class="btn btn--sm btn--soft">
+          View KYC Dossier
+        </a>
+      </div>
+    } @else if (me.status === 'rejected') {
+      <div class="banner banner--bad" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <strong style="color: #991b1b;">Verification Action Required</strong>
+          <p style="margin: 2px 0 0; color: #b91c1c; font-size: 0.8125rem;">
+            Admin note: {{ me.verificationNotes || 'Application documents require correction.' }}
+          </p>
+        </div>
+        <a [routerLink]="[]" [queryParams]="{ tab: 'verification' }" class="btn btn--sm btn--danger">
+          Update & Re-submit
+        </a>
+      </div>
+    } @else if (!me.nin) {
+      <div class="banner banner--warn" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <strong style="color: #92400e;">Complete Farm KYC Verification</strong>
+          <p style="margin: 2px 0 0; color: #b45309; font-size: 0.8125rem;">
+            Submit your National Identity Number (NIN), residential address, and farm size to get vetted and approved for selling.
+          </p>
+        </div>
+        <a [routerLink]="[]" [queryParams]="{ tab: 'verification' }" class="btn btn--sm btn--primary">
+          Complete KYC Now
+        </a>
+      </div>
     } @else if (me.status === 'suspended') {
       <p class="notice notice--bad">
-        Your farm is suspended, so your produce is hidden from the marketplace. Please contact
-        support.
+        Your farm is suspended, so your produce is hidden from the marketplace. Please contact support.
       </p>
     }
 
@@ -674,6 +704,175 @@
               </p>
             </div>
           }
+        </div>
+      }
+
+      @case ('verification') {
+        <h1>Farmer Verification (KYC)</h1>
+        <p>
+          FarmDirect vets every producer before approving listings on the marketplace.
+          Submit your official identification, residential address, and farmland details below for admin vetting.
+        </p>
+
+        @if (me.status === 'verified') {
+          <div class="banner banner--good" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <strong style="color: #065f46; display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Farm Verified & Vetted
+              </strong>
+              <p style="margin: 3px 0 0; color: #047857; font-size: 0.8125rem;">
+                Your NIN identity and farmland operations are fully verified. All approved produce listings are active on the marketplace.
+              </p>
+            </div>
+            <span class="badge-status badge-status--good">Verified Producer</span>
+          </div>
+        } @else if (me.status === 'pending') {
+          <div class="banner banner--warn" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <strong style="color: #92400e; display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Dossier Under Review by Admin
+              </strong>
+              <p style="margin: 3px 0 0; color: #b45309; font-size: 0.8125rem;">
+                Your verification documents have been submitted to the FarmDirect admin desk. You will be approved once your NIN and farm location are verified.
+              </p>
+            </div>
+            <span class="badge-status badge-status--warn">Pending Vetting</span>
+          </div>
+        } @else if (me.status === 'rejected') {
+          <div class="banner banner--bad" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px;">
+            <strong style="color: #991b1b; display: flex; align-items: center; gap: 6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              Verification Incomplete or Rejected
+            </strong>
+            <p style="margin: 3px 0 0; color: #b91c1c; font-size: 0.8125rem;">
+              Admin Note: <b>{{ me.verificationNotes || 'Please correct the information below and re-submit for review.' }}</b>
+            </p>
+          </div>
+        }
+
+        <div class="panel">
+          <div class="panel__head">
+            <h2>National Identity & Farmland Vetting Form</h2>
+          </div>
+
+          <form class="form" (submit)="$event.preventDefault(); submitKyc()">
+            <div class="grid-2">
+              <label>
+                National Identity Number (NIN)
+                <input
+                  type="text"
+                  placeholder="11-digit NIN (e.g. 89421039841)"
+                  maxlength="11"
+                  required
+                  [value]="kycNin()"
+                  (input)="kycNin.set($any($event.target).value)"
+                />
+                <small>11-digit National Identity Number issued by NIMC.</small>
+              </label>
+
+              <label>
+                State of Origin
+                <select
+                  [value]="kycStateOfOrigin()"
+                  (change)="kycStateOfOrigin.set($any($event.target).value)"
+                >
+                  @for (state of nigerianStates; track state) {
+                    <option [value]="state" [selected]="state === kycStateOfOrigin()">{{ state }}</option>
+                  }
+                </select>
+                <small>Official state of origin in Nigeria.</small>
+              </label>
+            </div>
+
+            <label>
+              Farmer Residential Address
+              <input
+                type="text"
+                placeholder="Your home address (e.g. Plot 12 Quarry Hill, Abeokuta, Ogun State)"
+                required
+                maxlength="300"
+                [value]="kycResidentialAddress()"
+                (input)="kycResidentialAddress.set($any($event.target).value)"
+              />
+              <small>Physical residence of the farm operator.</small>
+            </label>
+
+            <div class="grid-2">
+              <label>
+                Farmland Address / Location
+                <input
+                  type="text"
+                  placeholder="e.g. KM 14 Abeokuta-Ibadan Expressway, Odeda LGA"
+                  required
+                  maxlength="160"
+                  [value]="kycFarmLocation()"
+                  (input)="kycFarmLocation.set($any($event.target).value)"
+                />
+                <small>Physical farmland where produce is cultivated.</small>
+              </label>
+
+              <label>
+                Farm Size
+                <input
+                  type="text"
+                  placeholder="e.g. 15 Hectares / 35 Acres / 4 Plots"
+                  required
+                  maxlength="100"
+                  [value]="kycFarmSize()"
+                  (input)="kycFarmSize.set($any($event.target).value)"
+                />
+                <small>Total cultivated land or facility size.</small>
+              </label>
+            </div>
+
+            <label>
+              Crop & Produce Specialties
+              <input
+                type="text"
+                placeholder="e.g. Vine Tomatoes, Sweet Spinach, Ofada Rice, Ugu Leaves, Cassava"
+                required
+                maxlength="300"
+                [value]="kycCropProduces()"
+                (input)="kycCropProduces.set($any($event.target).value)"
+              />
+              <small>The main crops and agricultural items produced by your farm.</small>
+            </label>
+
+            <label>
+              Proof of Farmland / Identity Document Link (Optional)
+              <input
+                type="url"
+                placeholder="https://... (photo of ID card, cooperative cert, or land lease)"
+                [value]="kycDocumentUrl()"
+                (input)="kycDocumentUrl.set($any($event.target).value)"
+              />
+              <small>Supporting document or image link to expedite vetting.</small>
+            </label>
+
+            @if (kycError()) {
+              <p class="form__error" role="alert" style="color: #dc2626; font-size: 0.8125rem; font-weight: 500;">
+                {{ kycError() }}
+              </p>
+            }
+
+            @if (kycSuccess()) {
+              <div class="banner banner--good" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 10px 14px; color: #065f46; font-size: 0.8125rem; font-weight: 500;">
+                ✓ Verification dossier submitted successfully! Admin will vet your application.
+              </div>
+            }
+
+            <div class="form__foot">
+              <button
+                type="submit"
+                class="btn btn--primary"
+                [disabled]="kycSaving()"
+              >
+                {{ kycSaving() ? 'Submitting...' : 'Submit Verification Dossier' }}
+              </button>
+            </div>
+          </form>
         </div>
       }
 
