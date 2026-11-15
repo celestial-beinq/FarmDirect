@@ -11,6 +11,11 @@ export interface CartItem {
   /** Whole animals and pool shares are one-off — no quantity stepper. */
   fixedQty?: boolean;
   link: string;
+  kind: 'crop' | 'animal' | 'pool';
+  /** The farm that fulfils this line. */
+  farmerId: string;
+  /** Set when the line is a contribution to a livestock pool. */
+  poolId?: string;
 }
 
 const STORAGE_KEY = 'farmdirect.cart';

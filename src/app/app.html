@@ -31,7 +31,18 @@
       <a routerLink="/crops" class="icon-btn" aria-label="Search crops">
         <app-icon name="search" [size]="22" />
       </a>
-      <a routerLink="/basket" class="icon-btn" [attr.aria-label]="'Basket, ' + cart.count() + ' items'">
+      <a
+        [routerLink]="auth.homePath()"
+        class="icon-btn"
+        [attr.aria-label]="auth.session() ? 'Your dashboard' : 'Sign in'"
+      >
+        <app-icon name="user" [size]="22" />
+      </a>
+      <a
+        routerLink="/basket"
+        class="icon-btn"
+        [attr.aria-label]="'Basket, ' + cart.count() + ' items'"
+      >
         <app-icon name="basket" [size]="22" />
         @if (cart.count() > 0) {
           <span class="badge">{{ cart.count() }}</span>
@@ -82,6 +93,7 @@
         <li><a routerLink="/crops">Crops</a></li>
         <li><a routerLink="/livestock">Livestock</a></li>
         <li><a routerLink="/basket">Your Basket</a></li>
+        <li><a [routerLink]="auth.homePath()">Your Account</a></li>
       </ul>
     </div>
     <div>

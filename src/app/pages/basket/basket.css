@@ -151,3 +151,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+.summary__pending--bad {
+  background: #fbe9e7;
+  color: var(--danger);
+}

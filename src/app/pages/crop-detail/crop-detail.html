@@ -30,7 +30,9 @@
 
       <div>
         <h2 class="detail__title">{{ crop.name }}</h2>
-        <p class="detail__origin"><app-icon name="pin" [size]="18" /> Direct from {{ crop.origin }}</p>
+        <p class="detail__origin">
+          <app-icon name="pin" [size]="18" /> Direct from {{ crop.origin }}
+        </p>
         <p class="delivery">
           <app-icon name="truck" [size]="22" />
           <span><strong>Delivery: Sunday</strong><br />Order before the end of Thursday</span>
@@ -61,11 +63,21 @@
         <div class="units">
           <span>Units</span>
           <div class="stepper">
-            <button type="button" aria-label="Fewer units" [disabled]="units() === 1" (click)="changeUnits(-1)">
+            <button
+              type="button"
+              aria-label="Fewer units"
+              [disabled]="units() === 1"
+              (click)="changeUnits(-1)"
+            >
               <app-icon name="minus" [size]="16" />
             </button>
             <output aria-live="polite">{{ units() }}</output>
-            <button type="button" class="stepper__add" aria-label="More units" (click)="changeUnits(1)">
+            <button
+              type="button"
+              class="stepper__add"
+              aria-label="More units"
+              (click)="changeUnits(1)"
+            >
               <app-icon name="plus" [size]="16" />
             </button>
           </div>

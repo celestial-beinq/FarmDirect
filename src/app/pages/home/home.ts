@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/cart.service';
-import { CROPS, Crop, IMAGES, POSTS, buyOptions } from '../../core/data';
+import { Crop, IMAGES, POSTS, buyOptions } from '../../core/data';
+import { StoreService } from '../../core/store.service';
 import { Icon, IconName } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 
@@ -13,10 +14,16 @@ import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 })
 export class Home {
   private readonly cart = inject(CartService);
+  private readonly store = inject(StoreService);
 
   protected readonly img = IMAGES;
   protected readonly posts = POSTS;
-  protected readonly ticker = ['Order Thursday', 'Receive Sunday', 'No middlemen', 'Traceable to the farm'];
+  protected readonly ticker = [
+    'Order Thursday',
+    'Receive Sunday',
+    'No middlemen',
+    'Traceable to the farm',
+  ];
 
   protected readonly steps: { icon: IconName; title: string; text: string }[] = [
     {
@@ -59,9 +66,13 @@ export class Home {
     },
   ];
 
-  protected readonly trending = ['vegetable-box', 'ofada-rice', 'fruit-basket'].map((id) => {
-    const crop = CROPS.find((c) => c.id === id)!;
-    return { crop, option: buyOptions(crop)[0] };
+  /** Three featured crops — skipped if a listing is no longer on sale. */
+  protected readonly trending = computed(() => {
+    const featured = ['vegetable-box', 'ofada-rice', 'fruit-basket'];
+    return this.store
+      .liveCrops()
+      .filter((crop) => featured.includes(crop.id))
+      .map((crop) => ({ crop, option: buyOptions(crop)[0] }));
   });
 
   protected add(crop: Crop): void {
@@ -73,6 +84,8 @@ export class Home {
       image: crop.image,
       unitPrice: option.price,
       qty: 1,
+      kind: 'crop',
+      farmerId: crop.farmerId,
       link: `/crops/${crop.id}`,
     });
   }

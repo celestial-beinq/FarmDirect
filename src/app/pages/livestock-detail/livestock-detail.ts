@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/cart.service';
-import { ANIMALS, Pool } from '../../core/data';
+import { ANIMALS, LIVESTOCK_FARMER_ID, Pool } from '../../core/data';
 import { PoolService } from '../../core/pool.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe, formatNaira } from '../../shared/pipes';
@@ -147,6 +147,8 @@ export class LivestockDetail {
       key: `animal:${animal.id}`,
       title: animal.name,
       detail: 'Entire animal',
+      kind: 'animal',
+      farmerId: LIVESTOCK_FARMER_ID,
       image: animal.image,
       unitPrice: animal.price,
       qty: 1,
@@ -158,11 +160,14 @@ export class LivestockDetail {
   protected createPool(): void {
     const animal = this.animal();
     if (!animal || this.startError()) return;
-    const pool = this.poolService.create(animal, this.amount());
+    const pool = this.poolService.create(animal);
     this.cart.add({
       key: `pool:${pool.id}`,
       title: `${animal.name} share`,
       detail: `${this.portionName()} · ${pool.name}`,
+      kind: 'pool',
+      farmerId: LIVESTOCK_FARMER_ID,
+      poolId: pool.id,
       image: animal.image,
       unitPrice: this.amount(),
       qty: 1,
@@ -180,6 +185,9 @@ export class LivestockDetail {
       key: `pool:${pool.id}`,
       title: `${animal.name} share`,
       detail: `≈${this.meatYield()}kg · ${pool.name}`,
+      kind: 'pool',
+      farmerId: LIVESTOCK_FARMER_ID,
+      poolId: pool.id,
       image: animal.image,
       unitPrice: this.amount(),
       qty: 1,

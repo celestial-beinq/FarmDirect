@@ -1,13 +1,13 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CROPS, CROP_CATEGORIES, CropCategory } from '../../core/data';
+import { CROP_CATEGORIES, CropCategory } from '../../core/data';
+import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 
 type Sort = 'popular' | 'low' | 'high' | 'name';
 
 const PAGE_SIZE = 6;
-const MAX_PRICE = Math.max(...CROPS.map((c) => c.price));
 
 @Component({
   selector: 'app-crops',
@@ -17,25 +17,35 @@ const MAX_PRICE = Math.max(...CROPS.map((c) => c.price));
 })
 export class Crops {
   protected readonly categories = CROP_CATEGORIES;
-  protected readonly priceCeiling = MAX_PRICE;
+  private readonly store = inject(StoreService);
+
+  /** The dearest crop on sale — the top of the price slider. */
+  protected readonly priceCeiling = computed(() =>
+    Math.max(0, ...this.store.liveCrops().map((c) => c.price)),
+  );
 
   protected readonly search = signal('');
   protected readonly sort = signal<Sort>('popular');
   protected readonly selected = signal<CropCategory[]>([]);
-  protected readonly maxPrice = signal(MAX_PRICE);
+  /** null means no price limit has been chosen. */
+  protected readonly maxPrice = signal<number | null>(null);
   protected readonly page = signal(1);
 
   protected readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
     const cats = this.selected();
-    const max = this.maxPrice();
+    const max = this.maxPrice() ?? Infinity;
 
-    const list = CROPS.filter(
-      (c) =>
-        (!term || c.name.toLowerCase().includes(term) || c.category.toLowerCase().includes(term)) &&
-        (cats.length === 0 || cats.includes(c.category)) &&
-        c.price <= max,
-    );
+    const list = this.store
+      .liveCrops()
+      .filter(
+        (c) =>
+          (!term ||
+            c.name.toLowerCase().includes(term) ||
+            c.category.toLowerCase().includes(term)) &&
+          (cats.length === 0 || cats.includes(c.category)) &&
+          c.price <= max,
+      );
 
     switch (this.sort()) {
       case 'low':
@@ -60,7 +70,7 @@ export class Crops {
     return this.filtered().slice(start, start + PAGE_SIZE);
   });
   protected readonly hasFilters = computed(
-    () => !!this.search() || this.selected().length > 0 || this.maxPrice() < MAX_PRICE,
+    () => !!this.search() || this.selected().length > 0 || this.maxPrice() !== null,
   );
 
   protected setSearch(value: string): void {
@@ -88,7 +98,7 @@ export class Crops {
   protected clear(): void {
     this.search.set('');
     this.selected.set([]);
-    this.maxPrice.set(MAX_PRICE);
+    this.maxPrice.set(null);
     this.page.set(1);
   }
 }

@@ -1,0 +1,424 @@
+<app-dash-shell role="Admin" name="FarmDirect HQ" [tabs]="tabs()" [active]="active()">
+  @switch (active()) {
+    @case ('farmers') {
+      <h1>Farmers</h1>
+      <p>Only verified farms can sell. Suspending a farm hides all of its listings.</p>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Farm</th>
+                <th>Location</th>
+                <th>Listings</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of farmers(); track row.farmer.id) {
+                <tr>
+                  <td>
+                    {{ row.farmer.name }}
+                    <small>{{ row.farmer.owner }} · {{ row.farmer.phone }}</small>
+                  </td>
+                  <td>{{ row.farmer.location }}</td>
+                  <td>{{ row.listings }}</td>
+                  <td>{{ row.farmer.joined | date: 'mediumDate' }}</td>
+                  <td>
+                    <span class="badge-status" [class]="'badge-status--' + tone(row.farmer.status)">
+                      {{ row.farmer.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      @if (row.farmer.status === 'verified') {
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--danger"
+                          (click)="store.setFarmerStatus(row.farmer.id, 'suspended')"
+                        >
+                          Suspend
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--primary"
+                          (click)="store.setFarmerStatus(row.farmer.id, 'verified')"
+                        >
+                          {{ row.farmer.status === 'pending' ? 'Verify' : 'Reinstate' }}
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @case ('products') {
+      <h1>Listings</h1>
+      <p>Approve new produce before shoppers can see it, or take a listing down.</p>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Produce</th>
+                <th>Farm</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (product of store.products(); track product.id) {
+                <tr>
+                  <td>
+                    {{ product.name }} <small>{{ product.category }}</small>
+                  </td>
+                  <td>{{ store.farmerName(product.farmerId) }}</td>
+                  <td>{{ product.price | naira }} / {{ product.unit }}</td>
+                  <td>
+                    <span class="badge-status" [class]="'badge-status--' + tone(product.status)">
+                      {{ product.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      @if (product.status === 'pending') {
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--primary"
+                          (click)="store.setProductStatus(product.id, 'live')"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--danger"
+                          (click)="store.setProductStatus(product.id, 'rejected')"
+                        >
+                          Reject
+                        </button>
+                      } @else if (product.status === 'rejected') {
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--soft"
+                          (click)="store.setProductStatus(product.id, 'live')"
+                        >
+                          Restore
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--danger"
+                          (click)="store.setProductStatus(product.id, 'rejected')"
+                        >
+                          Take Down
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @case ('orders') {
+      <h1>Orders</h1>
+      <p>Every order across all farms. Change a status to step in when needed.</p>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Farm</th>
+                <th class="num">Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of orders(); track order.id) {
+                <tr>
+                  <td>
+                    {{ order.id }} <small>{{ order.date | date: 'mediumDate' }}</small>
+                  </td>
+                  <td>{{ store.customerName(order.customerId) }}</td>
+                  <td>{{ store.farmerName(order.farmerId) }}</td>
+                  <td class="num">{{ order.total | naira }}</td>
+                  <td>
+                    <select
+                      [attr.aria-label]="'Status of order ' + order.id"
+                      (change)="setOrderStatus(order.id, $any($event.target).value)"
+                    >
+                      @for (status of statuses; track status) {
+                        <option [value]="status" [selected]="status === order.status">
+                          {{ status }}
+                        </option>
+                      }
+                    </select>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @case ('pools') {
+      <h1>Livestock Pools</h1>
+      <p>Shared-purchase groups and how close each is to being fully funded.</p>
+
+      <div class="panel">
+        @if (pools().length > 0) {
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Pool</th>
+                  <th>Members</th>
+                  <th>Funded</th>
+                  <th class="num">Raised</th>
+                  <th>Closes in</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of pools(); track row.pool.id) {
+                  <tr>
+                    <td>
+                      {{ row.pool.name }} <small>{{ row.animal?.name ?? 'Unknown animal' }}</small>
+                    </td>
+                    <td>{{ row.pool.members }}</td>
+                    <td style="min-width: 130px">
+                      <div class="progress"><span [style.width.%]="row.percent"></span></div>
+                      <small>{{ row.percent }}%</small>
+                    </td>
+                    <td class="num">
+                      {{ row.pool.raised | naira }} <small>of {{ row.target | naira }}</small>
+                    </td>
+                    <td>{{ row.pool.closesIn }}</td>
+                    <td>
+                      <div class="actions">
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--danger"
+                          (click)="removePool(row.pool.id, row.pool.name)"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="panel__empty">There are no pools at the moment.</p>
+        }
+      </div>
+    }
+
+    @case ('customers') {
+      <h1>Customers</h1>
+      <p>Suspended customers can sign in but cannot place new orders.</p>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Address</th>
+                <th>Orders</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of customers(); track row.customer.id) {
+                <tr>
+                  <td>
+                    {{ row.customer.name }} <small>{{ row.customer.email }}</small>
+                  </td>
+                  <td>{{ row.customer.address }}</td>
+                  <td>{{ row.orders }}</td>
+                  <td>{{ row.customer.joined | date: 'mediumDate' }}</td>
+                  <td>
+                    <span
+                      class="badge-status"
+                      [class]="'badge-status--' + tone(row.customer.status)"
+                    >
+                      {{ row.customer.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      @if (row.customer.status === 'active') {
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--danger"
+                          (click)="store.setCustomerStatus(row.customer.id, 'suspended')"
+                        >
+                          Suspend
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--primary"
+                          (click)="store.setCustomerStatus(row.customer.id, 'active')"
+                        >
+                          Reinstate
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @default {
+      <h1>Marketplace Overview</h1>
+      <p>The state of FarmDirect at a glance.</p>
+
+      <div class="stats">
+        <div class="stat">
+          <span>Total sales</span><strong>{{ sales() | naira }}</strong>
+        </div>
+        <div class="stat">
+          <span>Orders</span><strong>{{ orders().length }}</strong>
+          <small>{{ openOrders().length }} in progress</small>
+        </div>
+        <div class="stat">
+          <span>Farms</span><strong>{{ farmers().length }}</strong>
+          <small>{{ pendingFarmers().length }} awaiting verification</small>
+        </div>
+        <div class="stat">
+          <span>Customers</span><strong>{{ customers().length }}</strong>
+        </div>
+        <div class="stat">
+          <span>Livestock pools</span><strong>{{ pools().length }}</strong>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head"><h2>Needs your attention</h2></div>
+        @if (pendingFarmers().length + pendingProducts().length > 0) {
+          <div class="table-wrap">
+            <table class="table">
+              <tbody>
+                @for (farmer of pendingFarmers(); track farmer.id) {
+                  <tr>
+                    <td>
+                      {{ farmer.name }} <small>New farm · {{ farmer.location }}</small>
+                    </td>
+                    <td>
+                      <div class="actions">
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--primary"
+                          (click)="store.setFarmerStatus(farmer.id, 'verified')"
+                        >
+                          Verify Farm
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+                @for (product of pendingProducts(); track product.id) {
+                  <tr>
+                    <td>
+                      {{ product.name }}
+                      <small
+                        >New listing · {{ store.farmerName(product.farmerId) }} ·
+                        {{ product.price | naira }} / {{ product.unit }}</small
+                      >
+                    </td>
+                    <td>
+                      <div class="actions">
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--primary"
+                          (click)="store.setProductStatus(product.id, 'live')"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--danger"
+                          (click)="store.setProductStatus(product.id, 'rejected')"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="panel__empty">Nothing is waiting for approval.</p>
+        }
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">
+          <h2>Orders by status</h2>
+          <a [routerLink]="[]" [queryParams]="{ tab: 'orders' }" class="btn btn--sm btn--soft"
+            >All Orders</a
+          >
+        </div>
+        <div class="table-wrap">
+          <table class="table" style="min-width: 0">
+            <tbody>
+              @for (row of byStatus(); track row.status) {
+                <tr>
+                  <td>
+                    <span class="badge-status" [class]="'badge-status--' + tone(row.status)">{{
+                      row.status
+                    }}</span>
+                  </td>
+                  <td class="num">{{ row.count }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">
+          <h2>Sample data</h2>
+          <button type="button" class="btn btn--sm btn--danger" (click)="resetDemo()">
+            Reset Sample Data
+          </button>
+        </div>
+        <p class="panel__empty">
+          Everything here is sample data saved in this browser. Resetting puts it back to how it
+          started.
+        </p>
+      </div>
+    }
+  }
+</app-dash-shell>

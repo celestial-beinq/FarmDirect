@@ -14,5 +14,10 @@ export const serverRoutes: ServerRoute[] = [
   },
   // The basket depends on what is saved in this visitor's browser.
   { path: 'basket', renderMode: RenderMode.Client },
+  // Sign-in and the dashboards depend on who is signed in on this device.
+  { path: 'login', renderMode: RenderMode.Client },
+  { path: 'account', renderMode: RenderMode.Client },
+  { path: 'farmer', renderMode: RenderMode.Client },
+  { path: 'admin', renderMode: RenderMode.Client },
   { path: '**', renderMode: RenderMode.Prerender },
 ];

@@ -1,7 +1,8 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/cart.service';
-import { BuyOption, CROPS, STORAGE_TIPS, buyOptions } from '../../core/data';
+import { BuyOption, STORAGE_TIPS, buyOptions } from '../../core/data';
+import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 
@@ -15,11 +16,12 @@ type Tab = 'Details' | 'Storage Tips' | 'Delivery Info';
 })
 export class CropDetail {
   private readonly cart = inject(CartService);
+  private readonly store = inject(StoreService);
 
   /** Filled in from the ":id" part of the URL. */
   readonly id = input.required<string>();
 
-  protected readonly crop = computed(() => CROPS.find((c) => c.id === this.id()));
+  protected readonly crop = computed(() => this.store.liveCrops().find((c) => c.id === this.id()));
   protected readonly options = computed(() => {
     const crop = this.crop();
     return crop ? buyOptions(crop) : [];
@@ -63,6 +65,8 @@ export class CropDetail {
       image: crop.image,
       unitPrice: option.price,
       qty: this.units(),
+      kind: 'crop',
+      farmerId: crop.farmerId,
       link: `/crops/${crop.id}`,
     });
     this.units.set(1);

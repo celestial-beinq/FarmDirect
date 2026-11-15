@@ -43,6 +43,8 @@ export type CropCategory = 'Vegetables' | 'Fruits' | 'Tubers' | 'Grains';
 
 export const CROP_CATEGORIES: CropCategory[] = ['Vegetables', 'Fruits', 'Tubers', 'Grains'];
 
+export type ProductStatus = 'live' | 'pending' | 'paused' | 'rejected';
+
 export interface Crop {
   id: string;
   name: string;
@@ -58,6 +60,10 @@ export interface Crop {
   blurb: string;
   description: string;
   highlights: string[];
+  /** The farm that sells this crop. */
+  farmerId: string;
+  /** Only "live" crops from verified farms appear in the marketplace. */
+  status: ProductStatus;
 }
 
 export interface BuyOption {
@@ -88,7 +94,7 @@ export function buyOptions(crop: Crop): BuyOption[] {
 
 const organic = ['Grown without synthetic pesticides', 'Harvested to order, not stored'];
 
-export const CROPS: Crop[] = [
+const SEED_CROPS: Omit<Crop, 'farmerId' | 'status'>[] = [
   {
     id: 'tomatoes',
     name: 'Vine-Ripened Tomatoes',
@@ -135,7 +141,11 @@ export const CROPS: Crop[] = [
     blurb: 'Firm, clean potatoes for frying, boiling or porridge.',
     description:
       'Firm Irish potatoes dug the week you order. Even sized and clean skinned — good for chips, boiling or potato porridge.',
-    highlights: ['Dug the week of delivery', 'No sprouting inhibitors used', 'Sorted for even size'],
+    highlights: [
+      'Dug the week of delivery',
+      'No sprouting inhibitors used',
+      'Sorted for even size',
+    ],
   },
   {
     id: 'bell-peppers',
@@ -283,6 +293,60 @@ export const CROPS: Crop[] = [
   },
 ];
 
+/** Which seed farm sells produce from each region. */
+const FARM_BY_ORIGIN: Record<string, string> = {
+  'Ogun State farms': 'f-ogun',
+  'Lagos State farms': 'f-ogun',
+  'Plateau State farms': 'f-plateau',
+  'Kaduna State farms': 'f-arewa',
+  'Kano State farms': 'f-arewa',
+  'Benue State farms': 'f-benue',
+  'Edo State farms': 'f-benue',
+};
+
+export const CROPS: Crop[] = [
+  ...SEED_CROPS.map((crop) => ({
+    ...crop,
+    farmerId: FARM_BY_ORIGIN[crop.origin],
+    status: 'live' as ProductStatus,
+  })),
+  // A listing waiting for admin approval, so the approval flow has something to show.
+  {
+    id: 'ugu-leaves',
+    name: 'Ugu (Pumpkin Leaves)',
+    category: 'Vegetables',
+    price: 500,
+    unit: 'bunch',
+    unitPlural: 'bunches',
+    tags: ['Fresh Cut'],
+    image: IMG.spinach,
+    gallery: [IMG.spinach],
+    origin: 'Ogun State farms',
+    blurb: 'Fresh ugu leaves cut on the morning of dispatch.',
+    description: 'Fresh ugu leaves cut on the morning of dispatch.',
+    highlights: [],
+    farmerId: 'f-ogun',
+    status: 'pending',
+  },
+];
+
+/** Photo used for a new listing until the farmer has real photos. */
+export const DEFAULT_IMAGE: Record<CropCategory, string> = {
+  Vegetables: IMG.vegMix,
+  Fruits: IMG.fruitMix,
+  Tubers: IMG.potatoes,
+  Grains: IMG.rice,
+};
+
+export const UNIT_PLURALS: Record<string, string> = {
+  kg: 'kg',
+  bunch: 'bunches',
+  piece: 'pieces',
+  basket: 'baskets',
+  box: 'boxes',
+  tuber: 'tubers',
+};
+
 export const STORAGE_TIPS: Record<CropCategory, string> = {
   Vegetables:
     'Keep in a cool, airy place and use within 5–7 days. Refrigerate leafy greens in a loose bag; keep tomatoes out of the fridge until fully ripe.',
@@ -313,6 +377,9 @@ export interface Animal {
   /** Smallest contribution allowed in a shared pool. */
   minShare: number;
 }
+
+/** All seed livestock is sold by one ranch. */
+export const LIVESTOCK_FARMER_ID = 'f-sahel';
 
 export const ANIMALS: Animal[] = [
   {
@@ -441,8 +508,7 @@ export const POSTS: Post[] = [
     title: 'From Farm Gate to Your Gate in Three Days',
     topic: 'How We Work',
     minutes: 6,
-    excerpt:
-      'Why we only harvest after you order, and what happens between Thursday and Sunday.',
+    excerpt: 'Why we only harvest after you order, and what happens between Thursday and Sunday.',
     image: IMG.harvest,
   },
   {

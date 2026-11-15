@@ -31,7 +31,9 @@ import { PhotoPipe } from '../../shared/pipes';
           <ul>
             <li><strong>Verified farms.</strong> We only list farmers we have checked.</li>
             <li><strong>Harvested to order.</strong> Nothing sits in a warehouse.</li>
-            <li><strong>Shared livestock.</strong> Families pool together to buy healthy animals.</li>
+            <li>
+              <strong>Shared livestock.</strong> Families pool together to buy healthy animals.
+            </li>
           </ul>
           <a routerLink="/crops" class="btn btn--primary btn--pill">Visit the Marketplace</a>
         </div>

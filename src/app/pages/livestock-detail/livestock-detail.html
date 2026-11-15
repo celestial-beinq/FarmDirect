@@ -9,7 +9,11 @@
   <section class="section">
     <div class="container detail">
       <div class="gallery">
-        <img class="gallery__main" [src]="animal.gallery[photoIndex()] | photo: 1100" [alt]="animal.name" />
+        <img
+          class="gallery__main"
+          [src]="animal.gallery[photoIndex()] | photo: 1100"
+          [alt]="animal.name"
+        />
         <div class="gallery__thumbs">
           @for (image of animal.gallery; track $index) {
             <button
@@ -27,10 +31,22 @@
       <div>
         <h2 class="detail__title">{{ animal.name }}</h2>
         <dl class="facts">
-          <div><dt>Type</dt><dd>{{ animal.type }}</dd></div>
-          <div><dt>Weight</dt><dd>{{ animal.weight }}</dd></div>
-          <div><dt>Meat yield</dt><dd>≈{{ animal.yieldKg }}kg</dd></div>
-          <div><dt>Origin</dt><dd>{{ animal.origin }}</dd></div>
+          <div>
+            <dt>Type</dt>
+            <dd>{{ animal.type }}</dd>
+          </div>
+          <div>
+            <dt>Weight</dt>
+            <dd>{{ animal.weight }}</dd>
+          </div>
+          <div>
+            <dt>Meat yield</dt>
+            <dd>≈{{ animal.yieldKg }}kg</dd>
+          </div>
+          <div>
+            <dt>Origin</dt>
+            <dd>{{ animal.origin }}</dd>
+          </div>
         </dl>
 
         <div class="buy card">
@@ -84,8 +100,14 @@
               <h3>{{ row.pool.name }}</h3>
               <div class="progress"><span [style.width.%]="row.percent"></span></div>
               <dl class="pool__stats">
-                <div><dt>Remaining</dt><dd>{{ row.remaining | naira }}</dd></div>
-                <div><dt>Closing in</dt><dd>{{ row.pool.closesIn }}</dd></div>
+                <div>
+                  <dt>Remaining</dt>
+                  <dd>{{ row.remaining | naira }}</dd>
+                </div>
+                <div>
+                  <dt>Closing in</dt>
+                  <dd>{{ row.pool.closesIn }}</dd>
+                </div>
               </dl>
               <button
                 type="button"
@@ -95,7 +117,13 @@
                 [disabled]="row.remaining === 0"
                 (click)="openJoin(row.pool)"
               >
-                {{ row.remaining === 0 ? 'Pool Full' : row.percent >= 90 ? 'Complete This Pool' : 'Join This Pool' }}
+                {{
+                  row.remaining === 0
+                    ? 'Pool Full'
+                    : row.percent >= 90
+                      ? 'Complete This Pool'
+                      : 'Join This Pool'
+                }}
               </button>
             </article>
           }
@@ -104,7 +132,9 @@
         <div class="empty">
           <h2>No pools yet for this animal</h2>
           <p class="muted">Start one and share the link with family and friends.</p>
-          <button type="button" class="btn btn--primary" (click)="openStart()">Start New Pool</button>
+          <button type="button" class="btn btn--primary" (click)="openStart()">
+            Start New Pool
+          </button>
         </div>
       }
     </div>
@@ -113,7 +143,13 @@
   <!-- Start New Pool dialog -->
   @if (startOpen()) {
     <div class="overlay" (click)="closeDialog()">
-      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="start-title" (click)="$event.stopPropagation()">
+      <div
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="start-title"
+        (click)="$event.stopPropagation()"
+      >
         <header class="dialog__head">
           <div>
             <h2 id="start-title">Start New Pool</h2>
@@ -142,18 +178,29 @@
         }
 
         <div class="portion">
-          <div class="ring" [style.--pct]="percent()"><span>{{ percent() }}%</span></div>
+          <div class="ring" [style.--pct]="percent()">
+            <span>{{ percent() }}%</span>
+          </div>
           <div>
             <small>Your Portion</small>
             <strong>{{ portionName() }}</strong>
-            <span>{{ animal.price - amount() > 0 ? (animal.price - amount() | naira) : '₦0' }} remaining for others</span>
+            <span
+              >{{
+                animal.price - amount() > 0 ? (animal.price - amount() | naira) : '₦0'
+              }}
+              remaining for others</span
+            >
           </div>
         </div>
 
         <span class="dialog__label">Share Your Pool</span>
         <div class="share">
           <span><app-icon name="link" [size]="16" /> {{ shareLink() }}</span>
-          <button type="button" [attr.aria-label]="copied() ? 'Link copied' : 'Copy link'" (click)="copyLink()">
+          <button
+            type="button"
+            [attr.aria-label]="copied() ? 'Link copied' : 'Copy link'"
+            (click)="copyLink()"
+          >
             <app-icon [name]="copied() ? 'check' : 'copy'" [size]="18" />
           </button>
         </div>
@@ -161,14 +208,19 @@
         <p class="note">
           <app-icon name="info" [size]="20" />
           <span>
-            Your pool completes when the full amount is raised. Funds are held until the livestock is
-            fully funded and ready for processing.
+            Your pool opens when you place your order, and completes when the full amount is raised.
+            Funds are held until the livestock is fully funded and ready for processing.
           </span>
         </p>
 
         <footer class="dialog__foot">
           <button type="button" class="btn btn--ghost" (click)="closeDialog()">Cancel</button>
-          <button type="button" class="btn btn--primary" [disabled]="!!startError()" (click)="createPool()">
+          <button
+            type="button"
+            class="btn btn--primary"
+            [disabled]="!!startError()"
+            (click)="createPool()"
+          >
             Create Pool <app-icon name="arrow-right" [size]="18" />
           </button>
         </footer>
@@ -179,7 +231,13 @@
   <!-- Join Pool dialog -->
   @if (joining(); as pool) {
     <div class="overlay" (click)="closeDialog()">
-      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="join-title" (click)="$event.stopPropagation()">
+      <div
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="join-title"
+        (click)="$event.stopPropagation()"
+      >
         <header class="dialog__head">
           <div>
             <h2 id="join-title">Join Pool</h2>
@@ -199,7 +257,9 @@
           {{ pool.raised | naira }} contributed of {{ animal.price | naira }} target
         </p>
 
-        <label class="dialog__label" for="join-amount">How much would you like to contribute?</label>
+        <label class="dialog__label" for="join-amount"
+          >How much would you like to contribute?</label
+        >
         <div class="money">
           <span>₦</span>
           <input
@@ -221,8 +281,13 @@
         }
 
         <div class="tiles">
-          <div><small>Meat Yield</small><strong>~{{ meatYield() }} kg</strong><span>Your share of ≈{{ animal.yieldKg }}kg</span></div>
-          <div><small>Packaging</small><strong>Vacuum Packed</strong><span>Sealed in portions</span></div>
+          <div>
+            <small>Meat Yield</small><strong>~{{ meatYield() }} kg</strong
+            ><span>Your share of ≈{{ animal.yieldKg }}kg</span>
+          </div>
+          <div>
+            <small>Packaging</small><strong>Vacuum Packed</strong><span>Sealed in portions</span>
+          </div>
         </div>
         <div class="tiles tiles--one">
           <div>
@@ -239,7 +304,12 @@
 
         <footer class="dialog__foot dialog__foot--plain">
           <button type="button" class="btn btn--ghost" (click)="closeDialog()">Cancel</button>
-          <button type="button" class="btn btn--primary" [disabled]="!!joinError()" (click)="joinPool()">
+          <button
+            type="button"
+            class="btn btn--primary"
+            [disabled]="!!joinError()"
+            (click)="joinPool()"
+          >
             <app-icon name="basket" [size]="18" /> Add to Basket
           </button>
         </footer>

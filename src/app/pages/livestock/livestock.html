@@ -11,21 +11,41 @@
     </div>
 
     <div class="filters">
-      <select class="control" aria-label="Animal type" [value]="type()" (change)="setType($any($event.target).value)">
+      <select
+        class="control"
+        aria-label="Animal type"
+        [value]="type()"
+        (change)="setType($any($event.target).value)"
+      >
         <option value="All">Animal type: All</option>
         @for (t of types; track t) {
           <option [value]="t">{{ t }}</option>
         }
       </select>
       <div class="segment" role="group" aria-label="Purchase type">
-        <button type="button" [class.is-current]="!poolsOnly()" [attr.aria-pressed]="!poolsOnly()" (click)="poolsOnly.set(false)">
+        <button
+          type="button"
+          [class.is-current]="!poolsOnly()"
+          [attr.aria-pressed]="!poolsOnly()"
+          (click)="poolsOnly.set(false)"
+        >
           All
         </button>
-        <button type="button" [class.is-current]="poolsOnly()" [attr.aria-pressed]="poolsOnly()" (click)="poolsOnly.set(true)">
+        <button
+          type="button"
+          [class.is-current]="poolsOnly()"
+          [attr.aria-pressed]="poolsOnly()"
+          (click)="poolsOnly.set(true)"
+        >
           With Active Pools
         </button>
       </div>
-      <select class="control" aria-label="Sort by price" [value]="sort()" (change)="setSort($any($event.target).value)">
+      <select
+        class="control"
+        aria-label="Sort by price"
+        [value]="sort()"
+        (change)="setSort($any($event.target).value)"
+      >
         <option value="high">Price: High to Low</option>
         <option value="low">Price: Low to High</option>
       </select>
@@ -52,7 +72,11 @@
         <span class="offer__tag">Buy together</span>
         <h2>Share a cow, split the cost</h2>
         <p>Join other families in a buying pool and pay only for the portion you need.</p>
-        <a [routerLink]="['/livestock', 'friesian-cross-cow']" fragment="pools" class="btn btn--primary btn--block">
+        <a
+          [routerLink]="['/livestock', 'friesian-cross-cow']"
+          fragment="pools"
+          class="btn btn--primary btn--block"
+        >
           View Active Cow Pools
         </a>
       </aside>
@@ -63,11 +87,18 @@
       <div class="grid">
         @for (row of animals(); track row.animal.id) {
           <article class="card animal">
-            <a [routerLink]="['/livestock', row.animal.id]" class="animal__photo" tabindex="-1" aria-hidden="true">
+            <a
+              [routerLink]="['/livestock', row.animal.id]"
+              class="animal__photo"
+              tabindex="-1"
+              aria-hidden="true"
+            >
               <img [src]="row.animal.image | photo: 600" alt="" loading="lazy" />
               <span class="tag">{{ row.animal.type }}</span>
               @if (row.pools > 0) {
-                <span class="tag tag--lime">{{ row.pools }} active {{ row.pools === 1 ? 'pool' : 'pools' }}</span>
+                <span class="tag tag--lime"
+                  >{{ row.pools }} active {{ row.pools === 1 ? 'pool' : 'pools' }}</span
+                >
               }
             </a>
             <div class="animal__body">
@@ -78,7 +109,9 @@
                   <span class="animal__label">Full price</span>
                   <span class="price">{{ row.animal.price | naira }}</span>
                 </div>
-                <a [routerLink]="['/livestock', row.animal.id]" class="btn btn--primary">Buy Share</a>
+                <a [routerLink]="['/livestock', row.animal.id]" class="btn btn--primary"
+                  >Buy Share</a
+                >
               </div>
             </div>
           </article>

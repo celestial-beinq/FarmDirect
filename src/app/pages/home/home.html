@@ -70,7 +70,9 @@
         <div class="category__body">
           <h3>Fresh Vegetables, Fruits and Grains</h3>
           <p>Seasonal crops harvested at peak ripeness, delivered.</p>
-          <span class="btn btn--white btn--pill">Shop Harvest <app-icon name="arrow-right" [size]="16" /></span>
+          <span class="btn btn--white btn--pill"
+            >Shop Harvest <app-icon name="arrow-right" [size]="16"
+          /></span>
         </div>
       </a>
       <a routerLink="/livestock" class="category">
@@ -78,7 +80,9 @@
         <div class="category__body">
           <h3>Ram, Goat, Cow. Full or Shared.</h3>
           <p>Healthy animals bought whole, or split with other families.</p>
-          <span class="btn btn--white btn--pill">Buy Livestock <app-icon name="arrow-right" [size]="16" /></span>
+          <span class="btn btn--white btn--pill"
+            >Buy Livestock <app-icon name="arrow-right" [size]="16"
+          /></span>
         </div>
       </a>
     </div>
@@ -115,7 +119,7 @@
       <a routerLink="/crops">View All Market Items</a>
     </div>
     <div class="trending">
-      @for (item of trending; track item.crop.id) {
+      @for (item of trending(); track item.crop.id) {
         <article class="product">
           <a [routerLink]="['/crops', item.crop.id]">
             <img [src]="item.crop.image | photo: 700" [alt]="item.crop.name" loading="lazy" />

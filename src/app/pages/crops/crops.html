@@ -58,18 +58,20 @@
             min="0"
             step="100"
             aria-label="Maximum price"
-            [max]="priceCeiling"
-            [value]="maxPrice()"
+            [max]="priceCeiling()"
+            [value]="maxPrice() ?? priceCeiling()"
             (input)="setMaxPrice($any($event.target).value)"
           />
           <div class="range-labels">
             <span>₦0</span>
-            <span>Up to {{ maxPrice() | naira }}</span>
+            <span>Up to {{ maxPrice() ?? priceCeiling() | naira }}</span>
           </div>
         </fieldset>
 
         @if (hasFilters()) {
-          <button type="button" class="btn btn--soft btn--block" (click)="clear()">Clear All</button>
+          <button type="button" class="btn btn--soft btn--block" (click)="clear()">
+            Clear All
+          </button>
         }
       </aside>
 
@@ -133,7 +135,9 @@
           <div class="empty">
             <h2>No crops match those filters</h2>
             <p class="muted">Try a different search, category or a higher price limit.</p>
-            <button type="button" class="btn btn--primary" (click)="clear()">Clear All Filters</button>
+            <button type="button" class="btn btn--primary" (click)="clear()">
+              Clear All Filters
+            </button>
           </div>
         }
       </div>

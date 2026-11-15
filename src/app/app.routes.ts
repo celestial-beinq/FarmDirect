@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from './core/auth.service';
 
 export const routes: Routes = [
   {
@@ -41,6 +42,29 @@ export const routes: Routes = [
     path: 'blog',
     title: 'Blog — FarmDirect',
     loadComponent: () => import('./pages/blog/blog').then((m) => m.Blog),
+  },
+  {
+    path: 'login',
+    title: 'Sign in — FarmDirect',
+    loadComponent: () => import('./pages/login/login').then((m) => m.Login),
+  },
+  {
+    path: 'account',
+    title: 'My Account — FarmDirect',
+    canActivate: [roleGuard('customer')],
+    loadComponent: () => import('./pages/dashboard/customer').then((m) => m.CustomerDashboard),
+  },
+  {
+    path: 'farmer',
+    title: 'Farmer Dashboard — FarmDirect',
+    canActivate: [roleGuard('farmer')],
+    loadComponent: () => import('./pages/dashboard/farmer').then((m) => m.FarmerDashboard),
+  },
+  {
+    path: 'admin',
+    title: 'Admin Dashboard — FarmDirect',
+    canActivate: [roleGuard('admin')],
+    loadComponent: () => import('./pages/dashboard/admin').then((m) => m.AdminDashboard),
   },
   {
     path: '**',

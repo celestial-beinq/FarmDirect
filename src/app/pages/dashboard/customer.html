@@ -1,0 +1,228 @@
+@if (me(); as me) {
+  <app-dash-shell role="Customer" [name]="me.name" [tabs]="tabs()" [active]="active()">
+    @if (me.status === 'suspended') {
+      <p class="notice notice--bad">
+        Your account is suspended, so you can't place new orders. Please contact support.
+      </p>
+    }
+
+    @switch (active()) {
+      @case ('orders') {
+        <h1>My Orders</h1>
+        <p>Follow each order from the farm to your door.</p>
+
+        @for (order of orders(); track order.id) {
+          <article class="order">
+            <div class="order__head">
+              <div>
+                <h3>Order {{ order.id }}</h3>
+                <p>
+                  {{ order.date | date: 'mediumDate' }} · {{ store.farmerName(order.farmerId) }}
+                </p>
+              </div>
+              <span class="badge-status" [class]="'badge-status--' + tone(order.status)">
+                {{ order.status }}
+              </span>
+            </div>
+
+            <ul class="order__items">
+              @for (item of order.items; track $index) {
+                <li>
+                  <img [src]="item.image | photo: 120" alt="" />
+                  <span
+                    >{{ item.title }} <small>{{ item.detail }} × {{ item.qty }}</small></span
+                  >
+                  <strong>{{ item.unitPrice * item.qty | naira }}</strong>
+                </li>
+              }
+            </ul>
+
+            @if (order.status !== 'Cancelled') {
+              <ol class="tracker" [attr.aria-label]="'Order progress: ' + order.status">
+                @for (step of steps; track step; let i = $index) {
+                  <li [class.is-done]="i <= stepIndex(order)">{{ step }}</li>
+                }
+              </ol>
+            }
+
+            <div class="order__foot">
+              <span
+                >Total <strong>{{ order.total | naira }}</strong></span
+              >
+              <div>
+                @if (order.status === 'Placed') {
+                  <button
+                    type="button"
+                    class="btn btn--sm btn--danger"
+                    (click)="store.setOrderStatus(order.id, 'Cancelled')"
+                  >
+                    Cancel Order
+                  </button>
+                }
+                @if (order.status === 'Dispatched') {
+                  <button
+                    type="button"
+                    class="btn btn--sm btn--primary"
+                    (click)="store.setOrderStatus(order.id, 'Delivered')"
+                  >
+                    Confirm Received
+                  </button>
+                }
+              </div>
+            </div>
+          </article>
+        } @empty {
+          <div class="empty">
+            <h2>No orders yet</h2>
+            <p class="muted">Your orders will appear here once you place one.</p>
+            <a routerLink="/crops" class="btn btn--primary">Shop the Harvest</a>
+          </div>
+        }
+      }
+
+      @case ('shares') {
+        <h1>Livestock Shares</h1>
+        <p>The buying pools you have contributed to.</p>
+
+        @for (share of shares(); track share.order.id + $index) {
+          <article class="order">
+            <div class="order__head">
+              <div>
+                <h3>{{ share.item.title }}</h3>
+                <p>{{ share.pool?.name ?? share.item.detail }} · Order {{ share.order.id }}</p>
+              </div>
+              <strong>{{ share.item.unitPrice | naira }}</strong>
+            </div>
+            @if (share.percent !== null) {
+              <div class="progress" style="margin: 16px 0 8px">
+                <span [style.width.%]="share.percent"></span>
+              </div>
+              <div class="order__foot" style="border: 0; padding-top: 0">
+                <span>
+                  {{ share.percent }}% funded
+                  @if (share.percent >= 100) {
+                    · pool complete, processing begins
+                  } @else {
+                    · closes in {{ share.pool?.closesIn }}
+                  }
+                </span>
+                @if (share.animal) {
+                  <a
+                    [routerLink]="['/livestock', share.animal.id]"
+                    fragment="pools"
+                    class="btn btn--sm btn--soft"
+                  >
+                    View Pool
+                  </a>
+                }
+              </div>
+            } @else {
+              <p class="panel__empty">This pool is no longer open.</p>
+            }
+          </article>
+        } @empty {
+          <div class="empty">
+            <h2>No livestock shares yet</h2>
+            <p class="muted">Join a buying pool to split a cow, ram or goat with other families.</p>
+            <a routerLink="/livestock" class="btn btn--primary">Browse Livestock</a>
+          </div>
+        }
+      }
+
+      @case ('profile') {
+        <h1>Profile &amp; Address</h1>
+        <p>New orders are delivered to the address saved here.</p>
+
+        <div class="panel">
+          <form
+            class="form"
+            (submit)="$event.preventDefault(); saveProfile(name.value, phone.value, address.value)"
+          >
+            <label
+              >Full name <input #name [value]="me.name" required (input)="saved.set(false)"
+            /></label>
+            <label
+              >Phone <input #phone type="tel" [value]="me.phone" (input)="saved.set(false)"
+            /></label>
+            <label class="wide">Email <input [value]="me.email" disabled /></label>
+            <label class="wide">
+              Delivery address
+              <textarea
+                #address
+                required
+                [value]="me.address"
+                (input)="saved.set(false)"
+              ></textarea>
+            </label>
+            <div class="form__foot">
+              <button type="submit" class="btn btn--primary">Save Changes</button>
+              @if (saved()) {
+                <span class="form__saved" role="status">Saved</span>
+              }
+            </div>
+          </form>
+        </div>
+      }
+
+      @default {
+        <h1>Welcome back, {{ me.name }}</h1>
+        <p>Here is what is happening with your orders.</p>
+
+        <div class="stats">
+          <div class="stat">
+            <span>Orders placed</span><strong>{{ orders().length }}</strong>
+          </div>
+          <div class="stat">
+            <span>On the way</span><strong>{{ openOrders().length }}</strong>
+          </div>
+          <div class="stat">
+            <span>Livestock shares</span><strong>{{ shares().length }}</strong>
+          </div>
+          <div class="stat">
+            <span>Total spent</span><strong>{{ spent() | naira }}</strong>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__head">
+            <h2>Orders in progress</h2>
+            <a [routerLink]="[]" [queryParams]="{ tab: 'orders' }" class="btn btn--sm btn--soft"
+              >All Orders</a
+            >
+          </div>
+          @for (order of openOrders(); track order.id) {
+            <div class="order__head">
+              <div>
+                <h3>Order {{ order.id }} · {{ order.total | naira }}</h3>
+                <p>
+                  {{ order.date | date: 'mediumDate' }} · {{ store.farmerName(order.farmerId) }}
+                </p>
+              </div>
+              <span class="badge-status" [class]="'badge-status--' + tone(order.status)">{{
+                order.status
+              }}</span>
+            </div>
+            <ol class="tracker" [attr.aria-label]="'Order progress: ' + order.status">
+              @for (step of steps; track step; let i = $index) {
+                <li [class.is-done]="i <= stepIndex(order)">{{ step }}</li>
+              }
+            </ol>
+          } @empty {
+            <p class="panel__empty">Nothing on the way right now.</p>
+          }
+        </div>
+
+        <div class="panel">
+          <div class="panel__head">
+            <h2>Delivery address</h2>
+            <a [routerLink]="[]" [queryParams]="{ tab: 'profile' }" class="btn btn--sm btn--soft"
+              >Edit</a
+            >
+          </div>
+          <p>{{ me.address }}</p>
+          <p class="muted">{{ me.phone }}</p>
+        </div>
+      }
+    }
+  </app-dash-shell>
+}

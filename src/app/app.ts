@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from './core/auth.service';
 import { CartService } from './core/cart.service';
 import { Icon } from './shared/icon';
 
@@ -10,6 +11,7 @@ import { Icon } from './shared/icon';
   styleUrl: './app.css',
 })
 export class App {
+  protected readonly auth = inject(AuthService);
   protected readonly cart = inject(CartService);
   protected readonly menuOpen = signal(false);
   protected readonly year = new Date().getFullYear();
