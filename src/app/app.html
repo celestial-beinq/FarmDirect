@@ -1,10 +1,5 @@
 @if (!bare()) {
-  <div class="topbar">
-    <div class="container topbar__inner">
-      <span>Order by Thursday · Delivered Sunday</span>
-      <a href="mailto:hello@farmdirect.example">info&#64;farmdirect.com</a>
-    </div>
-  </div>
+  <app-order-cycle />
 
   <header class="header">
     <div class="container header__inner">
@@ -66,8 +61,7 @@
 <main>
   @if (!supabase.configured) {
     <p class="setup-banner" role="status">
-      Supabase is not connected yet, so products, sign-in and orders are unavailable. Fill in the
-      .env file and restart — see SETUP.md.
+      🌱 Running in interactive preview mode with authentic Nigerian farm produce and mock accounts. Connect Supabase in your .env file to enable live production data.
     </p>
   }
   <router-outlet />

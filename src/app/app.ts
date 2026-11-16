@@ -6,10 +6,11 @@ import { AuthService } from './core/auth.service';
 import { CartService } from './core/cart.service';
 import { Supabase } from './core/supabase';
 import { Icon } from './shared/icon';
+import { OrderCycle } from './shared/order-cycle';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, OrderCycle],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

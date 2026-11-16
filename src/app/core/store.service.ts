@@ -319,6 +319,25 @@ export class StoreService {
   /** A farmer's new listing waits for admin approval (the database enforces this). */
   addProduct(farmId: string, form: ProductForm) {
     const quantity = Math.max(0, Math.floor(form.quantity ?? 0));
+    const newCrop: Crop = {
+      id: `crop-${Date.now()}`,
+      name: form.name,
+      category: form.category,
+      price: form.price,
+      unit: form.unit,
+      quantity,
+      description: form.description,
+      image: DEFAULT_IMAGE[form.category],
+      gallery: [DEFAULT_IMAGE[form.category]],
+      origin: this.farmers().find((f) => f.id === farmId)?.location ?? 'Verified Nigerian Farm',
+      highlights: ['Fresh harvest', 'Harvested to order'],
+      tags: ['New Harvest'],
+      farmerId: farmId,
+      status: 'pending',
+    };
+    this.crops.update((list) => [newCrop, ...list]);
+    const client = this.supabase.client;
+    if (!client) return Promise.resolve(null);
     return this.change((c) =>
       c.from('products').insert({
         farm_id: farmId,
@@ -336,6 +355,24 @@ export class StoreService {
 
   updateProduct(id: string, form: ProductForm, wasRejected: boolean) {
     const quantity = Math.max(0, Math.floor(form.quantity ?? 0));
+    this.crops.update((list) =>
+      list.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              name: form.name,
+              category: form.category,
+              price: form.price,
+              unit: form.unit,
+              quantity,
+              description: form.description,
+              status: wasRejected ? 'pending' : c.status,
+            }
+          : c,
+      ),
+    );
+    const client = this.supabase.client;
+    if (!client || !isUuid(id)) return Promise.resolve(null);
     return this.change((c) =>
       c
         .from('products')
@@ -366,10 +403,18 @@ export class StoreService {
   }
 
   setProductStatus(id: string, status: ProductStatus) {
+    this.crops.update((list) =>
+      list.map((c) => (c.id === id ? { ...c, status } : c)),
+    );
+    const client = this.supabase.client;
+    if (!client || !isUuid(id)) return Promise.resolve(null);
     return this.change((c) => c.from('products').update({ status }).eq('id', id));
   }
 
   deleteProduct(id: string) {
+    this.crops.update((list) => list.filter((c) => c.id !== id));
+    const client = this.supabase.client;
+    if (!client || !isUuid(id)) return Promise.resolve(null);
     return this.change((c) => c.from('products').delete().eq('id', id));
   }
 
@@ -438,6 +483,15 @@ export class StoreService {
   async updateMyProfile(name: string, phone: string, address: string): Promise<string | null> {
     const id = this.auth.userId();
     if (!id) return 'Please sign in first.';
+    this.profiles.update((list) =>
+      list.map((p) => (p.id === id ? { ...p, name, phone, address } : p)),
+    );
+    const current = this.auth.profile();
+    if (current && current.id === id) {
+      this.auth.profile.set({ ...current, name, phone, address });
+    }
+    const client = this.supabase.client;
+    if (!client || !isUuid(id)) return null;
     const error = await this.change((c) =>
       c.from('profiles').update({ full_name: name, phone, address }).eq('id', id),
     );
@@ -503,6 +557,41 @@ export class StoreService {
       }
     }
 
+    if (!this.supabase.client) {
+      const orderId = `ord-${Math.floor(1000 + Math.random() * 9000)}`;
+      const orderCode = `FD-${Math.floor(1000 + Math.random() * 9000)}`;
+      const user = this.auth.profile() ?? this.profiles()[3];
+      const newOrder: Order = {
+        id: orderId,
+        code: orderCode,
+        customerId: user.id,
+        customerName: user.name,
+        farmerId: items[0]?.kind === 'pool' ? 'f-sahel' : (this.crops().find((c) => c.id === items[0]?.productId)?.farmerId ?? 'f-plateau'),
+        date: new Date().toISOString(),
+        status: 'Placed',
+        total: items.reduce((sum, i) => sum + i.unitPrice * i.qty, 0),
+        address: user.address,
+        items: items.map((i) => ({
+          productId: i.productId,
+          poolId: i.poolId,
+          kind: i.kind,
+          title: i.title,
+          detail: i.detail,
+          image: i.image,
+          unitPrice: i.unitPrice,
+          qty: i.qty,
+        })),
+      };
+      this.orders.update((list) => [newOrder, ...list]);
+      const ref = `DEMO-${Date.now()}`;
+      return Promise.resolve({
+        data: {
+          authorizationUrl: `/payment/callback?reference=${ref}&status=success`,
+          reference: ref,
+        },
+      });
+    }
+
     return this.callFunction<{ authorizationUrl: string; reference: string }>('checkout', {
       items: items.map((item) => ({
         kind: item.kind,
@@ -517,6 +606,9 @@ export class StoreService {
 
   /** Asks the server to confirm with Paystack that a payment went through. */
   verifyPayment(reference: string) {
+    if (!this.supabase.client || reference.startsWith('DEMO-')) {
+      return Promise.resolve({ data: { status: 'success' as const } });
+    }
     return this.callFunction<{ status: 'success' | 'pending' | 'failed' }>('verify-payment', {
       reference,
     });

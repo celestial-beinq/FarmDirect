@@ -129,6 +129,37 @@ import { Supabase } from '../../core/supabase';
             <button type="button" (click)="setMode('in')">Sign in</button>
           }
         </p>
+
+        <div class="demo-box">
+          <div class="demo-box__head">
+            <span class="demo-badge">Instant Preview</span>
+            <h3>Test with a Demo Account</h3>
+            <p>Select any role below to explore dashboards, orders, produce management and KYC:</p>
+          </div>
+          <div class="demo-box__buttons">
+            <button type="button" class="btn-demo" (click)="loginAsDemo('customer')">
+              <span class="role-icon">🛒</span>
+              <div>
+                <strong>Customer Shopper</strong>
+                <small>Ngozi Adebayo · Lekki Phase 1, Lagos</small>
+              </div>
+            </button>
+            <button type="button" class="btn-demo" (click)="loginAsDemo('farmer')">
+              <span class="role-icon">🚜</span>
+              <div>
+                <strong>Verified Farmer</strong>
+                <small>Segun Adeleke · Ogun Valley Farm</small>
+              </div>
+            </button>
+            <button type="button" class="btn-demo" (click)="loginAsDemo('admin')">
+              <span class="role-icon">🛡️</span>
+              <div>
+                <strong>Market Administrator</strong>
+                <small>FarmDirect HQ Admin Portal</small>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   `,
@@ -141,6 +172,89 @@ import { Supabase } from '../../core/supabase';
       margin-bottom: 24px;
       font-size: clamp(1.8rem, 4vw, 2.4rem);
       text-align: center;
+    }
+
+    .demo-box {
+      margin-top: 32px;
+      padding: 24px;
+      background: var(--surface-raised, #f8faf5);
+      border: 1px solid var(--line, #e2e8d8);
+      border-radius: var(--radius-lg, 16px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    .demo-box__head {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .demo-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      margin-bottom: 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: var(--lime-300, #d9f99d);
+      color: var(--green-900, #14532d);
+      border-radius: 999px;
+    }
+
+    .demo-box__head h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 4px 0 6px;
+      color: var(--ink, #1f2937);
+    }
+
+    .demo-box__head p {
+      font-size: 0.85rem;
+      color: var(--muted, #6b7280);
+      margin: 0;
+    }
+
+    .demo-box__buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-demo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: #ffffff;
+      border: 1px solid var(--line, #e2e8d8);
+      border-radius: var(--radius, 10px);
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-demo:hover {
+      border-color: var(--green-700, #15803d);
+      background: var(--cream, #fdfbf7);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(21, 128, 61, 0.08);
+    }
+
+    .role-icon {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+
+    .btn-demo strong {
+      display: block;
+      font-size: 0.92rem;
+      color: var(--ink, #111827);
+    }
+
+    .btn-demo small {
+      display: block;
+      font-size: 0.76rem;
+      color: var(--muted, #6b7280);
     }
 
     .roles {
@@ -259,6 +373,15 @@ export class Login {
       }
     } finally {
       this.busy.set(false);
+    }
+  }
+
+  protected async loginAsDemo(role: 'customer' | 'farmer' | 'admin'): Promise<void> {
+    this.auth.signInDemo(role);
+    if (role === 'customer' && this.next() === 'basket') {
+      await this.router.navigate(['/basket']);
+    } else {
+      await this.router.navigateByUrl(this.auth.homePath());
     }
   }
 }
