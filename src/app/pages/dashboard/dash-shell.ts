@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
@@ -23,7 +22,7 @@ export interface DashTab {
  */
 @Component({
   selector: 'app-dash-shell',
-  imports: [RouterLink, DatePipe, Icon],
+  imports: [RouterLink, Icon],
   template: `
     <section class="dash">
       <aside class="dash__side">
@@ -75,25 +74,6 @@ export interface DashTab {
       </aside>
 
       <div class="dash__main">
-        <div class="dash__top">
-          <p class="dash__crumb">
-            {{ role() }} <span aria-hidden="true">/</span> <b>{{ activeLabel() }}</b>
-          </p>
-          <div>
-            <!-- "Live" while the realtime connection is up; otherwise data is re-fetched on a timer. -->
-            <span class="live" [class.live--on]="store.live()" role="status">
-              <i></i>
-              {{ store.live() ? 'Live' : 'Auto-refresh' }}
-              @if (store.updatedAt(); as at) {
-                · updated {{ at | date: 'mediumTime' }}
-              }
-            </span>
-            <a routerLink="/" class="dash__pill">
-              <app-icon name="home" [size]="16" /> Back to shop
-            </a>
-          </div>
-        </div>
-
         @if (store.error()) {
           <div class="notice notice--bad" role="alert" style="display: flex; justify-content: space-between; align-items: center;">
             <span>{{ store.error() }}</span>
