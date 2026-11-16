@@ -1,20 +1,82 @@
-<!-- One set of range buttons scopes every chart and table below it. -->
-<ng-template #filters>
-  <div class="dash-bar">
-    <div class="seg" role="group" aria-label="Period">
-      @for (option of ranges; track option) {
-        <button type="button" [attr.aria-pressed]="option === range()" (click)="range.set(option)">
-          Last {{ option }} days
-        </button>
-      }
-    </div>
-  </div>
-</ng-template>
-
 @switch (view()) {
-  @case ('analytics') {
-    <ng-container [ngTemplateOutlet]="filters" />
+  @case ('overview') {
+    <div class="dash-grid">
+      <div class="panel">
+        <div class="panel__head">
+          <h2>{{ noun() }} · last 30 days</h2>
+        </div>
+        <app-time-chart
+          [points]="revenuePoints()"
+          [series]="noun()"
+          [format]="money"
+          [axisFormat]="shortMoney"
+        />
+      </div>
+      <div class="panel">
+        <div class="panel__head">
+          <h2>Orders by status</h2>
+        </div>
+        <app-donut-chart
+          [slices]="statusSlices()"
+          caption="Orders"
+          empty="No orders in the last 30 days."
+        />
+      </div>
+    </div>
+  }
 
+  @default {
+    <!-- Merged Reports & Analytics Toolbar -->
+    <div class="dash-bar no-print">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+        <div class="seg" role="group" aria-label="Period">
+          @for (option of ranges; track option) {
+            <button
+              type="button"
+              [attr.aria-pressed]="option === range()"
+              (click)="range.set(option)"
+            >
+              Last {{ option }} days
+            </button>
+          }
+        </div>
+
+        <div class="seg" role="group" aria-label="Display mode">
+          <button
+            type="button"
+            [attr.aria-pressed]="mode() === 'all'"
+            (click)="mode.set('all')"
+          >
+            All
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="mode() === 'charts'"
+            (click)="mode.set('charts')"
+          >
+            Charts
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="mode() === 'tables'"
+            (click)="mode.set('tables')"
+          >
+            Tables & Exports
+          </button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <button type="button" class="btn btn--sm btn--soft" (click)="exportOrders()">
+          Export Orders CSV
+        </button>
+        <button type="button" class="btn btn--sm btn--primary" (click)="print()">
+          Print Report
+        </button>
+      </div>
+    </div>
+
+    <!-- Core KPIs (Stats Row) -->
     <div class="stats">
       <div class="stat">
         <span>{{ noun() }}</span>
@@ -45,160 +107,116 @@
       <div class="stat">
         <span>Customers buying</span>
         <strong>{{ buyers() }}</strong>
+        <small>In the last {{ days() }} days</small>
       </div>
     </div>
 
-    <div class="dash-grid">
-      <div class="panel">
-        <div class="panel__head">
-          <h2>{{ noun() }} per day</h2>
+    <!-- Visual Analytics & Charts Section -->
+    @if (mode() === 'all' || mode() === 'charts') {
+      @if (mode() === 'all') {
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px;">
+          <h2 style="font-size: 0.95rem; font-weight: 700; color: var(--dash-text); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Performance Charts</h2>
         </div>
-        <app-time-chart
-          [points]="revenuePoints()"
-          [series]="noun()"
-          [format]="money"
-          [axisFormat]="shortMoney"
-        />
-      </div>
-      <div class="panel">
-        <div class="panel__head">
-          <h2>{{ noun() }} by category</h2>
-        </div>
-        <app-donut-chart
-          [slices]="categorySlices()"
-          [caption]="noun()"
-          [format]="shortMoney"
-          empty="No sales in this period."
-        />
-      </div>
+      }
 
-      <div class="panel">
-        <div class="panel__head">
-          <h2>Paid orders per day</h2>
-        </div>
-        <app-time-chart type="columns" [points]="orderPoints()" series="Orders" />
-      </div>
-      <div class="panel">
-        <div class="panel__head">
-          <h2>Orders by status</h2>
-        </div>
-        <app-donut-chart
-          [slices]="statusSlices()"
-          caption="Orders"
-          empty="No orders in this period."
-        />
-      </div>
-    </div>
-
-    <div class="dash-grid dash-grid--even">
-      <div class="panel">
-        <div class="panel__head">
-          <h2>Top products</h2>
-        </div>
-        <app-bar-list [rows]="topProducts()" [format]="money" empty="No sales in this period." />
-      </div>
-      @if (byFarm()) {
+      <div class="dash-grid">
         <div class="panel">
           <div class="panel__head">
-            <h2>Top farms</h2>
+            <h2>{{ noun() }} per day</h2>
           </div>
-          <app-bar-list [rows]="topFarms()" [format]="money" empty="No sales in this period." />
+          <app-time-chart
+            [points]="revenuePoints()"
+            [series]="noun()"
+            [format]="money"
+            [axisFormat]="shortMoney"
+          />
+        </div>
+        <div class="panel">
+          <div class="panel__head">
+            <h2>{{ noun() }} by category</h2>
+          </div>
+          <app-donut-chart
+            [slices]="categorySlices()"
+            [caption]="noun()"
+            [format]="shortMoney"
+            empty="No sales in this period."
+          />
+        </div>
+
+        <div class="panel">
+          <div class="panel__head">
+            <h2>Paid orders per day</h2>
+          </div>
+          <app-time-chart type="columns" [points]="orderPoints()" series="Orders" />
+        </div>
+        <div class="panel">
+          <div class="panel__head">
+            <h2>Orders by status</h2>
+          </div>
+          <app-donut-chart
+            [slices]="statusSlices()"
+            caption="Orders"
+            empty="No orders in this period."
+          />
+        </div>
+      </div>
+
+      <div class="dash-grid dash-grid--even">
+        <div class="panel">
+          <div class="panel__head">
+            <h2>Top products</h2>
+          </div>
+          <app-bar-list [rows]="topProducts()" [format]="money" empty="No sales in this period." />
+        </div>
+        @if (byFarm()) {
+          <div class="panel">
+            <div class="panel__head">
+              <h2>Top farms</h2>
+            </div>
+            <app-bar-list [rows]="topFarms()" [format]="money" empty="No sales in this period." />
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Detailed Reports & Data Tables Section -->
+    @if (mode() === 'all' || mode() === 'tables') {
+      @if (mode() === 'all') {
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 24px 0 10px;">
+          <h2 style="font-size: 0.95rem; font-weight: 700; color: var(--dash-text); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Detailed Reports & Data Tables</h2>
         </div>
       }
-    </div>
-  }
 
-  @case ('reports') {
-    <ng-container [ngTemplateOutlet]="filters" />
-
-    <div class="stats">
-      <div class="stat">
-        <span>{{ noun() }}</span>
-        <strong>{{ revenue() | naira }}</strong>
-      </div>
-      <div class="stat">
-        <span>Paid orders</span>
-        <strong>{{ orderCount() }}</strong>
-      </div>
-      <div class="stat">
-        <span>Average order</span>
-        <strong>{{ average() | naira }}</strong>
-      </div>
-      <div class="stat no-print">
-        <span>Whole report</span>
-        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px">
-          <button type="button" class="btn btn--sm btn--primary" (click)="print()">Print</button>
-          <button type="button" class="btn btn--sm btn--soft" (click)="exportOrders()">
-            Orders CSV
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel__head">
-        <h2>{{ noun() }} by day</h2>
-        <button type="button" class="btn btn--sm btn--soft no-print" (click)="exportDays()">
-          Download CSV
-        </button>
-      </div>
-      @if (busyDays().length > 0) {
-        <div class="table-wrap">
-          <table class="table" style="min-width: 0">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th class="num">Orders</th>
-                <th class="num">{{ noun() }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (day of busyDays(); track day.key) {
-                <tr>
-                  <td>{{ day.key | date: 'mediumDate' }}</td>
-                  <td class="num">{{ day.orders }}</td>
-                  <td class="num">{{ day.revenue | naira }}</td>
-                </tr>
-              }
-              <tr class="table__total">
-                <td>Total</td>
-                <td class="num">{{ orderCount() }}</td>
-                <td class="num">{{ revenue() | naira }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <p class="panel__empty">No sales in this period.</p>
-      }
-    </div>
-
-    <div class="dash-grid dash-grid--even">
       <div class="panel">
         <div class="panel__head">
-          <h2>{{ noun() }} by product</h2>
-          <button type="button" class="btn btn--sm btn--soft no-print" (click)="exportProducts()">
+          <h2>{{ noun() }} by day</h2>
+          <button type="button" class="btn btn--sm btn--soft no-print" (click)="exportDays()">
             Download CSV
           </button>
         </div>
-        @if (products().length > 0) {
+        @if (busyDays().length > 0) {
           <div class="table-wrap">
             <table class="table" style="min-width: 0">
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th class="num">Units</th>
+                  <th>Date</th>
+                  <th class="num">Orders</th>
                   <th class="num">{{ noun() }}</th>
                 </tr>
               </thead>
               <tbody>
-                @for (row of products(); track row.label) {
+                @for (day of busyDays(); track day.key) {
                   <tr>
-                    <td>{{ row.label }}</td>
-                    <td class="num">{{ row.count }}</td>
-                    <td class="num">{{ row.value | naira }}</td>
+                    <td>{{ day.key | date: 'mediumDate' }}</td>
+                    <td class="num">{{ day.orders }}</td>
+                    <td class="num">{{ day.revenue | naira }}</td>
                   </tr>
                 }
+                <tr class="table__total">
+                  <td>Total</td>
+                  <td class="num">{{ orderCount() }}</td>
+                  <td class="num">{{ revenue() | naira }}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -207,26 +225,26 @@
         }
       </div>
 
-      @if (byFarm()) {
+      <div class="dash-grid dash-grid--even">
         <div class="panel">
           <div class="panel__head">
-            <h2>{{ noun() }} by farm</h2>
-            <button type="button" class="btn btn--sm btn--soft no-print" (click)="exportFarms()">
+            <h2>{{ noun() }} by product</h2>
+            <button type="button" class="btn btn--sm btn--soft no-print" (click)="exportProducts()">
               Download CSV
             </button>
           </div>
-          @if (farms().length > 0) {
+          @if (products().length > 0) {
             <div class="table-wrap">
               <table class="table" style="min-width: 0">
                 <thead>
                   <tr>
-                    <th>Farm</th>
-                    <th class="num">Orders</th>
+                    <th>Product</th>
+                    <th class="num">Units</th>
                     <th class="num">{{ noun() }}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (row of farms(); track row.label) {
+                  @for (row of products(); track row.label) {
                     <tr>
                       <td>{{ row.label }}</td>
                       <td class="num">{{ row.count }}</td>
@@ -240,66 +258,75 @@
             <p class="panel__empty">No sales in this period.</p>
           }
         </div>
-      }
 
-      <div class="panel">
-        <div class="panel__head">
-          <h2>Orders by status</h2>
-          <button type="button" class="btn btn--sm btn--soft no-print" (click)="exportStatuses()">
-            Download CSV
-          </button>
-        </div>
-        @if (statusRows().length > 0) {
-          <div class="table-wrap">
-            <table class="table" style="min-width: 0">
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th class="num">Orders</th>
-                  <th class="num">Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of statusRows(); track row.status) {
-                  <tr>
-                    <td>{{ row.status }}</td>
-                    <td class="num">{{ row.count }}</td>
-                    <td class="num">{{ row.value | naira }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+        @if (byFarm()) {
+          <div class="panel">
+            <div class="panel__head">
+              <h2>{{ noun() }} by farm</h2>
+              <button type="button" class="btn btn--sm btn--soft no-print" (click)="exportFarms()">
+                Download CSV
+              </button>
+            </div>
+            @if (farms().length > 0) {
+              <div class="table-wrap">
+                <table class="table" style="min-width: 0">
+                  <thead>
+                    <tr>
+                      <th>Farm</th>
+                      <th class="num">Orders</th>
+                      <th class="num">{{ noun() }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of farms(); track row.label) {
+                      <tr>
+                        <td>{{ row.label }}</td>
+                        <td class="num">{{ row.count }}</td>
+                        <td class="num">{{ row.value | naira }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="panel__empty">No sales in this period.</p>
+            }
           </div>
-        } @else {
-          <p class="panel__empty">No orders in this period.</p>
         }
-      </div>
-    </div>
-  }
 
-  @default {
-    <div class="dash-grid">
-      <div class="panel">
-        <div class="panel__head">
-          <h2>{{ noun() }} · last 30 days</h2>
+        <div class="panel">
+          <div class="panel__head">
+            <h2>Orders by status</h2>
+            <button type="button" class="btn btn--sm btn--soft no-print" (click)="exportStatuses()">
+              Download CSV
+            </button>
+          </div>
+          @if (statusRows().length > 0) {
+            <div class="table-wrap">
+              <table class="table" style="min-width: 0">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th class="num">Orders</th>
+                    <th class="num">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of statusRows(); track row.status) {
+                    <tr>
+                      <td>{{ row.status }}</td>
+                      <td class="num">{{ row.count }}</td>
+                      <td class="num">{{ row.value | naira }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <p class="panel__empty">No orders in this period.</p>
+          }
         </div>
-        <app-time-chart
-          [points]="revenuePoints()"
-          [series]="noun()"
-          [format]="money"
-          [axisFormat]="shortMoney"
-        />
       </div>
-      <div class="panel">
-        <div class="panel__head">
-          <h2>Orders by status</h2>
-        </div>
-        <app-donut-chart
-          [slices]="statusSlices()"
-          caption="Orders"
-          empty="No orders in the last 30 days."
-        />
-      </div>
-    </div>
+    }
   }
 }

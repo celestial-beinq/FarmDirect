@@ -64,15 +64,9 @@
 
     @switch (active()) {
       @case ('analytics') {
-        <h1>Analytics</h1>
-        <p>How your produce is selling, updating as orders come in.</p>
+        <h1>Reports & Analytics</h1>
+        <p>Sales performance, category breakdown, printable statements and data exports.</p>
         <app-insights view="analytics" noun="Sales" [orders]="orders()" />
-      }
-
-      @case ('reports') {
-        <h1>Reports</h1>
-        <p>The numbers behind the charts, ready to print or download.</p>
-        <app-insights view="reports" noun="Sales" [orders]="orders()" />
       }
 
       @case ('products') {

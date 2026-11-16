@@ -1,15 +1,9 @@
 <app-dash-shell role="Admin" name="FarmDirect HQ" [tabs]="tabs()" [active]="active()">
   @switch (active()) {
     @case ('analytics') {
-      <h1>Analytics</h1>
-      <p>Sales across every farm, updating as orders come in.</p>
+      <h1>Reports & Analytics</h1>
+      <p>Sales across every farm, category trends, printable statements and raw CSV exports.</p>
       <app-insights view="analytics" byFarm [orders]="orders()" />
-    }
-
-    @case ('reports') {
-      <h1>Reports</h1>
-      <p>The numbers behind the charts, ready to print or download.</p>
-      <app-insights view="reports" byFarm [orders]="orders()" />
     }
 
     @case ('farmers') {

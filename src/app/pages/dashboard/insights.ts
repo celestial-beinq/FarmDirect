@@ -1,4 +1,4 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
 import { Order, OrderStatus } from '../../core/accounts';
 import {
@@ -45,7 +45,7 @@ const STATUS_ORDER = Object.keys(STATUS_COLORS) as OrderStatus[];
  */
 @Component({
   selector: 'app-insights',
-  imports: [DatePipe, NgTemplateOutlet, NairaPipe, TimeChart, DonutChart, BarList],
+  imports: [DatePipe, NairaPipe, TimeChart, DonutChart, BarList],
   templateUrl: './insights.html',
 })
 export class Insights {
@@ -57,6 +57,9 @@ export class Insights {
   readonly noun = input('Revenue');
   /** Also break sales down by farm (for the admin). */
   readonly byFarm = input(false, { transform: booleanAttribute });
+
+  /** Display mode in the merged reports & analytics view. */
+  protected readonly mode = signal<'all' | 'charts' | 'tables'>('all');
 
   protected readonly ranges = [7, 30, 90];
   protected readonly range = signal(30);

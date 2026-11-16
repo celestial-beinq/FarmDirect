@@ -30,7 +30,11 @@ export class FarmerDashboard {
 
   /** The open tab, from "?tab=..." in the URL. */
   readonly tab = input<string>();
-  protected readonly active = computed(() => this.tab() ?? 'overview');
+  protected readonly active = computed(() => {
+    const t = this.tab();
+    if (t === 'reports') return 'analytics';
+    return t ?? 'overview';
+  });
 
   protected readonly categories = CROP_CATEGORIES;
   protected readonly units = Object.keys(UNIT_PLURALS);
@@ -199,8 +203,7 @@ export class FarmerDashboard {
 
   protected readonly tabs = computed<DashTab[]>(() => [
     { id: 'overview', label: 'Overview', icon: 'grid', group: 'Workspace' },
-    { id: 'analytics', label: 'Analytics', icon: 'chart', group: 'Workspace' },
-    { id: 'reports', label: 'Reports', icon: 'file', group: 'Workspace' },
+    { id: 'analytics', label: 'Reports & Analytics', icon: 'chart', group: 'Workspace' },
     { id: 'orders', label: 'Orders', icon: 'box', group: 'Farm', count: this.toFulfil().length },
     {
       id: 'products',
