@@ -219,7 +219,7 @@ export class AdminDashboard {
 
   protected readonly tabs = computed<DashTab[]>(() => [
     { id: 'overview', label: 'Overview', icon: 'grid', group: 'Workspace' },
-    { id: 'analytics', label: 'Reports & Analytics', icon: 'chart', group: 'Workspace' },
+    { id: 'analytics', label: 'Analytics', icon: 'chart', group: 'Workspace' },
     {
       id: 'orders',
       label: 'Orders',

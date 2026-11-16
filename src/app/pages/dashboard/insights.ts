@@ -1,11 +1,9 @@
-import { DatePipe } from '@angular/common';
 import { Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
 import { Order, OrderStatus } from '../../core/accounts';
 import {
   change,
   compactNaira,
   dailySeries,
-  downloadCsv,
   groupSum,
   isPaid,
   lastDays,
@@ -35,17 +33,13 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 const STATUS_ORDER = Object.keys(STATUS_COLORS) as OrderStatus[];
 
 /**
- * Charts and reports built from a list of orders. The admin dashboard gives
- * it every order, a farmer's dashboard only that farm's, a customer's only
- * their own — so the same component serves all three.
- *
- *  - "overview":  two charts for the dashboard's front page
- *  - "analytics": the full set of charts
- *  - "reports":   the same numbers as tables, with CSV downloads
+ * Analytics and performance charts built from orders data.
+ *  - "overview": compact two charts for dashboard home
+ *  - "analytics": full suite of analytics charts and KPI trends
  */
 @Component({
   selector: 'app-insights',
-  imports: [DatePipe, NairaPipe, TimeChart, DonutChart, BarList],
+  imports: [NairaPipe, TimeChart, DonutChart, BarList],
   templateUrl: './insights.html',
 })
 export class Insights {
@@ -57,9 +51,6 @@ export class Insights {
   readonly noun = input('Revenue');
   /** Also break sales down by farm (for the admin). */
   readonly byFarm = input(false, { transform: booleanAttribute });
-
-  /** Display mode in the merged reports & analytics view. */
-  protected readonly mode = signal<'all' | 'charts' | 'tables'>('all');
 
   protected readonly ranges = [7, 30, 90];
   protected readonly range = signal(30);
@@ -168,67 +159,10 @@ export class Insights {
   protected readonly topProducts = computed(() => this.products().slice(0, 6));
   protected readonly topFarms = computed(() => this.farms().slice(0, 6));
 
-  /** Days that had at least one sale, newest first. */
-  protected readonly busyDays = computed(() =>
-    this.daily()
-      .filter((d) => d.orders > 0)
-      .reverse(),
-  );
-
   /** "▲ 12% vs previous 30 days" */
   protected trend(percent: number | null): string {
     if (percent === null) return 'No earlier sales to compare with';
     const arrow = percent > 0 ? '▲ ' : percent < 0 ? '▼ ' : '';
     return `${arrow}${Math.abs(percent)}% vs previous ${this.days()} days`;
-  }
-
-  protected print(): void {
-    window.print();
-  }
-
-  protected exportDays(): void {
-    this.save('by-day', [
-      ['Date', 'Orders', `${this.noun()} (NGN)`],
-      ...this.busyDays().map((d) => [d.key, d.orders, d.revenue]),
-    ]);
-  }
-
-  protected exportProducts(): void {
-    this.save('by-product', [
-      ['Product', 'Units', `${this.noun()} (NGN)`],
-      ...this.products().map((p) => [p.label, p.count, p.value]),
-    ]);
-  }
-
-  protected exportFarms(): void {
-    this.save('by-farm', [
-      ['Farm', 'Orders', `${this.noun()} (NGN)`],
-      ...this.farms().map((f) => [f.label, f.count, f.value]),
-    ]);
-  }
-
-  protected exportStatuses(): void {
-    this.save('by-status', [
-      ['Status', 'Orders', 'Value (NGN)'],
-      ...this.statusRows().map((s) => [s.status, s.count, s.value]),
-    ]);
-  }
-
-  protected exportOrders(): void {
-    this.save('orders', [
-      ['Order', 'Date', 'Customer', 'Farm', 'Status', 'Total (NGN)'],
-      ...lastDays(this.orders(), this.days()).map((o) => [
-        o.code,
-        o.date.slice(0, 10),
-        o.customerName,
-        this.store.farmerName(o.farmerId),
-        o.status,
-        o.total,
-      ]),
-    ]);
-  }
-
-  private save(name: string, rows: (string | number)[][]): void {
-    downloadCsv(`farmdirect-${name}-last-${this.days()}-days.csv`, rows);
   }
 }

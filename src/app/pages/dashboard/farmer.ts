@@ -203,7 +203,7 @@ export class FarmerDashboard {
 
   protected readonly tabs = computed<DashTab[]>(() => [
     { id: 'overview', label: 'Overview', icon: 'grid', group: 'Workspace' },
-    { id: 'analytics', label: 'Reports & Analytics', icon: 'chart', group: 'Workspace' },
+    { id: 'analytics', label: 'Analytics', icon: 'chart', group: 'Workspace' },
     { id: 'orders', label: 'Orders', icon: 'box', group: 'Farm', count: this.toFulfil().length },
     {
       id: 'products',
