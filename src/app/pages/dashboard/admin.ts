@@ -249,8 +249,8 @@ export class AdminDashboard {
   /* ---- Orders table: filter by status, search, and page through ---- */
   protected readonly orderStatus = signal<OrderStatus | 'All'>('All');
   protected readonly orderSearch = signal('');
-  protected readonly pageSizes = [12, 25, 50];
-  protected readonly pageSize = signal(12);
+  protected readonly pageSizes = [15, 25, 50];
+  protected readonly pageSize = signal(15);
   private readonly pageWanted = signal(1);
 
   /** "All" and each status, with how many orders it holds. */
@@ -310,7 +310,100 @@ export class AdminDashboard {
     this.pageWanted.set(page);
   }
 
+  /* ---- Farmers Pagination (15 per page) ---- */
+  protected readonly FARMER_PAGE_SIZE = 15;
+  private readonly farmerPageWanted = signal(1);
+  protected readonly farmerPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.filteredFarmers().length / this.FARMER_PAGE_SIZE)),
+  );
+  protected readonly farmerPage = computed(() =>
+    Math.min(this.farmerPageWanted(), this.farmerPageCount()),
+  );
+  protected readonly farmerPageStart = computed(() => (this.farmerPage() - 1) * this.FARMER_PAGE_SIZE);
+  protected readonly pagedFarmers = computed(() =>
+    this.filteredFarmers().slice(this.farmerPageStart(), this.farmerPageStart() + this.FARMER_PAGE_SIZE),
+  );
+  protected readonly farmerPageNumbers = computed(() => {
+    const first = Math.max(1, Math.min(this.farmerPage() - 2, this.farmerPageCount() - 4));
+    const length = Math.min(5, this.farmerPageCount());
+    return Array.from({ length }, (_, i) => first + i);
+  });
+  protected goToFarmerPage(p: number): void {
+    this.farmerPageWanted.set(p);
+  }
+
+  /* ---- Listings Pagination (15 per page) ---- */
+  protected readonly PRODUCT_PAGE_SIZE = 15;
+  private readonly productPageWanted = signal(1);
+  protected readonly productPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.store.crops().length / this.PRODUCT_PAGE_SIZE)),
+  );
+  protected readonly productPage = computed(() =>
+    Math.min(this.productPageWanted(), this.productPageCount()),
+  );
+  protected readonly productPageStart = computed(() => (this.productPage() - 1) * this.PRODUCT_PAGE_SIZE);
+  protected readonly pagedProducts = computed(() =>
+    this.store.crops().slice(this.productPageStart(), this.productPageStart() + this.PRODUCT_PAGE_SIZE),
+  );
+  protected readonly productPageNumbers = computed(() => {
+    const first = Math.max(1, Math.min(this.productPage() - 2, this.productPageCount() - 4));
+    const length = Math.min(5, this.productPageCount());
+    return Array.from({ length }, (_, i) => first + i);
+  });
+  protected goToProductPage(p: number): void {
+    this.productPageWanted.set(p);
+  }
+
+  /* ---- Livestock Pools Pagination (15 per page) ---- */
+  protected readonly POOL_PAGE_SIZE = 15;
+  private readonly poolPageWanted = signal(1);
+  protected readonly poolPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.pools().length / this.POOL_PAGE_SIZE)),
+  );
+  protected readonly poolPage = computed(() =>
+    Math.min(this.poolPageWanted(), this.poolPageCount()),
+  );
+  protected readonly poolPageStart = computed(() => (this.poolPage() - 1) * this.POOL_PAGE_SIZE);
+  protected readonly pagedPools = computed(() =>
+    this.pools().slice(this.poolPageStart(), this.poolPageStart() + this.POOL_PAGE_SIZE),
+  );
+  protected readonly poolPageNumbers = computed(() => {
+    const first = Math.max(1, Math.min(this.poolPage() - 2, this.poolPageCount() - 4));
+    const length = Math.min(5, this.poolPageCount());
+    return Array.from({ length }, (_, i) => first + i);
+  });
+  protected goToPoolPage(p: number): void {
+    this.poolPageWanted.set(p);
+  }
+
+  /* ---- Customers Pagination (15 per page) ---- */
+  protected readonly CUSTOMER_PAGE_SIZE = 15;
+  private readonly customerPageWanted = signal(1);
+  protected readonly customerPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.customers().length / this.CUSTOMER_PAGE_SIZE)),
+  );
+  protected readonly customerPage = computed(() =>
+    Math.min(this.customerPageWanted(), this.customerPageCount()),
+  );
+  protected readonly customerPageStart = computed(() => (this.customerPage() - 1) * this.CUSTOMER_PAGE_SIZE);
+  protected readonly pagedCustomers = computed(() =>
+    this.customers().slice(this.customerPageStart(), this.customerPageStart() + this.CUSTOMER_PAGE_SIZE),
+  );
+  protected readonly customerPageNumbers = computed(() => {
+    const first = Math.max(1, Math.min(this.customerPage() - 2, this.customerPageCount() - 4));
+    const length = Math.min(5, this.customerPageCount());
+    return Array.from({ length }, (_, i) => first + i);
+  });
+  protected goToCustomerPage(p: number): void {
+    this.customerPageWanted.set(p);
+  }
+
   constructor() {
+    effect(() => {
+      this.farmerFilter();
+      this.farmerSearch();
+      untracked(() => this.farmerPageWanted.set(1));
+    });
     // Load reviews the first time the Reviews tab is opened.
     effect(() => {
       if (this.active() === 'reviews') untracked(() => void this.loadReviews());

@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
+import { Component, booleanAttribute, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Order, OrderStatus, tone } from '../../core/accounts';
 import {
   change,
@@ -66,6 +66,62 @@ export class Insights {
   /* ---- Table tab & search filter state ---- */
   protected readonly tableTab = signal<'products' | 'orders' | 'farms'>('products');
   protected readonly tableSearch = signal('');
+
+  /* ---- Table Pagination (15 items per page) ---- */
+  readonly PAGE_SIZE = 15;
+  private readonly pageWanted = signal(1);
+
+  constructor() {
+    effect(() => {
+      this.tableTab();
+      this.tableSearch();
+      this.range();
+      untracked(() => this.pageWanted.set(1));
+    });
+  }
+
+  protected readonly currentListLength = computed(() => {
+    switch (this.tableTab()) {
+      case 'products':
+        return this.filteredProducts().length;
+      case 'orders':
+        return this.filteredOrders().length;
+      case 'farms':
+        return this.filteredFarms().length;
+    }
+  });
+
+  protected readonly pageCount = computed(() =>
+    Math.max(1, Math.ceil(this.currentListLength() / this.PAGE_SIZE)),
+  );
+
+  protected readonly page = computed(() =>
+    Math.min(this.pageWanted(), this.pageCount()),
+  );
+
+  protected readonly pageStart = computed(() => (this.page() - 1) * this.PAGE_SIZE);
+
+  protected readonly pagedProducts = computed(() =>
+    this.filteredProducts().slice(this.pageStart(), this.pageStart() + this.PAGE_SIZE),
+  );
+
+  protected readonly pagedOrders = computed(() =>
+    this.filteredOrders().slice(this.pageStart(), this.pageStart() + this.PAGE_SIZE),
+  );
+
+  protected readonly pagedFarms = computed(() =>
+    this.filteredFarms().slice(this.pageStart(), this.pageStart() + this.PAGE_SIZE),
+  );
+
+  protected readonly pageNumbers = computed(() => {
+    const first = Math.max(1, Math.min(this.page() - 2, this.pageCount() - 4));
+    const length = Math.min(5, this.pageCount());
+    return Array.from({ length }, (_, i) => first + i);
+  });
+
+  protected goToPage(p: number): void {
+    this.pageWanted.set(p);
+  }
 
   private readonly paid = computed(() => this.orders().filter(isPaid));
   /** This period and the one before it, so the two can be compared. */
