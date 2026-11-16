@@ -540,7 +540,9 @@ export class StoreService {
    * creates the orders and returns a Paystack payment page to go to.
    * Only ids and quantities are sent — never prices.
    */
-  checkout(items: CartItem[]) {
+  checkout(
+    items: CartItem[],
+  ): Promise<{ data?: { authorizationUrl: string; reference: string }; error?: string }> {
     // Decrement stock optimistically so the remaining counter updates immediately
     for (const item of items) {
       if (item.kind === 'crop') {
@@ -573,7 +575,7 @@ export class StoreService {
         address: user.address,
         items: items.map((i) => ({
           productId: i.productId,
-          poolId: i.poolId,
+          poolId: i.poolId ?? null,
           kind: i.kind,
           title: i.title,
           detail: i.detail,
@@ -605,7 +607,9 @@ export class StoreService {
   }
 
   /** Asks the server to confirm with Paystack that a payment went through. */
-  verifyPayment(reference: string) {
+  verifyPayment(
+    reference: string,
+  ): Promise<{ data?: { status: 'success' | 'pending' | 'failed' }; error?: string }> {
     if (!this.supabase.client || reference.startsWith('DEMO-')) {
       return Promise.resolve({ data: { status: 'success' as const } });
     }

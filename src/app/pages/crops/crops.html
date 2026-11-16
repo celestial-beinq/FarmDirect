@@ -52,6 +52,33 @@
         </fieldset>
 
         <fieldset>
+          <legend>Farm Region / State</legend>
+          <select
+            class="field field--select field--block"
+            aria-label="Filter by state of origin"
+            [value]="selectedOrigin()"
+            (change)="setOrigin($any($event.target).value)"
+          >
+            <option value="all">All Farm Regions</option>
+            @for (origin of availableOrigins(); track origin) {
+              <option [value]="origin">{{ origin }}</option>
+            }
+          </select>
+        </fieldset>
+
+        <fieldset>
+          <legend>Availability</legend>
+          <label class="check">
+            <input
+              type="checkbox"
+              [checked]="inStockOnly()"
+              (change)="toggleInStock($any($event.target).checked)"
+            />
+            In Stock Only
+          </label>
+        </fieldset>
+
+        <fieldset>
           <legend>Price Range</legend>
           <input
             type="range"
@@ -102,9 +129,23 @@
                       <span class="chip">{{ tag }}</span>
                     }
                   </div>
-                  <a [routerLink]="['/crops', crop.id]" class="btn btn--soft btn--block">
-                    View Details <app-icon name="arrow-right" [size]="16" />
-                  </a>
+                  <div class="crop__actions">
+                    <button
+                      type="button"
+                      class="btn btn--primary btn--quick-add"
+                      [disabled]="crop.quantity <= 0"
+                      (click)="quickAdd(crop, $event)"
+                    >
+                      @if (addedId() === crop.id) {
+                        <app-icon name="check" [size]="16" /> Added!
+                      } @else {
+                        <app-icon name="basket" [size]="16" /> Add to Basket
+                      }
+                    </button>
+                    <a [routerLink]="['/crops', crop.id]" class="btn btn--soft btn--details" aria-label="View product details">
+                      <app-icon name="arrow-right" [size]="16" />
+                    </a>
+                  </div>
                 </div>
               </article>
             }

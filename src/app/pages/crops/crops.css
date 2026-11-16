@@ -44,6 +44,10 @@
   padding-right: 10px;
 }
 
+.field--block {
+  width: 100%;
+}
+
 .layout {
   display: grid;
   grid-template-columns: 240px 1fr;
@@ -166,8 +170,32 @@
   margin: 12px 0 18px;
 }
 
-.crop .btn {
+.crop__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: auto;
+}
+
+.btn--quick-add {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 10px 14px;
+}
+
+.btn--details {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+}
+
+.crop .btn {
+  margin-top: 0;
 }
 
 /* ---------- Pager ---------- */

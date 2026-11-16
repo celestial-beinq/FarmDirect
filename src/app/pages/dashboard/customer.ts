@@ -1,21 +1,25 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ORDER_STEPS, Order, OrderItem, tone } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
+import { CartService } from '../../core/cart.service';
 import { StoreService } from '../../core/store.service';
+import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
 import { Insights } from './insights';
 
 @Component({
   selector: 'app-customer-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell, Insights],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell, Insights, Icon],
   templateUrl: './customer.html',
 })
 export class CustomerDashboard {
   private readonly auth = inject(AuthService);
   protected readonly store = inject(StoreService);
+  private readonly cart = inject(CartService);
+  private readonly router = inject(Router);
 
   /** The open tab, from "?tab=..." in the URL. */
   readonly tab = input<string>();
@@ -114,5 +118,25 @@ export class CustomerDashboard {
     const error = await this.store.updateMyProfile(name.trim(), phone.trim(), address.trim());
     this.formError.set(error ?? '');
     this.saved.set(!error);
+  }
+
+  protected async reorder(order: Order): Promise<void> {
+    for (const item of order.items) {
+      if (item.productId) {
+        this.cart.add({
+          key: `${item.kind}:${item.productId}:${item.detail}`,
+          productId: item.productId,
+          poolId: item.poolId ?? undefined,
+          kind: item.kind,
+          title: item.title,
+          detail: item.detail,
+          image: item.image,
+          unitPrice: item.unitPrice,
+          qty: item.qty,
+          link: item.kind === 'crop' ? `/crops/${item.productId}` : `/livestock/${item.productId}`,
+        });
+      }
+    }
+    await this.router.navigate(['/basket']);
   }
 }

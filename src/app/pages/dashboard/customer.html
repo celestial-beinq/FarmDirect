@@ -59,7 +59,14 @@
               <span
                 >Total <strong>{{ order.total | naira }}</strong></span
               >
-              <div>
+              <div class="order__actions">
+                <button
+                  type="button"
+                  class="btn btn--sm btn--soft"
+                  (click)="reorder(order)"
+                >
+                  <app-icon name="basket" [size]="14" /> Buy Again
+                </button>
                 @if (order.status === 'Awaiting payment') {
                   <button
                     type="button"
