@@ -1,5 +1,6 @@
+import { DatePipe } from '@angular/common';
 import { Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
-import { Order, OrderStatus } from '../../core/accounts';
+import { Order, OrderStatus, tone } from '../../core/accounts';
 import {
   change,
   compactNaira,
@@ -9,7 +10,8 @@ import {
   lastDays,
 } from '../../core/analytics';
 import { StoreService } from '../../core/store.service';
-import { BarList, ChartSlice, DonutChart, TimeChart } from '../../shared/charts';
+import { ChartSlice, DonutChart, TimeChart } from '../../shared/charts';
+import { Icon } from '../../shared/icon';
 import { NairaPipe, formatNaira } from '../../shared/pipes';
 
 /** Each category and status keeps one colour everywhere it appears. */
@@ -29,21 +31,22 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   Cancelled: 'var(--chart-5)',
   Delivered: 'var(--chart-6)',
 };
-/** The order slices are drawn in, which keeps look-alike colours apart. */
 const STATUS_ORDER = Object.keys(STATUS_COLORS) as OrderStatus[];
 
 /**
  * Analytics and performance charts built from orders data.
  *  - "overview": compact two charts for dashboard home
- *  - "analytics": full suite of analytics charts and KPI trends
+ *  - "analytics": analytics charts paired with an interactive breakdown table
  */
 @Component({
   selector: 'app-insights',
-  imports: [NairaPipe, TimeChart, DonutChart, BarList],
+  imports: [DatePipe, NairaPipe, TimeChart, DonutChart, Icon],
   templateUrl: './insights.html',
 })
 export class Insights {
   protected readonly store = inject(StoreService);
+  protected readonly Math = Math;
+  protected readonly tone = tone;
 
   readonly orders = input.required<Order[]>();
   readonly view = input<'overview' | 'analytics' | 'reports'>('overview');
@@ -60,6 +63,10 @@ export class Insights {
   protected readonly money = formatNaira;
   protected readonly shortMoney = compactNaira;
 
+  /* ---- Table tab & search filter state ---- */
+  protected readonly tableTab = signal<'products' | 'orders' | 'farms'>('products');
+  protected readonly tableSearch = signal('');
+
   private readonly paid = computed(() => this.orders().filter(isPaid));
   /** This period and the one before it, so the two can be compared. */
   private readonly bothPeriods = computed(() => dailySeries(this.paid(), this.days() * 2));
@@ -69,12 +76,12 @@ export class Insights {
   protected readonly revenuePoints = computed(() =>
     this.daily().map((d) => ({ label: d.label, value: d.revenue })),
   );
-  protected readonly orderPoints = computed(() =>
-    this.daily().map((d) => ({ label: d.label, value: d.orders })),
-  );
 
   /** Paid orders in the period. */
   private readonly current = computed(() => lastDays(this.paid(), this.days()));
+  /** All orders in the period (including pending, dispatched, delivered). */
+  protected readonly periodOrders = computed(() => lastDays(this.orders(), this.days()));
+
   protected readonly revenue = computed(() => this.current().reduce((sum, o) => sum + o.total, 0));
   protected readonly orderCount = computed(() => this.current().length);
   protected readonly average = computed(() =>
@@ -95,27 +102,7 @@ export class Insights {
     ),
   );
 
-  /** Every order in the period by status, including unpaid and cancelled ones. */
-  protected readonly statusRows = computed(() => {
-    const orders = lastDays(this.orders(), this.days());
-    return STATUS_ORDER.map((status) => {
-      const matching = orders.filter((o) => o.status === status);
-      return {
-        status,
-        count: matching.length,
-        value: matching.reduce((sum, o) => sum + o.total, 0),
-      };
-    }).filter((row) => row.count > 0);
-  });
-  protected readonly statusSlices = computed<ChartSlice[]>(() =>
-    this.statusRows().map((row) => ({
-      label: row.status,
-      value: row.count,
-      color: STATUS_COLORS[row.status],
-    })),
-  );
-
-  /** Everything sold in the period, one entry per order line. */
+  /** Slices for category donut chart. */
   private readonly items = computed(() => this.current().flatMap((o) => o.items));
 
   protected readonly categorySlices = computed<ChartSlice[]>(() => {
@@ -141,6 +128,28 @@ export class Insights {
       }));
   });
 
+  /** Slices for status donut chart (overview view). */
+  protected readonly statusRows = computed(() => {
+    const orders = lastDays(this.orders(), this.days());
+    return STATUS_ORDER.map((status) => {
+      const matching = orders.filter((o) => o.status === status);
+      return {
+        status,
+        count: matching.length,
+        value: matching.reduce((sum, o) => sum + o.total, 0),
+      };
+    }).filter((row) => row.count > 0);
+  });
+
+  protected readonly statusSlices = computed<ChartSlice[]>(() =>
+    this.statusRows().map((row) => ({
+      label: row.status,
+      value: row.count,
+      color: STATUS_COLORS[row.status],
+    })),
+  );
+
+  /* ---- Table data & filtered views ---- */
   protected readonly products = computed(() =>
     groupSum(
       this.items(),
@@ -149,6 +158,7 @@ export class Insights {
       (i) => i.qty,
     ),
   );
+
   protected readonly farms = computed(() =>
     groupSum(
       this.current(),
@@ -156,8 +166,68 @@ export class Insights {
       (o) => o.total,
     ),
   );
-  protected readonly topProducts = computed(() => this.products().slice(0, 6));
-  protected readonly topFarms = computed(() => this.farms().slice(0, 6));
+
+  protected readonly filteredProducts = computed(() => {
+    const q = this.tableSearch().trim().toLowerCase();
+    const list = this.products();
+    if (!q) return list;
+    return list.filter((p) => p.label.toLowerCase().includes(q));
+  });
+
+  protected readonly filteredOrders = computed(() => {
+    const q = this.tableSearch().trim().toLowerCase();
+    const list = this.periodOrders();
+    if (!q) return list;
+    return list.filter(
+      (o) =>
+        o.code.toLowerCase().includes(q) ||
+        o.customerName.toLowerCase().includes(q) ||
+        o.status.toLowerCase().includes(q) ||
+        this.store.farmerName(o.farmerId).toLowerCase().includes(q),
+    );
+  });
+
+  protected readonly filteredFarms = computed(() => {
+    const q = this.tableSearch().trim().toLowerCase();
+    const list = this.farms();
+    if (!q) return list;
+    return list.filter((f) => f.label.toLowerCase().includes(q));
+  });
+
+  protected readonly filteredProductsTotal = computed(() => {
+    const rows = this.filteredProducts();
+    return {
+      units: rows.reduce((sum, r) => sum + r.count, 0),
+      value: rows.reduce((sum, r) => sum + r.value, 0),
+    };
+  });
+
+  protected readonly filteredOrdersTotal = computed(() => {
+    const rows = this.filteredOrders();
+    return {
+      count: rows.length,
+      value: rows.reduce((sum, r) => sum + r.total, 0),
+    };
+  });
+
+  protected readonly filteredFarmsTotal = computed(() => {
+    const rows = this.filteredFarms();
+    return {
+      orders: rows.reduce((sum, r) => sum + r.count, 0),
+      value: rows.reduce((sum, r) => sum + r.value, 0),
+    };
+  });
+
+  protected readonly searchPlaceholder = computed(() => {
+    switch (this.tableTab()) {
+      case 'products':
+        return 'Search products...';
+      case 'orders':
+        return 'Search orders, customers...';
+      case 'farms':
+        return 'Search farms...';
+    }
+  });
 
   /** "▲ 12% vs previous 30 days" */
   protected trend(percent: number | null): string {

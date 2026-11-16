@@ -76,7 +76,7 @@
       </div>
     </div>
 
-    <!-- Clean Analytics Charts -->
+    <!-- Top Visual Charts -->
     <div class="dash-grid">
       <div class="panel">
         <div class="panel__head">
@@ -100,39 +100,183 @@
           empty="No sales in this period."
         />
       </div>
-
-      <div class="panel">
-        <div class="panel__head">
-          <h2>Paid orders per day</h2>
-        </div>
-        <app-time-chart type="columns" [points]="orderPoints()" series="Orders" />
-      </div>
-      <div class="panel">
-        <div class="panel__head">
-          <h2>Orders by status</h2>
-        </div>
-        <app-donut-chart
-          [slices]="statusSlices()"
-          caption="Orders"
-          empty="No orders in this period."
-        />
-      </div>
     </div>
 
-    <div class="dash-grid dash-grid--even">
-      <div class="panel">
-        <div class="panel__head">
-          <h2>Top products</h2>
+    <!-- Interactive Data Breakdown Table -->
+    <div class="panel">
+      <div class="panel__head">
+        <div class="seg" role="group" aria-label="Data breakdown">
+          <button
+            type="button"
+            [attr.aria-pressed]="tableTab() === 'products'"
+            (click)="tableTab.set('products')"
+          >
+            Top Products <span>{{ products().length }}</span>
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="tableTab() === 'orders'"
+            (click)="tableTab.set('orders')"
+          >
+            Orders Breakdown <span>{{ periodOrders().length }}</span>
+          </button>
+          @if (byFarm()) {
+            <button
+              type="button"
+              [attr.aria-pressed]="tableTab() === 'farms'"
+              (click)="tableTab.set('farms')"
+            >
+              Farms <span>{{ farms().length }}</span>
+            </button>
+          }
         </div>
-        <app-bar-list [rows]="topProducts()" [format]="money" empty="No sales in this period." />
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label class="dash-search" style="min-width: 200px;">
+            <app-icon name="search" [size]="16" />
+            <input
+              type="search"
+              [placeholder]="searchPlaceholder()"
+              [value]="tableSearch()"
+              (input)="tableSearch.set($any($event.target).value)"
+            />
+          </label>
+        </div>
       </div>
-      @if (byFarm()) {
-        <div class="panel">
-          <div class="panel__head">
-            <h2>Top farms</h2>
+
+      <!-- Tab 1: Products Table -->
+      @if (tableTab() === 'products') {
+        @if (filteredProducts().length > 0) {
+          <div class="table-wrap">
+            <table class="table" style="min-width: 0">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th class="num">Units Sold</th>
+                  <th class="num">{{ noun() }}</th>
+                  <th class="num">% of {{ noun() }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of filteredProducts(); track row.label) {
+                  <tr>
+                    <td><strong>{{ row.label }}</strong></td>
+                    <td class="num">{{ row.count }}</td>
+                    <td class="num">{{ row.value | naira }}</td>
+                    <td class="num" style="color: var(--dash-muted);">
+                      {{ revenue() ? Math.round((row.value / revenue()) * 100) : 0 }}%
+                    </td>
+                  </tr>
+                }
+                <tr class="table__total">
+                  <td>{{ tableSearch() ? 'Filtered Total' : 'Total' }}</td>
+                  <td class="num">{{ filteredProductsTotal().units }}</td>
+                  <td class="num">{{ filteredProductsTotal().value | naira }}</td>
+                  <td class="num" style="color: var(--dash-muted);">
+                    {{ revenue() ? Math.min(100, Math.round((filteredProductsTotal().value / revenue()) * 100)) : 0 }}%
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <app-bar-list [rows]="topFarms()" [format]="money" empty="No sales in this period." />
-        </div>
+        } @else {
+          <p class="panel__empty">
+            {{ tableSearch() ? 'No products matching "' + tableSearch() + '"' : 'No sales recorded in this period.' }}
+          </p>
+        }
+      }
+
+      <!-- Tab 2: Orders Table -->
+      @if (tableTab() === 'orders') {
+        @if (filteredOrders().length > 0) {
+          <div class="table-wrap">
+            <table class="table" style="min-width: 0">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  @if (byFarm()) {
+                    <th>Farm</th>
+                  }
+                  <th>Status</th>
+                  <th class="num">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of filteredOrders(); track order.id) {
+                  <tr>
+                    <td><strong>{{ order.code }}</strong></td>
+                    <td>{{ order.date | date: 'mediumDate' }}</td>
+                    <td>{{ order.customerName }}</td>
+                    @if (byFarm()) {
+                      <td>{{ store.farmerName(order.farmerId) }}</td>
+                    }
+                    <td>
+                      <span class="badge-status" [class]="'badge-status--' + tone(order.status)">
+                        {{ order.status }}
+                      </span>
+                    </td>
+                    <td class="num">{{ order.total | naira }}</td>
+                  </tr>
+                }
+                <tr class="table__total">
+                  <td>{{ tableSearch() ? 'Filtered Total' : 'Total' }}</td>
+                  <td [attr.colspan]="byFarm() ? 4 : 3">
+                    {{ filteredOrdersTotal().count }} order(s)
+                  </td>
+                  <td class="num">{{ filteredOrdersTotal().value | naira }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="panel__empty">
+            {{ tableSearch() ? 'No orders matching "' + tableSearch() + '"' : 'No orders in this period.' }}
+          </p>
+        }
+      }
+
+      <!-- Tab 3: Farms Table -->
+      @if (tableTab() === 'farms' && byFarm()) {
+        @if (filteredFarms().length > 0) {
+          <div class="table-wrap">
+            <table class="table" style="min-width: 0">
+              <thead>
+                <tr>
+                  <th>Farm</th>
+                  <th class="num">Orders</th>
+                  <th class="num">{{ noun() }}</th>
+                  <th class="num">% of {{ noun() }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of filteredFarms(); track row.label) {
+                  <tr>
+                    <td><strong>{{ row.label }}</strong></td>
+                    <td class="num">{{ row.count }}</td>
+                    <td class="num">{{ row.value | naira }}</td>
+                    <td class="num" style="color: var(--dash-muted);">
+                      {{ revenue() ? Math.round((row.value / revenue()) * 100) : 0 }}%
+                    </td>
+                  </tr>
+                }
+                <tr class="table__total">
+                  <td>{{ tableSearch() ? 'Filtered Total' : 'Total' }}</td>
+                  <td class="num">{{ filteredFarmsTotal().orders }}</td>
+                  <td class="num">{{ filteredFarmsTotal().value | naira }}</td>
+                  <td class="num" style="color: var(--dash-muted);">
+                    {{ revenue() ? Math.min(100, Math.round((filteredFarmsTotal().value / revenue()) * 100)) : 0 }}%
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="panel__empty">
+            {{ tableSearch() ? 'No farms matching "' + tableSearch() + '"' : 'No farm sales in this period.' }}
+          </p>
+        }
       }
     </div>
   }
