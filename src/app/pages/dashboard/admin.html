@@ -87,7 +87,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (row of filteredFarmers(); track row.farmer.id) {
+              @for (row of pagedFarmers(); track row.farmer.id) {
                 <tr>
                   <td>
                     <strong>{{ row.farmer.name }}</strong>
@@ -138,6 +138,43 @@
             </tbody>
           </table>
         </div>
+
+        @if (farmerPageCount() > 1) {
+          <div class="pager">
+            <span>
+              {{ farmerPageStart() + 1 }}–{{ Math.min(farmerPageStart() + FARMER_PAGE_SIZE, filteredFarmers().length) }} of
+              {{ filteredFarmers().length }}
+            </span>
+            <div>
+              <button
+                type="button"
+                aria-label="Previous page"
+                [disabled]="farmerPage() === 1"
+                (click)="goToFarmerPage(farmerPage() - 1)"
+              >
+                <app-icon name="chevron-left" [size]="16" />
+              </button>
+              @for (number of farmerPageNumbers(); track number) {
+                <button
+                  type="button"
+                  [attr.aria-label]="'Page ' + number"
+                  [attr.aria-current]="number === farmerPage() ? 'page' : null"
+                  (click)="goToFarmerPage(number)"
+                >
+                  {{ number }}
+                </button>
+              }
+              <button
+                type="button"
+                aria-label="Next page"
+                [disabled]="farmerPage() === farmerPageCount()"
+                (click)="goToFarmerPage(farmerPage() + 1)"
+              >
+                <app-icon name="chevron-right" [size]="16" />
+              </button>
+            </div>
+          </div>
+        }
       </div>
 
       <!-- Vetting Dossier Modal -->
@@ -284,7 +321,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (product of store.crops(); track product.id) {
+              @for (product of pagedProducts(); track product.id) {
                 <tr>
                   <td>
                     {{ product.name }} <small>{{ product.category }}</small>
@@ -350,6 +387,43 @@
             </tbody>
           </table>
         </div>
+
+        @if (productPageCount() > 1) {
+          <div class="pager">
+            <span>
+              {{ productPageStart() + 1 }}–{{ Math.min(productPageStart() + PRODUCT_PAGE_SIZE, store.crops().length) }} of
+              {{ store.crops().length }}
+            </span>
+            <div>
+              <button
+                type="button"
+                aria-label="Previous page"
+                [disabled]="productPage() === 1"
+                (click)="goToProductPage(productPage() - 1)"
+              >
+                <app-icon name="chevron-left" [size]="16" />
+              </button>
+              @for (number of productPageNumbers(); track number) {
+                <button
+                  type="button"
+                  [attr.aria-label]="'Page ' + number"
+                  [attr.aria-current]="number === productPage() ? 'page' : null"
+                  (click)="goToProductPage(number)"
+                >
+                  {{ number }}
+                </button>
+              }
+              <button
+                type="button"
+                aria-label="Next page"
+                [disabled]="productPage() === productPageCount()"
+                (click)="goToProductPage(productPage() + 1)"
+              >
+                <app-icon name="chevron-right" [size]="16" />
+              </button>
+            </div>
+          </div>
+        }
       </div>
     }
 
@@ -500,7 +574,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (row of pools(); track row.pool.id) {
+                @for (row of pagedPools(); track row.pool.id) {
                   <tr>
                     <td>
                       {{ row.pool.name }}
@@ -540,6 +614,43 @@
               </tbody>
             </table>
           </div>
+
+          @if (poolPageCount() > 1) {
+            <div class="pager">
+              <span>
+                {{ poolPageStart() + 1 }}–{{ Math.min(poolPageStart() + POOL_PAGE_SIZE, pools().length) }} of
+                {{ pools().length }}
+              </span>
+              <div>
+                <button
+                  type="button"
+                  aria-label="Previous page"
+                  [disabled]="poolPage() === 1"
+                  (click)="goToPoolPage(poolPage() - 1)"
+                >
+                  <app-icon name="chevron-left" [size]="16" />
+                </button>
+                @for (number of poolPageNumbers(); track number) {
+                  <button
+                    type="button"
+                    [attr.aria-label]="'Page ' + number"
+                    [attr.aria-current]="number === poolPage() ? 'page' : null"
+                    (click)="goToPoolPage(number)"
+                  >
+                    {{ number }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  aria-label="Next page"
+                  [disabled]="poolPage() === poolPageCount()"
+                  (click)="goToPoolPage(poolPage() + 1)"
+                >
+                  <app-icon name="chevron-right" [size]="16" />
+                </button>
+              </div>
+            </div>
+          }
         } @else {
           <p class="panel__empty">There are no pools at the moment.</p>
         }
@@ -830,7 +941,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (row of customers(); track row.customer.id) {
+              @for (row of pagedCustomers(); track row.customer.id) {
                 <tr>
                   <td>
                     {{ row.customer.name || '—' }} <small>{{ row.customer.email }}</small>
@@ -876,6 +987,43 @@
             </tbody>
           </table>
         </div>
+
+        @if (customerPageCount() > 1) {
+          <div class="pager">
+            <span>
+              {{ customerPageStart() + 1 }}–{{ Math.min(customerPageStart() + CUSTOMER_PAGE_SIZE, customers().length) }} of
+              {{ customers().length }}
+            </span>
+            <div>
+              <button
+                type="button"
+                aria-label="Previous page"
+                [disabled]="customerPage() === 1"
+                (click)="goToCustomerPage(customerPage() - 1)"
+              >
+                <app-icon name="chevron-left" [size]="16" />
+              </button>
+              @for (number of customerPageNumbers(); track number) {
+                <button
+                  type="button"
+                  [attr.aria-label]="'Page ' + number"
+                  [attr.aria-current]="number === customerPage() ? 'page' : null"
+                  (click)="goToCustomerPage(number)"
+                >
+                  {{ number }}
+                </button>
+              }
+              <button
+                type="button"
+                aria-label="Next page"
+                [disabled]="customerPage() === customerPageCount()"
+                (click)="goToCustomerPage(customerPage() + 1)"
+              >
+                <app-icon name="chevron-right" [size]="16" />
+              </button>
+            </div>
+          </div>
+        }
       </div>
     }
 

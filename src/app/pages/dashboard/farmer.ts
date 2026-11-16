@@ -75,6 +75,28 @@ export class FarmerDashboard {
   protected readonly outOfStockItems = computed(() =>
     this.products().filter((p) => p.quantity <= 0),
   );
+
+  /* ---- My Produce Pagination (15 items per page) ---- */
+  protected readonly PRODUCT_PAGE_SIZE = 15;
+  private readonly productPageWanted = signal(1);
+  protected readonly productPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.products().length / this.PRODUCT_PAGE_SIZE)),
+  );
+  protected readonly productPage = computed(() =>
+    Math.min(this.productPageWanted(), this.productPageCount()),
+  );
+  protected readonly productPageStart = computed(() => (this.productPage() - 1) * this.PRODUCT_PAGE_SIZE);
+  protected readonly pagedProducts = computed(() =>
+    this.products().slice(this.productPageStart(), this.productPageStart() + this.PRODUCT_PAGE_SIZE),
+  );
+  protected readonly productPageNumbers = computed(() => {
+    const first = Math.max(1, Math.min(this.productPage() - 2, this.productPageCount() - 4));
+    const length = Math.min(5, this.productPageCount());
+    return Array.from({ length }, (_, i) => first + i);
+  });
+  protected goToProductPage(p: number): void {
+    this.productPageWanted.set(p);
+  }
   protected readonly sales = computed(() =>
     this.orders()
       .filter((o) => o.status !== 'Cancelled')

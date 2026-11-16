@@ -173,7 +173,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (product of products(); track product.id) {
+                  @for (product of pagedProducts(); track product.id) {
                     <tr>
                       <td>
                         {{ product.name }} <small>{{ product.category }}</small>
@@ -300,6 +300,43 @@
                 </tbody>
               </table>
             </div>
+
+            @if (productPageCount() > 1) {
+              <div class="pager">
+                <span>
+                  {{ productPageStart() + 1 }}–{{ Math.min(productPageStart() + PRODUCT_PAGE_SIZE, products().length) }} of
+                  {{ products().length }}
+                </span>
+                <div>
+                  <button
+                    type="button"
+                    aria-label="Previous page"
+                    [disabled]="productPage() === 1"
+                    (click)="goToProductPage(productPage() - 1)"
+                  >
+                    <app-icon name="chevron-left" [size]="16" />
+                  </button>
+                  @for (number of productPageNumbers(); track number) {
+                    <button
+                      type="button"
+                      [attr.aria-label]="'Page ' + number"
+                      [attr.aria-current]="number === productPage() ? 'page' : null"
+                      (click)="goToProductPage(number)"
+                    >
+                      {{ number }}
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    aria-label="Next page"
+                    [disabled]="productPage() === productPageCount()"
+                    (click)="goToProductPage(productPage() + 1)"
+                  >
+                    <app-icon name="chevron-right" [size]="16" />
+                  </button>
+                </div>
+              </div>
+            }
           } @else {
             <p class="panel__empty">
               You have no listings yet. Add your first one to start selling.
