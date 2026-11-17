@@ -8,7 +8,7 @@ import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 
 type Sort = 'popular' | 'low' | 'high' | 'name';
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-crops',

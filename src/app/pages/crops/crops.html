@@ -107,28 +107,42 @@
           <div class="grid">
             @for (crop of visible(); track crop.id) {
               <article class="card crop">
-                <a [routerLink]="['/crops', crop.id]" tabindex="-1" aria-hidden="true">
-                  <img [src]="crop.image | photo: 600" alt="" loading="lazy" />
-                </a>
-                <div class="crop__body">
-                  <h2>{{ crop.name }}</h2>
-                  <div class="crop__stock">
+                <div class="crop__media">
+                  <a [routerLink]="['/crops', crop.id]" class="crop__image-link" [attr.aria-label]="crop.name">
+                    <img [src]="crop.image | photo: 600" [alt]="crop.name" loading="lazy" />
+                  </a>
+                  <div class="crop__stock-badge">
                     @if (crop.quantity <= 0) {
-                      <span class="stock-tag stock-tag--out">Not Available</span>
+                      <span class="stock-tag stock-tag--out">Out of Stock</span>
                     } @else if (crop.quantity < 5) {
                       <span class="stock-tag stock-tag--low">Only {{ crop.quantity }} {{ crop.unit }} left</span>
                     } @else {
-                      <span class="stock-tag stock-tag--in">{{ crop.quantity }} {{ crop.unit }}s left</span>
+                      <span class="stock-tag stock-tag--in">{{ crop.quantity }} {{ crop.unit === 'bunch' ? 'bunches' : crop.unit + 's' }} left</span>
                     }
                   </div>
-                  <p class="price">
-                    {{ crop.price | naira }} <span class="per">/ {{ crop.unit }}</span>
-                  </p>
-                  <div class="crop__tags">
-                    @for (tag of crop.tags; track tag) {
-                      <span class="chip">{{ tag }}</span>
+                </div>
+                <div class="crop__body">
+                  <div class="crop__meta">
+                    <span class="crop__category">{{ crop.category }}</span>
+                    @if (crop.origin) {
+                      <span class="crop__meta-dot">•</span>
+                      <span class="crop__origin">{{ crop.origin.split(',')[0] }}</span>
                     }
                   </div>
+                  <h2 class="crop__title">
+                    <a [routerLink]="['/crops', crop.id]">{{ crop.name }}</a>
+                  </h2>
+                  <div class="crop__price-row">
+                    <span class="crop__price">{{ crop.price | naira }}</span>
+                    <span class="crop__unit">/ {{ crop.unit }}</span>
+                  </div>
+                  @if (crop.tags.length > 0) {
+                    <div class="crop__tags">
+                      @for (tag of crop.tags.slice(0, 2); track tag) {
+                        <span class="chip">{{ tag }}</span>
+                      }
+                    </div>
+                  }
                   <div class="crop__actions">
                     <button
                       type="button"
@@ -137,13 +151,13 @@
                       (click)="quickAdd(crop, $event)"
                     >
                       @if (addedId() === crop.id) {
-                        <app-icon name="check" [size]="16" /> Added!
+                        <app-icon name="check" [size]="15" /> Added!
                       } @else {
-                        <app-icon name="basket" [size]="16" /> Add to Basket
+                        <app-icon name="basket" [size]="15" /> Add to Basket
                       }
                     </button>
                     <a [routerLink]="['/crops', crop.id]" class="btn btn--soft btn--details" aria-label="View product details">
-                      <app-icon name="arrow-right" [size]="16" />
+                      <app-icon name="arrow-right" [size]="15" />
                     </a>
                   </div>
                 </div>
