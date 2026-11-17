@@ -69,9 +69,6 @@ export interface DashTab {
           <span>
             <strong>{{ name() }}</strong>
             <small>{{ role() }}</small>
-            @if (role().toLowerCase() === 'admin') {
-              <small class="dash__timeout-badge" title="Auto-logout active: logs out after 5 minutes of inactivity">🔒 Auto-logout: 5m idle</small>
-            }
           </span>
         </div>
       </aside>
