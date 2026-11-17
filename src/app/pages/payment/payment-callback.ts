@@ -21,7 +21,7 @@ import { StoreService } from '../../core/store.service';
               <p class="muted">This only takes a moment. Please don't close the page.</p>
             }
             @case ('success') {
-              <h2>Payment received — thank you!</h2>
+              <h2>Payment received, thank you!</h2>
               <p class="muted">
                 Your order has been sent to the farm. You can follow it from your account.
               </p>

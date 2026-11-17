@@ -47,7 +47,7 @@ type Topic = 'order' | 'farmer' | 'livestock' | 'account' | 'other';
               <span class="info__icon"><app-icon name="clock" [size]="20" /></span>
               <div>
                 <strong>Support hours</strong>
-                <span>Mon – Sat, 8am – 6pm WAT</span>
+                <span>Mon to Sat, 8am to 6pm WAT</span>
               </div>
             </li>
           </ul>
@@ -69,7 +69,7 @@ type Topic = 'order' | 'farmer' | 'livestock' | 'account' | 'other';
               <span class="sent__icon"><app-icon name="check" [size]="28" /></span>
               <h3>Your message is ready to send</h3>
               <p>
-                We’ve opened your email app with your message filled in — just press send. If
+                We’ve opened your email app with your message filled in, just press send. If
                 nothing opened, email us directly at
                 <a [href]="'mailto:' + email">{{ email }}</a>.
               </p>
@@ -381,10 +381,10 @@ type Topic = 'order' | 'farmer' | 'livestock' | 'account' | 'other';
 
     .field input:focus,
     .field textarea:focus {
-      outline: none;
+      outline: none !important;
       border-color: var(--accent);
       background: var(--white);
-      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.14);
+      box-shadow: none !important;
     }
 
     .count {
@@ -524,8 +524,8 @@ export class Contact {
     }
 
     const label = this.topics.find((t) => t.value === this.topic())?.label ?? 'General';
-    const subject = `[FarmDirect] ${label}${orderRef ? ` — ${orderRef}` : ''}`;
-    const body = [message, '', '—', `Name: ${name}`, `Email: ${from}`]
+    const subject = `[FarmDirect] ${label}${orderRef ? ` (${orderRef})` : ''}`;
+    const body = [message, '', `Name: ${name}`, `Email: ${from}`]
       .concat(orderRef ? [`Order: ${orderRef}`] : [])
       .join('\n');
 

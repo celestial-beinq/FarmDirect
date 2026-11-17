@@ -32,7 +32,7 @@ import { PhotoPipe } from '../../shared/pipes';
           </h2>
           <p class="auth__lede">
             Order straight from verified Nigerian farms. Harvested for your order, delivered to your
-            door — nothing in between.
+            door, nothing in between.
           </p>
 
           <ul class="auth__perks">
@@ -64,7 +64,7 @@ import { PhotoPipe } from '../../shared/pipes';
               “The tomatoes actually taste like tomatoes, and I know exactly which farm they came
               from.”
             </blockquote>
-            <figcaption>— FarmDirect customer, Lagos</figcaption>
+            <figcaption>FarmDirect customer, Lagos</figcaption>
           </figure>
         </div>
       </aside>
@@ -82,7 +82,7 @@ import { PhotoPipe } from '../../shared/pipes';
               {{
                 mode() === 'in'
                   ? 'Sign in to track orders, manage your basket and more.'
-                  : 'Join FarmDirect in under a minute — it’s free.'
+                  : 'Join FarmDirect in under a minute: it’s free.'
               }}
             </p>
           </header>
@@ -143,7 +143,7 @@ import { PhotoPipe } from '../../shared/pipes';
             <p class="alert alert--good" role="status">
               <app-icon name="mail" [size]="18" />
               <span>
-                Almost done — we’ve sent a confirmation link to your email. Open it, then sign in
+                Almost done: we’ve sent a confirmation link to your email. Open it, then sign in
                 here.
               </span>
             </p>
@@ -747,7 +747,8 @@ import { PhotoPipe } from '../../shared/pipes';
     .field__control:focus-within {
       border-color: var(--accent);
       background: var(--white);
-      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.14);
+      outline: none !important;
+      box-shadow: none !important;
       color: var(--accent);
     }
 

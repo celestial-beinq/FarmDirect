@@ -27,7 +27,7 @@ interface Step {
           <h2>No middlemen. No warehouses. Just a weekly harvest made for you.</h2>
           <p>
             FarmDirect runs on a simple weekly rhythm. You order during the week, verified farmers
-            harvest exactly what was ordered, and it arrives at your door on Sunday — usually less
+            harvest exactly what was ordered, and it arrives at your door on Sunday, usually less
             than three days after it left the soil.
           </p>
         </div>
@@ -117,7 +117,7 @@ interface Step {
             </li>
             <li>
               <app-icon name="chart" [size]="20" />
-              <span><strong>Watch it fill</strong> — the progress bar shows how much is raised.</span>
+              <span><strong>Watch it fill</strong>: the progress bar shows how much is raised.</span>
             </li>
             <li>
               <app-icon name="box" [size]="20" />
@@ -472,7 +472,7 @@ export class HowItWorks {
     {
       icon: 'leaf',
       title: 'We harvest for you',
-      text: 'Over the weekend, farmers harvest and pack exactly what you ordered — nothing sits in storage.',
+      text: 'Over the weekend, farmers harvest and pack exactly what you ordered, nothing sits in storage.',
     },
     {
       icon: 'truck',

@@ -285,7 +285,7 @@
 }
 
 .money:focus-within {
-  outline: 2px solid var(--green-900);
+  outline: none;
 }
 
 .money input {

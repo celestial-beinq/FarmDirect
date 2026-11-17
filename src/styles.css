@@ -90,8 +90,13 @@ ul {
 }
 
 :focus-visible {
-  outline: 2px solid var(--green-900);
-  outline-offset: 2px;
+  outline: none !important;
+}
+
+input,
+textarea,
+select {
+  outline: none !important;
 }
 
 input:focus,
@@ -99,7 +104,9 @@ input:focus-visible,
 textarea:focus,
 textarea:focus-visible,
 select:focus,
-select:focus-visible {
+select:focus-visible,
+[contenteditable]:focus,
+[contenteditable]:focus-visible {
   outline: none !important;
   outline-offset: 0 !important;
   box-shadow: none !important;
@@ -1934,7 +1941,7 @@ select:focus-visible {
 }
 
 .review-card__reply-form textarea:focus {
-  outline: 2px solid #059669;
+  outline: none !important;
   border-color: #059669;
 }
 
