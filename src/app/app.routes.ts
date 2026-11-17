@@ -39,13 +39,26 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/about/about').then((m) => m.About),
   },
   {
-    path: 'blog',
-    title: 'Blog — FarmDirect',
-    loadComponent: () => import('./pages/blog/blog').then((m) => m.Blog),
+    path: 'how-it-works',
+    title: 'How It Works — FarmDirect',
+    loadComponent: () => import('./pages/how-it-works/how-it-works').then((m) => m.HowItWorks),
+  },
+  // The blog was replaced by "How It Works"; keep old links working.
+  { path: 'blog', redirectTo: 'how-it-works', pathMatch: 'full' },
+  {
+    path: 'contact',
+    title: 'Contact Us — FarmDirect',
+    loadComponent: () => import('./pages/contact/contact').then((m) => m.Contact),
   },
   {
     path: 'login',
     title: 'Sign in — FarmDirect',
+    loadComponent: () => import('./pages/login/login').then((m) => m.Login),
+  },
+  {
+    path: 'signup',
+    title: 'Create an account — FarmDirect',
+    data: { start: 'up' },
     loadComponent: () => import('./pages/login/login').then((m) => m.Login),
   },
   {
