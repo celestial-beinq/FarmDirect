@@ -364,9 +364,11 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .auth {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) minmax(460px, 540px);
       min-height: calc(100dvh - 76px);
+      width: 100%;
       background: var(--cream);
+      overflow-x: hidden;
     }
 
     /* ---------- Brand panel ---------- */
@@ -486,18 +488,23 @@ import { PhotoPipe } from '../../shared/pipes';
     .auth__main {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       justify-content: center;
-      padding: clamp(32px, 4vw, 72px);
+      padding: clamp(24px, 3.5vw, 64px);
       min-height: 100%;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
       background: var(--cream);
     }
 
     .auth__card {
       width: 100%;
       max-width: 490px;
-      margin: auto 0;
-      padding: clamp(24px, 3.8vw, 40px);
+      min-width: 0;
+      margin: auto;
+      box-sizing: border-box;
+      padding: clamp(24px, 3.5vw, 40px);
       border-radius: var(--radius-lg);
       background: var(--white);
       box-shadow:
@@ -615,6 +622,10 @@ import { PhotoPipe } from '../../shared/pipes';
     .auth-form {
       display: grid;
       gap: 16px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .auth-form .alert {
@@ -626,6 +637,9 @@ import { PhotoPipe } from '../../shared/pipes';
       padding: 0;
       border: 0;
       min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
     .roles legend,
@@ -640,8 +654,11 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .roles__grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 10px;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .roles__grid button {
@@ -653,6 +670,11 @@ import { PhotoPipe } from '../../shared/pipes';
       border: 1.5px solid var(--line);
       border-radius: 12px;
       text-align: left;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      word-break: break-word;
       transition:
         border-color 0.15s,
         background 0.15s,
@@ -720,8 +742,18 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .field-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 12px;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .field {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
     .field__control {
@@ -734,6 +766,10 @@ import { PhotoPipe } from '../../shared/pipes';
       border-radius: 12px;
       background: var(--field-bg);
       color: #8a938c;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
       transition:
         border-color 0.15s,
         box-shadow 0.15s,
@@ -755,6 +791,7 @@ import { PhotoPipe } from '../../shared/pipes';
     .field__control input {
       flex: 1;
       min-width: 0;
+      width: 100%;
       height: 100%;
       padding: 0;
       border: 0;
@@ -762,6 +799,7 @@ import { PhotoPipe } from '../../shared/pipes';
       background: transparent;
       font-size: 1rem;
       color: var(--ink);
+      box-sizing: border-box;
     }
 
     .field__control input::placeholder {
@@ -1005,9 +1043,9 @@ import { PhotoPipe } from '../../shared/pipes';
       }
     }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 1120px) and (min-width: 901px) {
       .auth {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        grid-template-columns: minmax(0, 1fr) minmax(440px, 490px);
       }
 
       .auth__visual {
@@ -1015,7 +1053,12 @@ import { PhotoPipe } from '../../shared/pipes';
       }
 
       .auth__main {
-        padding: 32px 24px;
+        padding: 24px 20px;
+      }
+
+      .auth__card {
+        max-width: 450px;
+        padding: 24px 20px;
       }
 
       .auth__perks {
@@ -1028,7 +1071,7 @@ import { PhotoPipe } from '../../shared/pipes';
       }
     }
 
-    @media (max-width: 860px) {
+    @media (max-width: 900px) {
       .auth {
         grid-template-columns: 1fr;
         min-height: auto;
@@ -1038,13 +1081,13 @@ import { PhotoPipe } from '../../shared/pipes';
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 220px;
-        padding: 36px 20px;
+        min-height: 200px;
+        padding: 28px 20px;
         text-align: center;
       }
 
       .auth__visual-inner {
-        max-width: 520px;
+        max-width: 480px;
         margin: 0 auto;
       }
 
@@ -1055,22 +1098,23 @@ import { PhotoPipe } from '../../shared/pipes';
       }
 
       .auth__visual h2 {
-        font-size: 1.75rem;
-        margin: 12px 0 0;
+        font-size: 1.65rem;
+        margin: 10px 0 0;
       }
 
       .auth__main {
         align-items: center;
         justify-content: center;
-        padding: 32px 20px 48px;
+        padding: 24px 16px 40px;
         background:
           radial-gradient(circle at 50% 0%, rgba(207, 232, 110, 0.28), transparent 55%),
           var(--cream);
       }
 
       .auth__card {
-        max-width: 500px;
+        max-width: 480px;
         margin: 0 auto;
+        padding: 28px 24px;
       }
     }
 
@@ -1086,13 +1130,13 @@ import { PhotoPipe } from '../../shared/pipes';
 
       .auth__card {
         max-width: 100%;
-        padding: 22px 16px;
+        padding: 20px 14px;
         border-radius: 16px;
         box-shadow: 0 4px 20px rgba(18, 40, 26, 0.08);
       }
 
       .auth__head h1 {
-        font-size: 1.55rem;
+        font-size: 1.45rem;
       }
 
       .roles__grid,
