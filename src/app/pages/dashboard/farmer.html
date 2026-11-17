@@ -304,7 +304,7 @@
             @if (productPageCount() > 1) {
               <div class="pager">
                 <span>
-                  {{ productPageStart() + 1 }}–{{ Math.min(productPageStart() + PRODUCT_PAGE_SIZE, products().length) }} of
+                  {{ productPageStart() + 1 }} to {{ Math.min(productPageStart() + PRODUCT_PAGE_SIZE, products().length) }} of
                   {{ products().length }}
                 </span>
                 <div>
@@ -961,7 +961,7 @@
           </div>
           <div class="stat">
             <span>Rating</span
-            ><strong>{{ reviews().length ? averageRating() + ' / 5' : '—' }}</strong>
+            ><strong>{{ reviews().length ? averageRating() + ' / 5' : 'N/A' }}</strong>
             <small
               >{{ reviews().length }} {{ reviews().length === 1 ? 'review' : 'reviews' }}</small
             >
@@ -1011,7 +1011,7 @@
               </table>
             </div>
           } @else {
-            <p class="panel__empty">You're all caught up — no orders waiting.</p>
+            <p class="panel__empty">You're all caught up: no orders waiting.</p>
           }
         </div>
 

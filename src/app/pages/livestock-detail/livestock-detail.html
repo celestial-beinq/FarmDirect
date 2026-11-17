@@ -156,7 +156,7 @@
         <header class="dialog__head">
           <div>
             <h2 id="start-title">Start New Pool</h2>
-            <p class="dialog__sub">{{ animal.type }} – {{ animal.price | naira }}</p>
+            <p class="dialog__sub">{{ animal.type }} ({{ animal.price | naira }})</p>
           </div>
           <button type="button" class="dialog__close" aria-label="Close" (click)="closeDialog()">
             <app-icon name="close" [size]="22" />

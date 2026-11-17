@@ -370,7 +370,7 @@ export const MOCK_CROPS: Crop[] = [
     gallery: ['1601493700631-2b16ec4b4716'],
     origin: 'Makurdi, Benue State',
     description:
-      'Rich, golden, fiberless sweet mangoes tree-ripened in the orchards of Benue. Guaranteed zero calcium carbide — pure, intense tropical fruit nectar.',
+      'Rich, golden, fiberless sweet mangoes tree-ripened in the orchards of Benue. Guaranteed zero calcium carbide, pure, intense tropical fruit nectar.',
     highlights: ['Zero calcium carbide', 'Tree ripened', 'Fresh 48h harvest'],
     farmerId: 'f-benue',
     status: 'live',

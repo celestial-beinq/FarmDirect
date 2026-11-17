@@ -94,7 +94,7 @@
                     <small>{{ row.owner }}</small>
                   </td>
                   <td>
-                    <div>{{ row.farmer.stateOfOrigin || '—' }}</div>
+                    <div>{{ row.farmer.stateOfOrigin || 'N/A' }}</div>
                     <small class="mono">NIN: {{ row.farmer.nin || 'Not submitted' }}</small>
                   </td>
                   <td>
@@ -142,7 +142,7 @@
         @if (farmerPageCount() > 1) {
           <div class="pager">
             <span>
-              {{ farmerPageStart() + 1 }}–{{ Math.min(farmerPageStart() + FARMER_PAGE_SIZE, filteredFarmers().length) }} of
+              {{ farmerPageStart() + 1 }} to {{ Math.min(farmerPageStart() + FARMER_PAGE_SIZE, filteredFarmers().length) }} of
               {{ filteredFarmers().length }}
             </span>
             <div>
@@ -391,7 +391,7 @@
         @if (productPageCount() > 1) {
           <div class="pager">
             <span>
-              {{ productPageStart() + 1 }}–{{ Math.min(productPageStart() + PRODUCT_PAGE_SIZE, store.crops().length) }} of
+              {{ productPageStart() + 1 }} to {{ Math.min(productPageStart() + PRODUCT_PAGE_SIZE, store.crops().length) }} of
               {{ store.crops().length }}
             </span>
             <div>
@@ -520,7 +520,7 @@
             </label>
             <div>
               <span>
-                {{ pageStart() + 1 }}–{{ pageStart() + pageOrders().length }} of
+                {{ pageStart() + 1 }} to {{ pageStart() + pageOrders().length }} of
                 {{ matchingOrders().length }}
               </span>
               <button
@@ -618,7 +618,7 @@
           @if (poolPageCount() > 1) {
             <div class="pager">
               <span>
-                {{ poolPageStart() + 1 }}–{{ Math.min(poolPageStart() + POOL_PAGE_SIZE, pools().length) }} of
+                {{ poolPageStart() + 1 }} to {{ Math.min(poolPageStart() + POOL_PAGE_SIZE, pools().length) }} of
                 {{ pools().length }}
               </span>
               <div>
@@ -944,9 +944,9 @@
               @for (row of pagedCustomers(); track row.customer.id) {
                 <tr>
                   <td>
-                    {{ row.customer.name || '—' }} <small>{{ row.customer.email }}</small>
+                    {{ row.customer.name || 'N/A' }} <small>{{ row.customer.email }}</small>
                   </td>
-                  <td>{{ row.customer.address || '—' }}</td>
+                  <td>{{ row.customer.address || 'N/A' }}</td>
                   <td>{{ row.orders }}</td>
                   <td>{{ row.customer.joined | date: 'mediumDate' }}</td>
                   <td>
@@ -991,7 +991,7 @@
         @if (customerPageCount() > 1) {
           <div class="pager">
             <span>
-              {{ customerPageStart() + 1 }}–{{ Math.min(customerPageStart() + CUSTOMER_PAGE_SIZE, customers().length) }} of
+              {{ customerPageStart() + 1 }} to {{ Math.min(customerPageStart() + CUSTOMER_PAGE_SIZE, customers().length) }} of
               {{ customers().length }}
             </span>
             <div>

@@ -198,7 +198,7 @@ export class FarmerDashboard {
   }
 
   protected copyTestimonial(review: Review): void {
-    const text = `"${review.comment}" — ${review.author} on ${this.productName(review.productId)} (FarmDirect ★★★★★)`;
+    const text = `"${review.comment}" by ${review.author} on ${this.productName(review.productId)} (FarmDirect ★★★★★)`;
     if (navigator?.clipboard?.writeText) {
       void navigator.clipboard.writeText(text);
     }

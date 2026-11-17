@@ -293,7 +293,7 @@ export class StoreService {
   }
 
   profileName(id: string | null): string {
-    return this.profiles().find((p) => p.id === id)?.name || '—';
+    return this.profiles().find((p) => p.id === id)?.name || 'N/A';
   }
 
   /* ------------------------- Changing things ------------------------- */

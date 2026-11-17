@@ -283,7 +283,7 @@
       @if (pageCount() > 1) {
         <div class="pager" style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
           <span>
-            {{ pageStart() + 1 }}–{{ Math.min(pageStart() + PAGE_SIZE, currentListLength()) }} of
+            {{ pageStart() + 1 }} to {{ Math.min(pageStart() + PAGE_SIZE, currentListLength()) }} of
             {{ currentListLength() }}
           </span>
           <div>

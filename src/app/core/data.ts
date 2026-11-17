@@ -79,7 +79,7 @@ export const STORAGE_TIPS: Record<CropCategory, string> = {
   Fruits:
     'Allow Benue mangoes, sweet bananas, avocados, and papayas to ripen naturally at room temperature. Never refrigerate green cooking plantains. Soften bush pears (ube) in warm water right before serving.',
   Tubers:
-    'Store Benue white & yellow yams, water yams, sweet potatoes and Irish potatoes in a dry, dark, well-ventilated space elevated on slats or baskets — never on damp concrete floors.',
+    'Store Benue white & yellow yams, water yams, sweet potatoes and Irish potatoes in a dry, dark, well-ventilated space elevated on slats or baskets, never on damp concrete floors.',
   Grains:
     'Store honey beans, brown drum beans, Ofada rice, egusi, ogbono, and acha in airtight dry containers. Keep virgin palm oil and raw honey tightly sealed in a cool, dark pantry away from direct heat or moisture.',
 };
