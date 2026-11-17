@@ -59,6 +59,12 @@ export class AuthService {
   private lastActivityTime = Date.now();
   private activityListenerCleanup: (() => void) | null = null;
 
+  /* --- Pending Signup Confirmations (for demo / offline fallback) --- */
+  private readonly pendingConfirmations = new Map<
+    string,
+    { code: string; details: SignUpDetails; expiresAt: number }
+  >();
+
   constructor() {
     const client = this.supabase.client;
     if (!client) {
@@ -163,12 +169,13 @@ export class AuthService {
   }
 
   /**
-   * Creates an account. `confirmEmail` is true when Supabase has sent a
-   * confirmation link that must be clicked before signing in.
+   * Creates an account. `confirmEmail` is true when the user must enter
+   * a confirmation code from their email before signing in.
    */
-  async signUp(details: SignUpDetails): Promise<{ error: string | null; confirmEmail: boolean }> {
+  async signUp(
+    details: SignUpDetails,
+  ): Promise<{ error: string | null; confirmEmail: boolean; demoCode?: string }> {
     const client = this.supabase.client;
-    if (!client) return { error: 'Sign-up is not set up yet.', confirmEmail: false };
 
     const cleanEmail = sanitizeEmail(details.email);
     const cleanName = sanitizeText(details.fullName, 120);
@@ -179,6 +186,25 @@ export class AuthService {
     if (!cleanName) return { error: 'Please enter your full name.', confirmEmail: false };
     if (!details.password || details.password.trim().length < 8) {
       return { error: 'Password must be at least 8 characters.', confirmEmail: false };
+    }
+
+    if (!client) {
+      if (environment.debug) {
+        const demoCode = '123456';
+        this.pendingConfirmations.set(cleanEmail, {
+          code: demoCode,
+          details: {
+            ...details,
+            email: cleanEmail,
+            fullName: cleanName,
+            farmName: cleanFarmName,
+            farmLocation: cleanFarmLocation,
+          },
+          expiresAt: Date.now() + 15 * 60 * 1000,
+        });
+        return { error: null, confirmEmail: true, demoCode };
+      }
+      return { error: 'Sign-up is not set up yet.', confirmEmail: false };
     }
 
     const { data, error } = await client.auth.signUp({
@@ -197,8 +223,136 @@ export class AuthService {
       },
     });
     if (error) return { error: friendlyError(error), confirmEmail: false };
+
+    // Customers must always confirm via email code before they can login
+    if (details.role === 'customer') {
+      return { error: null, confirmEmail: true };
+    }
+
     if (data.session) await this.loadProfile(data.session.user.id);
     return { error: null, confirmEmail: !data.session };
+  }
+
+  /**
+   * Verifies an email confirmation code sent during customer sign up or login.
+   * On success, authenticates the user and loads their profile.
+   */
+  async verifySignUpCode(email: string, token: string): Promise<{ error: string | null }> {
+    const cleanEmail = sanitizeEmail(email);
+    const cleanToken = token.trim().replace(/\s+/g, '');
+
+    if (!cleanEmail) return { error: 'Please enter a valid email address.' };
+    if (!cleanToken || cleanToken.length < 4) {
+      return { error: 'Please enter the confirmation code from your email.' };
+    }
+
+    const client = this.supabase.client;
+    if (!client) {
+      const pending = this.pendingConfirmations.get(cleanEmail);
+      if (pending && (cleanToken === pending.code || (environment.debug && cleanToken === '123456'))) {
+        this.pendingConfirmations.delete(cleanEmail);
+        this.profile.set({
+          id: 'u-cust-' + Date.now(),
+          role: pending.details.role,
+          name: pending.details.fullName,
+          email: pending.details.email,
+          phone: '',
+          address: pending.details.farmLocation || '',
+          status: 'active',
+          joined: new Date().toISOString(),
+        });
+        if (this.isBrowser) {
+          this.recordActivity();
+        }
+        return { error: null };
+      }
+      if (environment.debug && cleanToken === '123456') {
+        this.profile.set({
+          id: 'u-cust-' + Date.now(),
+          role: 'customer',
+          name: 'Verified Customer',
+          email: cleanEmail,
+          phone: '',
+          address: '',
+          status: 'active',
+          joined: new Date().toISOString(),
+        });
+        if (this.isBrowser) {
+          this.recordActivity();
+        }
+        return { error: null };
+      }
+      return {
+        error: 'Invalid confirmation code. Please check your email or enter 123456 in demo mode.',
+      };
+    }
+
+    let res = await client.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanToken,
+      type: 'signup',
+    });
+
+    if (res.error) {
+      // Fallback: check if OTP type was 'email'
+      const fallback = await client.auth.verifyOtp({
+        email: cleanEmail,
+        token: cleanToken,
+        type: 'email',
+      });
+      if (!fallback.error) {
+        res = fallback;
+      }
+    }
+
+    if (res.error) {
+      return { error: friendlyError(res.error) };
+    }
+
+    if (this.isBrowser) {
+      this.recordActivity();
+    }
+
+    if (res.data?.session?.user) {
+      await this.loadProfile(res.data.session.user.id);
+    } else if (res.data?.user) {
+      await this.loadProfile(res.data.user.id);
+    }
+
+    return { error: null };
+  }
+
+  /**
+   * Resends the sign-up confirmation email with a fresh code.
+   */
+  async resendSignUpCode(
+    email: string,
+  ): Promise<{ error: string | null; demoCode?: string }> {
+    const cleanEmail = sanitizeEmail(email);
+    if (!cleanEmail) return { error: 'Please enter a valid email address.' };
+
+    const client = this.supabase.client;
+    if (!client) {
+      if (environment.debug) {
+        const pending = this.pendingConfirmations.get(cleanEmail);
+        if (pending) {
+          pending.code = '123456';
+          pending.expiresAt = Date.now() + 15 * 60 * 1000;
+        }
+        return { error: null, demoCode: '123456' };
+      }
+      return { error: 'Authentication service is not configured.' };
+    }
+
+    const { error } = await client.auth.resend({
+      type: 'signup',
+      email: cleanEmail,
+    });
+
+    if (error) {
+      return { error: friendlyError(error) };
+    }
+    return { error: null };
   }
 
   async signOut(): Promise<void> {

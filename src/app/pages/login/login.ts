@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
@@ -26,6 +26,8 @@ import { PhotoPipe } from '../../shared/pipes';
           <h2>
             @if (mode() === 'in') {
               Good to see you again.
+            } @else if (mode() === 'confirm') {
+              Verify your email.
             } @else {
               Fresh food starts with a direct connection.
             }
