@@ -79,37 +79,49 @@ import { PhotoPipe } from '../../shared/pipes';
           </a>
 
           <header class="auth__head">
-            <h1>{{ mode() === 'in' ? 'Welcome back' : 'Create your account' }}</h1>
+            <h1>
+              @if (mode() === 'confirm') {
+                Confirm your email
+              } @else if (mode() === 'up') {
+                Create your account
+              } @else {
+                Welcome back
+              }
+            </h1>
             <p>
-              {{
-                mode() === 'in'
-                  ? 'Sign in to track orders, manage your basket and more.'
-                  : 'Join FarmDirect in under a minute: it’s free.'
-              }}
+              @if (mode() === 'confirm') {
+                Enter the confirmation code sent to your email to verify your account.
+              } @else if (mode() === 'up') {
+                Join FarmDirect in under a minute: it’s free.
+              } @else {
+                Sign in to track orders, manage your basket and more.
+              }
             </p>
           </header>
 
-          <div class="tabs" role="tablist" aria-label="Account">
-            <button
-              type="button"
-              role="tab"
-              [attr.aria-selected]="mode() === 'in'"
-              [class.is-active]="mode() === 'in'"
-              (click)="setMode('in')"
-            >
-              Sign in
-            </button>
-            <button
-              type="button"
-              role="tab"
-              [attr.aria-selected]="mode() === 'up'"
-              [class.is-active]="mode() === 'up'"
-              (click)="setMode('up')"
-            >
-              Create account
-            </button>
-            <span class="tabs__glider" [class.is-right]="mode() === 'up'" aria-hidden="true"></span>
-          </div>
+          @if (mode() !== 'confirm') {
+            <div class="tabs" role="tablist" aria-label="Account">
+              <button
+                type="button"
+                role="tab"
+                [attr.aria-selected]="mode() === 'in'"
+                [class.is-active]="mode() === 'in'"
+                (click)="setMode('in')"
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                role="tab"
+                [attr.aria-selected]="mode() === 'up'"
+                [class.is-active]="mode() === 'up'"
+                (click)="setMode('up')"
+              >
+                Create account
+              </button>
+              <span class="tabs__glider" [class.is-right]="mode() === 'up'" aria-hidden="true"></span>
+            </div>
+          }
 
           @if (!supabase.configured) {
             <p class="alert alert--info">
@@ -141,182 +153,269 @@ import { PhotoPipe } from '../../shared/pipes';
             </p>
           }
 
-          @if (confirmEmail()) {
+          @if (confirmEmail() && mode() !== 'confirm') {
             <p class="alert alert--good" role="status">
               <app-icon name="mail" [size]="18" />
               <span>
-                Almost done: we’ve sent a confirmation link to your email. Open it, then sign in
-                here.
+                Almost done: we’ve sent a confirmation code to your email.
+                <button type="button" class="confirm-link-btn" (click)="setMode('confirm')">Enter code</button>
               </span>
             </p>
           }
 
-          <form class="auth-form" novalidate (submit)="$event.preventDefault(); submit()">
-            @if (mode() === 'up') {
-              <fieldset class="roles">
-                <legend>I’m joining as</legend>
-                <div class="roles__grid" role="radiogroup" aria-label="Account type">
-                  <button
-                    type="button"
-                    role="radio"
-                    [attr.aria-checked]="role() === 'customer'"
-                    [class.is-chosen]="role() === 'customer'"
-                    (click)="role.set('customer')"
-                  >
-                    <span class="roles__icon"><app-icon name="basket" [size]="20" /></span>
-                    <strong>A buyer</strong>
-                    <small>Order produce and join livestock pools</small>
-                    <span class="roles__tick"><app-icon name="check" [size]="14" /></span>
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    [attr.aria-checked]="role() === 'farmer'"
-                    [class.is-chosen]="role() === 'farmer'"
-                    (click)="role.set('farmer')"
-                  >
-                    <span class="roles__icon"><app-icon name="leaf" [size]="20" /></span>
-                    <strong>A farmer</strong>
-                    <small>List produce and receive orders</small>
-                    <span class="roles__tick"><app-icon name="check" [size]="14" /></span>
-                  </button>
-                </div>
-              </fieldset>
+          @if (mode() === 'confirm') {
+            <form class="auth-form" novalidate (submit)="$event.preventDefault(); verifyCode()">
+              <div class="confirm-email-chip">
+                <app-icon name="mail" [size]="18" />
+                <span class="confirm-email-chip__text">{{ email() }}</span>
+                <button type="button" class="confirm-email-chip__edit" (click)="setMode('up')">
+                  Change
+                </button>
+              </div>
 
               <div class="field">
-                <label for="auth-name">Full name</label>
+                <label for="auth-code">Confirmation code</label>
                 <div class="field__control">
-                  <app-icon name="user" [size]="18" />
+                  <app-icon name="lock" [size]="18" />
                   <input
-                    #fullName
-                    id="auth-name"
-                    name="name"
-                    autocomplete="name"
-                    placeholder="e.g. Ngozi Adebayo"
+                    #code
+                    id="auth-code"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    placeholder="Enter 6-digit code"
+                    maxlength="8"
                     required
-                    maxlength="120"
-                    (input)="name.set(fullName.value)"
+                    [value]="confirmationCode()"
+                    (input)="confirmationCode.set(code.value)"
+                  />
+                </div>
+                <p class="field-hint">
+                  Please check your inbox or spam folder for your confirmation code.
+                  @if (debugMode && demoCodeHint()) {
+                    <span class="demo-code-note">Demo code: {{ demoCodeHint() }}</span>
+                  }
+                </p>
+              </div>
+
+              @if (error()) {
+                <p class="alert alert--bad" role="alert">
+                  <app-icon name="info" [size]="18" />
+                  <span>{{ error() }}</span>
+                </p>
+              }
+
+              @if (resendMessage()) {
+                <p class="alert alert--good" role="status">
+                  <app-icon name="check" [size]="18" />
+                  <span>{{ resendMessage() }}</span>
+                </p>
+              }
+
+              <button
+                type="submit"
+                class="auth-submit"
+                [disabled]="busy() || !confirmationCode().trim()"
+              >
+                @if (busy()) {
+                  <span class="spinner" aria-hidden="true"></span> Verifying…
+                } @else {
+                  Verify and sign in
+                  <app-icon name="arrow-right" [size]="18" />
+                }
+              </button>
+
+              <div class="resend-row">
+                <span>Didn’t receive the code?</span>
+                <button
+                  type="button"
+                  class="resend-btn"
+                  [disabled]="resendCooldown() > 0 || resendBusy()"
+                  (click)="resendCode()"
+                >
+                  @if (resendCooldown() > 0) {
+                    Resend in {{ resendCooldown() }}s
+                  } @else if (resendBusy()) {
+                    Sending…
+                  } @else {
+                    Resend code
+                  }
+                </button>
+              </div>
+
+              <p class="switch">
+                Want to sign in with an existing account?
+                <button type="button" (click)="setMode('in')">Sign in</button>
+              </p>
+            </form>
+          } @else {
+            <form class="auth-form" novalidate (submit)="$event.preventDefault(); submit()">
+              @if (mode() === 'up') {
+                <fieldset class="roles">
+                  <legend>I’m joining as</legend>
+                  <div class="roles__grid" role="radiogroup" aria-label="Account type">
+                    <button
+                      type="button"
+                      role="radio"
+                      [attr.aria-checked]="role() === 'customer'"
+                      [class.is-chosen]="role() === 'customer'"
+                      (click)="role.set('customer')"
+                    >
+                      <span class="roles__icon"><app-icon name="basket" [size]="20" /></span>
+                      <strong>A buyer</strong>
+                      <small>Order produce and join livestock pools</small>
+                      <span class="roles__tick"><app-icon name="check" [size]="14" /></span>
+                    </button>
+                    <button
+                      type="button"
+                      role="radio"
+                      [attr.aria-checked]="role() === 'farmer'"
+                      [class.is-chosen]="role() === 'farmer'"
+                      (click)="role.set('farmer')"
+                    >
+                      <span class="roles__icon"><app-icon name="leaf" [size]="20" /></span>
+                      <strong>A farmer</strong>
+                      <small>List produce and receive orders</small>
+                      <span class="roles__tick"><app-icon name="check" [size]="14" /></span>
+                    </button>
+                  </div>
+                </fieldset>
+
+                <div class="field">
+                  <label for="auth-name">Full name</label>
+                  <div class="field__control">
+                    <app-icon name="user" [size]="18" />
+                    <input
+                      #fullName
+                      id="auth-name"
+                      name="name"
+                      autocomplete="name"
+                      placeholder="e.g. Ngozi Adebayo"
+                      required
+                      maxlength="120"
+                      (input)="name.set(fullName.value)"
+                    />
+                  </div>
+                </div>
+
+                @if (role() === 'farmer') {
+                  <div class="field-row">
+                    <div class="field">
+                      <label for="auth-farm">Farm name</label>
+                      <div class="field__control">
+                        <app-icon name="leaf" [size]="18" />
+                        <input
+                          #farm
+                          id="auth-farm"
+                          name="farm"
+                          placeholder="Green Valley Farm"
+                          required
+                          maxlength="120"
+                          (input)="farmName.set(farm.value)"
+                        />
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label for="auth-location">Farm location</label>
+                      <div class="field__control">
+                        <app-icon name="pin" [size]="18" />
+                        <input
+                          #place
+                          id="auth-location"
+                          name="location"
+                          placeholder="Town, State"
+                          maxlength="160"
+                          (input)="farmLocation.set(place.value)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+
+              <div class="field">
+                <label for="auth-email">Email address</label>
+                <div class="field__control">
+                  <app-icon name="mail" [size]="18" />
+                  <input
+                    #mail
+                    id="auth-email"
+                    type="email"
+                    name="email"
+                    autocomplete="email"
+                    placeholder="you@example.com"
+                    required
+                    (input)="email.set(mail.value)"
                   />
                 </div>
               </div>
 
-              @if (role() === 'farmer') {
-                <div class="field-row">
-                  <div class="field">
-                    <label for="auth-farm">Farm name</label>
-                    <div class="field__control">
-                      <app-icon name="leaf" [size]="18" />
-                      <input
-                        #farm
-                        id="auth-farm"
-                        name="farm"
-                        placeholder="Green Valley Farm"
-                        required
-                        maxlength="120"
-                        (input)="farmName.set(farm.value)"
-                      />
-                    </div>
-                  </div>
-                  <div class="field">
-                    <label for="auth-location">Farm location</label>
-                    <div class="field__control">
-                      <app-icon name="pin" [size]="18" />
-                      <input
-                        #place
-                        id="auth-location"
-                        name="location"
-                        placeholder="Town, State"
-                        maxlength="160"
-                        (input)="farmLocation.set(place.value)"
-                      />
-                    </div>
-                  </div>
+              <div class="field">
+                <label for="auth-password">Password</label>
+                <div class="field__control">
+                  <app-icon name="lock" [size]="18" />
+                  <input
+                    #pass
+                    id="auth-password"
+                    [type]="showPassword() ? 'text' : 'password'"
+                    name="password"
+                    [placeholder]="mode() === 'in' ? 'Your password' : 'At least 8 characters'"
+                    required
+                    minlength="8"
+                    [attr.autocomplete]="mode() === 'in' ? 'current-password' : 'new-password'"
+                    (input)="password.set(pass.value)"
+                  />
+                  <button
+                    type="button"
+                    class="field__toggle"
+                    [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                    [attr.aria-pressed]="showPassword()"
+                    (click)="showPassword.set(!showPassword())"
+                  >
+                    <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18" />
+                  </button>
                 </div>
+                @if (mode() === 'up') {
+                  <div class="strength" [attr.data-level]="strength()">
+                    <span></span><span></span><span></span>
+                    <small>{{ strengthLabel() }}</small>
+                  </div>
+                }
+              </div>
+
+              @if (error()) {
+                <p class="alert alert--bad" role="alert">
+                  <app-icon name="info" [size]="18" />
+                  <span>{{ error() }}</span>
+                </p>
               }
-            }
 
-            <div class="field">
-              <label for="auth-email">Email address</label>
-              <div class="field__control">
-                <app-icon name="mail" [size]="18" />
-                <input
-                  #mail
-                  id="auth-email"
-                  type="email"
-                  name="email"
-                  autocomplete="email"
-                  placeholder="you@example.com"
-                  required
-                  (input)="email.set(mail.value)"
-                />
-              </div>
-            </div>
+              <button type="submit" class="auth-submit" [disabled]="busy()">
+                @if (busy()) {
+                  <span class="spinner" aria-hidden="true"></span> Please wait…
+                } @else {
+                  {{ mode() === 'in' ? 'Sign in' : 'Create account' }}
+                  <app-icon name="arrow-right" [size]="18" />
+                }
+              </button>
 
-            <div class="field">
-              <label for="auth-password">Password</label>
-              <div class="field__control">
-                <app-icon name="lock" [size]="18" />
-                <input
-                  #pass
-                  id="auth-password"
-                  [type]="showPassword() ? 'text' : 'password'"
-                  name="password"
-                  [placeholder]="mode() === 'in' ? 'Your password' : 'At least 8 characters'"
-                  required
-                  minlength="8"
-                  [attr.autocomplete]="mode() === 'in' ? 'current-password' : 'new-password'"
-                  (input)="password.set(pass.value)"
-                />
-                <button
-                  type="button"
-                  class="field__toggle"
-                  [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-                  [attr.aria-pressed]="showPassword()"
-                  (click)="showPassword.set(!showPassword())"
-                >
-                  <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18" />
-                </button>
-              </div>
               @if (mode() === 'up') {
-                <div class="strength" [attr.data-level]="strength()">
-                  <span></span><span></span><span></span>
-                  <small>{{ strengthLabel() }}</small>
-                </div>
+                <p class="fine">
+                  By creating an account you agree to buy and sell fairly and honestly on FarmDirect.
+                </p>
               }
-            </div>
+            </form>
 
-            @if (error()) {
-              <p class="alert alert--bad" role="alert">
-                <app-icon name="info" [size]="18" />
-                <span>{{ error() }}</span>
-              </p>
-            }
-
-            <button type="submit" class="auth-submit" [disabled]="busy()">
-              @if (busy()) {
-                <span class="spinner" aria-hidden="true"></span> Please wait…
+            <p class="switch">
+              @if (mode() === 'in') {
+                New to FarmDirect?
+                <button type="button" (click)="setMode('up')">Create an account</button>
               } @else {
-                {{ mode() === 'in' ? 'Sign in' : 'Create account' }}
-                <app-icon name="arrow-right" [size]="18" />
+                Already have an account?
+                <button type="button" (click)="setMode('in')">Sign in</button>
               }
-            </button>
-
-            @if (mode() === 'up') {
-              <p class="fine">
-                By creating an account you agree to buy and sell fairly and honestly on FarmDirect.
-              </p>
-            }
-          </form>
-
-          <p class="switch">
-            @if (mode() === 'in') {
-              New to FarmDirect?
-              <button type="button" (click)="setMode('up')">Create an account</button>
-            } @else {
-              Already have an account?
-              <button type="button" (click)="setMode('in')">Sign in</button>
-            }
-          </p>
+            </p>
+          }
 
           <p class="help">Need help? <a routerLink="/contact">Contact our support team</a></p>
 
@@ -618,6 +717,114 @@ import { PhotoPipe } from '../../shared/pipes';
       background: #ecfdf5;
       border: 1px solid #a7f3d0;
       color: #065f46;
+    }
+
+    .confirm-link-btn {
+      margin-left: 6px;
+      font-weight: 700;
+      color: var(--accent-dark);
+      text-decoration: underline;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .confirm-email-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: var(--cream);
+      border: 1.5px solid var(--line);
+      font-size: 0.88rem;
+      color: var(--ink);
+      min-width: 0;
+      word-break: break-all;
+    }
+
+    .confirm-email-chip app-icon {
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .confirm-email-chip__text {
+      flex: 1;
+      font-weight: 600;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .confirm-email-chip__edit {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-dark);
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .confirm-email-chip__edit:hover {
+      color: var(--green-900);
+    }
+
+    .field-hint {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .demo-code-note {
+      display: block;
+      margin-top: 4px;
+      font-weight: 600;
+      color: var(--accent-dark);
+    }
+
+    .field__control input#auth-code {
+      letter-spacing: 0.16em;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+
+    .resend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 4px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .resend-btn {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent-dark);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .resend-btn:hover:not(:disabled) {
+      background: var(--cream);
+      color: var(--green-900);
+      text-decoration: underline;
+    }
+
+    .resend-btn:disabled {
+      color: var(--muted);
+      cursor: not-allowed;
+      text-decoration: none;
+      opacity: 0.7;
     }
 
     /* Form */
@@ -1190,7 +1397,7 @@ import { PhotoPipe } from '../../shared/pipes';
     }
   `,
 })
-export class Login implements OnInit {
+export class Login implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly supabase = inject(Supabase);
@@ -1206,7 +1413,7 @@ export class Login implements OnInit {
   /** From route data: the /signup route opens on the "create account" tab. */
   readonly start = input<'in' | 'up'>('in');
 
-  protected readonly mode = signal<'in' | 'up'>('in');
+  protected readonly mode = signal<'in' | 'up' | 'confirm'>('in');
   protected readonly role = signal<'customer' | 'farmer'>('customer');
   protected readonly name = signal('');
   protected readonly farmName = signal('');
@@ -1214,6 +1421,14 @@ export class Login implements OnInit {
   protected readonly email = signal('');
   protected readonly password = signal('');
   protected readonly showPassword = signal(false);
+
+  /* --- Email Confirmation Code (OTP) State --- */
+  protected readonly confirmationCode = signal('');
+  protected readonly demoCodeHint = signal('');
+  protected readonly resendCooldown = signal(0);
+  protected readonly resendMessage = signal('');
+  protected readonly resendBusy = signal(false);
+  private cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
   protected readonly busy = signal(false);
   protected readonly error = signal('');
@@ -1231,6 +1446,13 @@ export class Login implements OnInit {
     this.mode.set(this.start() === 'up' ? 'up' : 'in');
   }
 
+  ngOnDestroy(): void {
+    if (this.cooldownTimer) {
+      clearInterval(this.cooldownTimer);
+      this.cooldownTimer = null;
+    }
+  }
+
   /** 0 = empty, 1 = too short, 2 = good, 3 = strong. */
   protected strength(): number {
     const p = this.password();
@@ -1246,15 +1468,18 @@ export class Login implements OnInit {
     return ['At least 8 characters', 'Too short', 'Good', 'Strong'][this.strength()];
   }
 
-  protected setMode(mode: 'in' | 'up'): void {
+  protected setMode(mode: 'in' | 'up' | 'confirm'): void {
     this.mode.set(mode);
     this.error.set('');
+    this.resendMessage.set('');
+    this.confirmationCode.set('');
   }
 
   protected async submit(): Promise<void> {
     const email = sanitizeEmail(this.email());
     const password = this.password();
     this.error.set('');
+    this.resendMessage.set('');
 
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
       return this.error.set('Enter a valid email address.');
@@ -1267,7 +1492,17 @@ export class Login implements OnInit {
     try {
       if (this.mode() === 'in') {
         const error = await this.auth.signIn(email, password);
-        if (error) return this.error.set(error);
+        if (error) {
+          if (/email not confirmed/i.test(error) || /not confirmed/i.test(error)) {
+            this.error.set(
+              'Your email is not confirmed yet. Please enter the confirmation code sent to your email.',
+            );
+            this.setMode('confirm');
+            this.startResendCooldown(30);
+            return;
+          }
+          return this.error.set(error);
+        }
       } else {
         const fullName = sanitizeText(this.name(), 120);
         if (!fullName) return this.error.set('Enter your full name.');
@@ -1288,9 +1523,12 @@ export class Login implements OnInit {
           farmLocation: location,
         });
         if (result.error) return this.error.set(result.error);
-        if (result.confirmEmail) {
-          this.confirmEmail.set(true);
-          this.setMode('in');
+        if (result.demoCode) {
+          this.demoCodeHint.set(result.demoCode);
+        }
+        if (result.confirmEmail || this.role() === 'customer') {
+          this.setMode('confirm');
+          this.startResendCooldown(30);
           return;
         }
       }
@@ -1304,6 +1542,81 @@ export class Login implements OnInit {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /** Verifies the email confirmation code entered by the customer. */
+  protected async verifyCode(): Promise<void> {
+    const email = sanitizeEmail(this.email());
+    const code = this.confirmationCode().trim();
+    this.error.set('');
+    this.resendMessage.set('');
+
+    if (!email) {
+      return this.error.set('Email is missing. Please return to sign up.');
+    }
+    if (!code) {
+      return this.error.set('Please enter the confirmation code from your email.');
+    }
+
+    this.busy.set(true);
+    try {
+      const res = await this.auth.verifySignUpCode(email, code);
+      if (res.error) {
+        return this.error.set(res.error);
+      }
+
+      const profile = this.auth.profile();
+      if (profile?.role === 'customer' && this.next() === 'basket') {
+        await this.router.navigate(['/basket']);
+      } else {
+        await this.router.navigateByUrl(this.auth.homePath());
+      }
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** Requests a fresh confirmation code to be sent to the user's email. */
+  protected async resendCode(): Promise<void> {
+    const email = sanitizeEmail(this.email());
+    if (!email) {
+      return this.error.set('Please enter your email address.');
+    }
+
+    this.resendBusy.set(true);
+    this.error.set('');
+    try {
+      const res = await this.auth.resendSignUpCode(email);
+      if (res.error) {
+        return this.error.set(res.error);
+      }
+      if (res.demoCode) {
+        this.demoCodeHint.set(res.demoCode);
+      }
+      this.resendMessage.set('A new confirmation code has been sent to your email.');
+      this.startResendCooldown(45);
+    } finally {
+      this.resendBusy.set(false);
+    }
+  }
+
+  private startResendCooldown(seconds: number): void {
+    if (this.cooldownTimer) {
+      clearInterval(this.cooldownTimer);
+    }
+    this.resendCooldown.set(seconds);
+    this.cooldownTimer = setInterval(() => {
+      const current = this.resendCooldown();
+      if (current <= 1) {
+        this.resendCooldown.set(0);
+        if (this.cooldownTimer) {
+          clearInterval(this.cooldownTimer);
+          this.cooldownTimer = null;
+        }
+      } else {
+        this.resendCooldown.set(current - 1);
+      }
+    }, 1000);
   }
 
   protected async loginAsDemo(role: 'customer' | 'farmer' | 'admin'): Promise<void> {
