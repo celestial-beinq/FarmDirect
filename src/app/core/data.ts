@@ -75,13 +75,13 @@ export const DEFAULT_IMAGE: Record<CropCategory, string> = {
 
 export const STORAGE_TIPS: Record<CropCategory, string> = {
   Vegetables:
-    'Store leafy greens (Ugu, Ewedu, Shoko) wrapped loosely in dry paper or airy bags in your crisper drawer. Keep plum tomatoes, tatashe and rodo in a ventilated basket at room temperature until fully ripe.',
+    'Store leafy greens (Ugu, Ewedu, Shoko, Scent Leaves, Waterleaf) wrapped loosely in dry paper or airy bags in your crisper drawer. Keep plum tomatoes, tatashe, rodo and red onions in a ventilated basket at room temperature. Keep fresh ginger dry and unpeeled.',
   Fruits:
-    'Allow Benue mangoes, sweet plantains and papayas to ripen naturally at room temperature. Never refrigerate green cooking plantains. Wash fruits only right before eating.',
+    'Allow Benue mangoes, sweet bananas, avocados, and papayas to ripen naturally at room temperature. Never refrigerate green cooking plantains. Soften bush pears (ube) in warm water right before serving.',
   Tubers:
-    'Store Benue yams, sweet potatoes and Irish potatoes in a dry, dark, well-ventilated space elevated on slats or baskets — never on damp concrete floors. Keep away from onions.',
+    'Store Benue white & yellow yams, water yams, sweet potatoes and Irish potatoes in a dry, dark, well-ventilated space elevated on slats or baskets — never on damp concrete floors.',
   Grains:
-    'Store honey beans, Ofada rice, egusi and ogbono in airtight dry containers. Adding dry dried chilies or bay leaves naturally protects beans against weevils without chemicals.',
+    'Store honey beans, brown drum beans, Ofada rice, egusi, ogbono, and acha in airtight dry containers. Keep virgin palm oil and raw honey tightly sealed in a cool, dark pantry away from direct heat or moisture.',
 };
 
 /* ---------------------------- Livestock ---------------------------- */

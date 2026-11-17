@@ -133,6 +133,12 @@ values
    array['Seasonal', 'By Basket']::text[],
    array['Wild-grove harvest', 'Naturally sweet pulp', 'Rich in Vitamin C']::text[], 'live'),
 
+  ('00000000-0000-4000-8000-000000000009', 'crop', 'Sweet Golden Papaya (Solo Pawpaw)', 'Fruits', 1100, 'piece',
+   'Tree-ripened solo golden papaya with deep salmon-pink flesh. Fragrant, sweet, rich in papain enzymes for healthy digestion with zero chemical forcing.',
+   '1610832958506-aa56368176cf', array['1610832958506-aa56368176cf']::text[],
+   array['Tree Ripened', 'Per Piece']::text[],
+   array['Naturally tree ripened', 'Rich papain enzymes', 'Low acidity']::text[], 'live'),
+
   -- Tubers
   ('00000000-0000-4000-8000-000000000004', 'crop', 'Benue White Pona Yam (New Harvest)', 'Tubers', 2800, 'tuber',
    'Genuine White Pona yam tubers from Benue State. Dry, floury, and starch-rich — pounds effortlessly into lump-free, stretchy pounded yam (iyan) or boiled yam.',
@@ -211,7 +217,173 @@ values
    'Authentic fermented cassava flakes from Ijebu processors. Famous for its dry crunchy grain and delightful pleasant sourness for eba or drinking cold.',
    '1586201375761-83865001e31c', array['1586201375761-83865001e31c']::text[],
    array['Crispy Sour', 'By Weight']::text[],
-   array['Traditional 4-day fermentation', 'Extra dry and crunchy', 'Triple sifted fine']::text[], 'live');
+   array['Traditional 4-day fermentation', 'Extra dry and crunchy', 'Triple sifted fine']::text[], 'live'),
+
+  -- New Vegetables & Herbs
+  ('00000000-0000-4000-8000-000000000006', 'crop', 'Fresh Scent Leaves (Efirin / Nchanwu)', 'Vegetables', 500, 'bunch',
+   'Pungent, highly aromatic African basil leaves (Ocimum gratissimum) freshly cut at dawn. Essential for authentic goat meat pepper soup, black soup, and traditional digestive remedies.',
+   '1540420773420-3366772f4999', array['1540420773420-3366772f4999']::text[],
+   array['Herbal Aroma', 'Fresh Cut', 'Pepper Soup Staple']::text[],
+   array['Dawn cut harvest', 'Clean borehole rinsed', 'Potent fragrant essential oils']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000006', 'crop', 'Fresh Waterleaf (Gbure / Mgbolodi)', 'Vegetables', 400, 'bunch',
+   'Succulent, tender waterleaf (Talinum triangulare) harvested before sunlight warms the leaves. Crisp and mild, the non-negotiable partner to okazi/afang in authentic Calabar Edikang Ikong.',
+   '1576045057995-568f588f82fb', array['1576045057995-568f588f82fb']::text[],
+   array['Fresh Cut', 'Afang Essential', 'Tender Tips']::text[],
+   array['Morning hand-harvest', 'Cleanly sorted', 'Retains crisp crunch']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000001', 'crop', 'Fresh Green Amaranth (Efo Tete)', 'Vegetables', 450, 'bunch',
+   'Tender indigenous Nigerian green amaranth greens. Naturally sweet with delicate stalks that cook down rapidly into velvety Yoruba stews and egusi.',
+   '1576045057995-568f588f82fb', array['1576045057995-568f588f82fb']::text[],
+   array['Fresh Cut', 'Traditional Soup', 'Iron Rich']::text[],
+   array['Farm gate freshness', 'Zero chemical sprays', 'Tender soft stalks']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000008', 'crop', 'Aromatic Yellow Nsukka Pepper (Ose Nsukka)', 'Vegetables', 2200, 'kg',
+   'Famous yellow Scotch bonnet variety from the red hills of Nsukka. Renowned for its explosive floral perfume, intoxicating fruity bouquet, and sharp persistent heat.',
+   '1588252303782-cb80119abd6d', array['1588252303782-cb80119abd6d']::text[],
+   array['Extra Hot', 'By Weight', 'Nsukka Fragrant']::text[],
+   array['Authentic Nsukka heirloom', 'Distinct fruity perfume', 'Hand sorted pod by pod']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000003', 'crop', 'Sun-Cured Kano Red Onions (Alubosa)', 'Vegetables', 1400, 'kg',
+   'Tight, dry-skin crimson northern Nigerian red onions. Heavy bulbs cured in dry Sahel air with strong sulfur aroma and high dry matter, ensuring 3-month pantry shelf life.',
+   '1508746829417-e6f548d8d6ed', array['1508746829417-e6f548d8d6ed']::text[],
+   array['Long Shelf Life', 'By Weight', 'Northern Cured']::text[],
+   array['Sun-cured 2 weeks', 'Firm solid concentric layers', 'Zero rot or soft necks']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000002', 'crop', 'Crisp Jos Highland Cucumbers', 'Vegetables', 800, 'kg',
+   'Straight, dark-green cucumbers grown in the cool highland soils of Jos. Extra crisp, highly refreshing with tiny seed cavities, thin tender skin, and sweet juicy bite.',
+   '1598170845058-32b9d6a5da37', array['1598170845058-32b9d6a5da37']::text[],
+   array['By Weight', 'Highland Crisp', 'Salad & Juicing']::text[],
+   array['Cool climate crispness', 'Thin edible skin', 'Picked firm and chilled']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000005', 'crop', 'Kaduna Golden Ginger Rhizomes (Chitta)', 'Vegetables', 1800, 'kg',
+   'Southern Kaduna ginger known internationally for having the highest gingerol essential oil concentration. Incredibly spicy, fragrant, and clean-washed for cooking and ginger drinks.',
+   '1508746829417-e6f548d8d6ed', array['1508746829417-e6f548d8d6ed']::text[],
+   array['By Weight', 'High Pungency', 'Immunity Boost']::text[],
+   array['Washed clean of soil', 'Maximum gingerol potency', 'Firm plump fingers']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000006', 'crop', 'Fresh Uziza Leaves (Piper Guineense)', 'Vegetables', 650, 'bunch',
+   'Glossy green West African black pepper leaves. Gives a warm, peppery, slightly camphoric kick to white soups (Ofe Sala), fisherman soup, and yam pepper soup.',
+   '1540420773420-3366772f4999', array['1540420773420-3366772f4999']::text[],
+   array['Peppery Aroma', 'Fresh Cut', 'Delta Special']::text[],
+   array['Cut fresh morning of dispatch', 'Organic shade grown', 'Strong essential oil scent']::text[], 'live'),
+
+  -- New Fruits
+  ('00000000-0000-4000-8000-000000000008', 'crop', 'Native African Bush Pears (Ube)', 'Fruits', 1700, 'kg',
+   'Deep indigo-violet African pears (Dacryodes edulis) with rich, velvety greenish butter flesh. Gently soften in hot water or warm embers and pair with freshly roasted corn.',
+   '1610832958506-aa56368176cf', array['1610832958506-aa56368176cf']::text[],
+   array['Traditional Pair', 'In Season', 'Butter Rich']::text[],
+   array['Velvety butter pulp when warmed', 'Carefully crate-packed', 'Zero bruised skins']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000006', 'crop', 'Sweet Golden Bananas (Cavendish / Ogede Wewe)', 'Fruits', 1600, 'bunch',
+   'Naturally yellowed, honey-sweet dessert bananas from rainforest orchards. Never gassed with chemical calcium carbide; wholesome nutrition packed with potassium.',
+   '1571771894821-ce9b6c11b08e', array['1571771894821-ce9b6c11b08e']::text[],
+   array['Tree Ripened', 'Snack Staple', 'Carbide Free']::text[],
+   array['100% naturally yellowed', 'High natural sweetness', 'Plump clean unblemished fingers']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000002', 'crop', 'Jos Butter Avocados (Plateau Green Pear)', 'Fruits', 2100, 'kg',
+   'Silky, nut-rich avocados grown at high altitude in Plateau state. Small seed core, thick buttery meat with zero watery texture or dark strings. Heavenly on warm sourdough or salad.',
+   '1601493700631-2b16ec4b4716', array['1601493700631-2b16ec4b4716']::text[],
+   array['Healthy Fats', 'Highland Grown', 'Creamy Flesh']::text[],
+   array['Grade A large size', 'Zero fibrous stringiness', 'Slow mountain tree-ripened']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000009', 'crop', 'Fresh Fragrant Soursop (Shawashawa)', 'Fruits', 2400, 'kg',
+   'Spiky emerald green soursop (Annona muricata) with cotton-soft white pulp. Exquisitely aromatic with sweet-tart notes of pineapple and strawberry; prized for cleansing juices.',
+   '1610832958506-aa56368176cf', array['1610832958506-aa56368176cf']::text[],
+   array['Superfood', 'Juice Special', 'Antioxidant Rich']::text[],
+   array['Hand-picked at tender firmness', 'Intense tropical citrus-custard flavor', 'Padded transport packaging']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000001', 'crop', 'Badagry Dwarf Sweet Coconuts (Agbon)', 'Fruits', 900, 'piece',
+   'Heavy coastal coconuts bursting with natural electrolyte-rich coconut water and thick, nutty, crisp white copra meat. Perfect for coconut rice, candies, or fresh eating.',
+   '1550258987-190a2d41a8ba', array['1550258987-190a2d41a8ba']::text[],
+   array['Hydration', 'Fresh Meat', 'Coastal Harvest']::text[],
+   array['Heavy with fresh water', 'Thick creamy white meat', 'Cleanly husked shell']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000004', 'crop', 'Fresh Citrus Basket (Gboko Limes & Lemons)', 'Fruits', 1500, 'basket',
+   'Handful basket of sun-drenched green limes and fragrant yellow lemons from Gboko citrus orchards. Paper-thin rinds yielding maximum tart, fragrant vitamin-C rich juice.',
+   '1610832958506-aa56368176cf', array['1610832958506-aa56368176cf']::text[],
+   array['High Juice Yield', 'Citrus Basket', 'Vitamin C']::text[],
+   array['Thin skin maximum juice', 'Zero synthetic rind wax', 'Picked fresh daily']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000009', 'crop', 'Crisp Red Cashew Apples (Ogbomoso Heritage)', 'Fruits', 1300, 'basket',
+   'Vibrant red-orange cashew apples harvested at peak ripeness with intact nut. Loaded with sweet, astringent, intensely fragrant juice with 5 times the vitamin C of oranges.',
+   '1601493700631-2b16ec4b4716', array['1601493700631-2b16ec4b4716']::text[],
+   array['In Season', 'Juicy Nectar', 'Traditional']::text[],
+   array['Harvested same-day dawn', 'Exploding sweet nectar', 'Carefully cushioned']::text[], 'live'),
+
+  -- New Tubers
+  ('00000000-0000-4000-8000-000000000001', 'crop', 'Water Yam (Ji Abana / Ewura)', 'Tubers', 2600, 'tuber',
+   'Large, moisture-rich water yam tuber (Dioscorea alata). High in natural starch; non-negotiable for grating into golden crispy Ojojo fritters or rich Ijebu Ikokore pottage.',
+   '1518977676601-b53f82aba655', array['1518977676601-b53f82aba655']::text[],
+   array['Ikokore Staple', 'Ojojo Special', 'By Tuber']::text[],
+   array['Firm healthy tuber body', 'Triple-tested for Ikokore draw', 'Stored in dry aerated barn']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000004', 'crop', 'Yellow Yam (Ji Oku / Guinea Yellow Yam)', 'Tubers', 3100, 'tuber',
+   'Hearty yellow yam (Dioscorea cayenensis) with dense, dry, golden interior. Rich in provitamin A carotenoids, sweet nutty aroma, and cooks to a firm, satisfying dry bite.',
+   '1596704017254-9b121068fb31', array['1596704017254-9b121068fb31']::text[],
+   array['Firm Texture', 'Carotenoid Rich', 'Benue Harvest']::text[],
+   array['Benue food basket harvest', 'Dense non-watery crumb', 'Sun-cured bark zero blemishes']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000002', 'crop', 'Highland Red Ruby Beetroots', 'Tubers', 1100, 'kg',
+   'Dense, earth-sweet ruby beetroots grown in volcanic mountain soil in Jos. Deep purple interior rich in nitrates, folic acid, and natural betalain pigments for vitality.',
+   '1518977676601-b53f82aba655', array['1518977676601-b53f82aba655']::text[],
+   array['By Weight', 'Highland Fresh', 'Detox & Juicing']::text[],
+   array['Unbroken firm skins', 'Extra deep blood-red juice', 'Grown in cool highland loam']::text[], 'live'),
+
+  -- New Grains, Legumes & Farm Staples
+  ('00000000-0000-4000-8000-000000000003', 'crop', 'Potiskum Northern Brown Beans (Drum Beans)', 'Grains', 2100, 'kg',
+   'Plump, large-seeded brown cowpeas prized across Lagos food spots. Cooks into meltingly soft, mashable texture with natural bean sweetness; the definitive choice for Ewa Aganyin.',
+   '1551462147-ff29053bfc14', array['1551462147-ff29053bfc14']::text[],
+   array['Ewa Aganyin Special', 'By Weight', 'Weevil Free']::text[],
+   array['Double swelling ratio', 'Natural chili-pod stored (no pesticide powder)', 'Machine sorted clean']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000007', 'crop', 'Artisanal Red Palm Oil Garri (Yellow Garri)', 'Grains', 1400, 'kg',
+   'Sun-dried fermented cassava mash roasted over wood fire with pure unadulterated palm oil. Fine, dry golden grains that mold into supple, aromatic yellow eba for traditional soups.',
+   '1586201375761-83865001e31c', array['1586201375761-83865001e31c']::text[],
+   array['Palm Oil Fried', 'Eastern Style', 'Extra Crispy']::text[],
+   array['Infused with virgin palm oil', 'Double sifted silky grain', 'Zero sandy residue guarantee']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000003', 'crop', 'Red Guinea Corn / Sorghum (Dawa)', 'Grains', 1300, 'kg',
+   'Ruby-colored ancient sorghum grains harvested from northern drylands. 100% gluten-free, dense in polyphenols and iron; prime ingredient for brewing red kunu and weaning cereals.',
+   '1500937386664-56d1dfef3854', array['1500937386664-56d1dfef3854']::text[],
+   array['Ancient Grain', 'Gluten Free', 'Tom Brown Staple']::text[],
+   array['Air winnowed three times', 'Heirloom dryland seed', 'Rich in iron and magnesium']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000002', 'crop', 'Plateau Acha (White Fonio / Hungry Rice)', 'Grains', 2800, 'kg',
+   'One of Africa''s oldest cultivated cereals, grown in the rocky soils of Plateau. Delicate micro-grains with nutty flavor, low glycemic index, and essential sulfur-bearing amino acids.',
+   '1586201375761-83865001e31c', array['1586201375761-83865001e31c']::text[],
+   array['Diabetic Friendly', 'Superfood', 'Ancient Grain']::text[],
+   array['Meticulously sand-washed and destoned', 'Cooks in 3-5 minutes', 'Naturally gluten-free']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000003', 'crop', 'Raw Kano Golden Groundnuts (Shelled Peanuts)', 'Grains', 1600, 'kg',
+   'Sweet, crunchy red-skin groundnuts grown in arid sandy Kano soils. High natural oil content, sweet nutty taste; wonderful for roasting with garri or grinding into silky peanut paste.',
+   '1508746829417-e6f548d8d6ed', array['1508746829417-e6f548d8d6ed']::text[],
+   array['High Protein', 'By Weight', 'Sweet Red Skin']::text[],
+   array['Aflatoxin inspected', 'Sun dried extra crunchy', 'Uniform plump kernels']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000004', 'crop', 'Natural Benne Seeds (White Sesame Seeds)', 'Grains', 2300, 'kg',
+   'Pearlescent white sesame seeds harvested from the Benue river plains. Loaded with calcium, healthy polyunsaturated oils, and nutty scent for beniseed soup, baking, and snacks.',
+   '1508746829417-e6f548d8d6ed', array['1508746829417-e6f548d8d6ed']::text[],
+   array['Superseed', 'Calcium Rich', 'Export Grade']::text[],
+   array['99.8% cleaned purity', 'Cold-press ready oil content', 'Chemical-free processing']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000009', 'crop', 'Artisanal Fermented Locust Beans (Iru Woro)', 'Grains', 1200, 'pack',
+   'Whole-bean African locust beans fermented traditionally inside wrapped banana leaves. Delivers deep, pungent savory umami complexity to efo riro, ila alasepo, and traditional stews.',
+   '1508746829417-e6f548d8d6ed', array['1508746829417-e6f548d8d6ed']::text[],
+   array['Umami Seasoning', 'Natural Ferment', 'Traditional']::text[],
+   array['Traditional earthen pot fermentation', 'Zero artificial flavor enhancers', 'Packaged fresh in leaves']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000006', 'crop', 'Pure Unadulterated Red Palm Oil (Banga Virgin Oil)', 'Grains', 2500, 'bottle',
+   'Rich, deep-red, slow-settled virgin palm oil extracted from fresh ripe oil palm fruit clusters. Completely unadulterated with dye or kerosene; thick, fragrant, and heavily beta-carotene rich.',
+   '1508746829417-e6f548d8d6ed', array['1508746829417-e6f548d8d6ed']::text[],
+   array['First Press', 'Zero Colorants', 'Banga Stew']::text[],
+   array['Single-estate rainforest grove', 'Naturally settles clear (no adulterants)', 'Sealed tamper-proof 1L glass bottle']::text[], 'live'),
+
+  ('00000000-0000-4000-8000-000000000004', 'crop', 'Raw Wildflower Forest Honey', 'Grains', 3800, 'bottle',
+   '100% pure, unheated, unpasteurized amber honey harvested by local beekeepers in the woodlands of Benue. Packed with active bee pollen, live enzymes, and rich floral notes.',
+   '1508746829417-e6f548d8d6ed', array['1508746829417-e6f548d8d6ed']::text[],
+   array['100% Raw Honey', 'Wild Harvest', 'Sugar Free']::text[],
+   array['Completely raw and unpasteurized', 'Zero sugar or syrup adulteration', '750ml sealed glass jar']::text[], 'live');
 
 -- --------------------- LIVESTOCK ---------------------
 insert into public.products

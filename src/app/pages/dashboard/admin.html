@@ -1,4 +1,4 @@
-<app-dash-shell role="Admin" name="FarmDirect HQ" [tabs]="tabs()" [active]="active()">
+<app-dash-shell role="Admin" [name]="adminName()" [tabs]="tabs()" [active]="active()">
   @switch (active()) {
     @case ('analytics') {
       <h1>Analytics</h1>

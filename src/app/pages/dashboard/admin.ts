@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Farmer, FarmerStatus, ORDER_STATUSES, OrderStatus, Review, tone } from '../../core/accounts';
+import { AuthService } from '../../core/auth.service';
 import { sanitizeUrl, sanitizeText } from '../../core/sanitizer';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
@@ -15,7 +16,10 @@ import { Insights } from './insights';
   templateUrl: './admin.html',
 })
 export class AdminDashboard {
+  private readonly auth = inject(AuthService);
   protected readonly store = inject(StoreService);
+
+  protected readonly adminName = computed(() => this.auth.profile()?.name ?? 'FarmDirect HQ');
 
   /** The open tab, from "?tab=..." in the URL. */
   readonly tab = input<string>();

@@ -1,4 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { Profile, Role } from './accounts';
@@ -10,6 +11,10 @@ const DASHBOARDS: Record<Role, string> = {
   farmer: '/farmer',
   admin: '/admin',
 };
+
+/** 5 minutes of inactivity triggers automatic admin logout for high security. */
+export const ADMIN_INACTIVITY_LIMIT_MS = 5 * 60 * 1000;
+export const ADMIN_LAST_ACTIVE_KEY = 'fd_admin_last_active';
 
 export interface SignUpDetails {
   email: string;
@@ -24,6 +29,9 @@ export interface SignUpDetails {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly supabase = inject(Supabase);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly router = inject(Router);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   /** Access to the Supabase client for auth session verification. */
   get supabaseClient() {
@@ -46,22 +54,38 @@ export class AuthService {
   /** Resolves once we know whether someone is signed in. */
   readonly ready: Promise<void>;
 
+  /* --- Inactivity Watchdog State --- */
+  private watchdogIntervalId: ReturnType<typeof setInterval> | null = null;
+  private lastActivityTime = Date.now();
+  private activityListenerCleanup: (() => void) | null = null;
+
   constructor() {
     const client = this.supabase.client;
     if (!client) {
       this.ready = Promise.resolve();
-      return;
+    } else {
+      this.ready = client.auth
+        .getSession()
+        .then(({ data }) => this.loadProfile(data.session?.user.id ?? null));
+
+      client.auth.onAuthStateChange((event, session) => {
+        if (event === 'INITIAL_SESSION') return; // handled by getSession above
+        // Supabase asks that we don't call it again from inside this callback.
+        setTimeout(() => this.loadProfile(session?.user.id ?? null));
+      });
     }
 
-    this.ready = client.auth
-      .getSession()
-      .then(({ data }) => this.loadProfile(data.session?.user.id ?? null));
-
-    client.auth.onAuthStateChange((event, session) => {
-      if (event === 'INITIAL_SESSION') return; // handled by getSession above
-      // Supabase asks that we don't call it again from inside this callback.
-      setTimeout(() => this.loadProfile(session?.user.id ?? null));
-    });
+    // Effect to monitor admin profile and toggle the 5-min inactivity watchdog
+    if (this.isBrowser) {
+      effect(() => {
+        const currentProfile = this.profile();
+        if (currentProfile?.role === 'admin') {
+          this.startAdminInactivityWatchdog();
+        } else {
+          this.stopAdminInactivityWatchdog();
+        }
+      });
+    }
   }
 
   private async loadProfile(userId: string | null): Promise<void> {
@@ -84,6 +108,19 @@ export class AuthService {
       const retry = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
       data = retry.data;
     }
+
+    if (data && data.role === 'admin' && this.isBrowser) {
+      // Check if previous admin session has exceeded the 5-min inactivity window
+      const stored = localStorage.getItem(ADMIN_LAST_ACTIVE_KEY);
+      const lastActive = stored ? Number(stored) : NaN;
+      if (!isNaN(lastActive) && Date.now() - lastActive >= ADMIN_INACTIVITY_LIMIT_MS) {
+        console.warn('[Security] Admin session expired due to inactivity (> 5 minutes).');
+        await this.handleAdminInactivityTimeout();
+        return;
+      }
+      this.recordActivity();
+    }
+
     this.profile.set(
       data
         ? {
@@ -116,6 +153,11 @@ export class AuthService {
       password,
     });
     if (error) return friendlyError(error);
+
+    if (this.isBrowser) {
+      this.recordActivity();
+    }
+
     await this.loadProfile(data.user.id);
     return null;
   }
@@ -160,6 +202,11 @@ export class AuthService {
   }
 
   async signOut(): Promise<void> {
+    this.stopAdminInactivityWatchdog();
+    if (this.isBrowser) {
+      localStorage.removeItem(ADMIN_LAST_ACTIVE_KEY);
+      sessionStorage.removeItem(ADMIN_LAST_ACTIVE_KEY);
+    }
     await this.supabase.client?.auth.signOut();
     this.profile.set(null);
   }
@@ -169,6 +216,10 @@ export class AuthService {
     if (!environment.debug) {
       console.warn('Demo login is disabled in production / secure mode.');
       return;
+    }
+
+    if (this.isBrowser) {
+      this.recordActivity();
     }
 
     if (role === 'admin') {
@@ -206,19 +257,119 @@ export class AuthService {
       });
     }
   }
+
+  /* -------------------------------------------------------------------------- */
+  /*                      ADMIN 5-MINUTE INACTIVITY WATCHDOG                    */
+  /* -------------------------------------------------------------------------- */
+
+  /** Records user interaction timestamp (throttled to at most once per 2s). */
+  recordActivity(): void {
+    const now = Date.now();
+    if (now - this.lastActivityTime < 2000) return;
+    this.lastActivityTime = now;
+    if (this.isBrowser) {
+      try {
+        localStorage.setItem(ADMIN_LAST_ACTIVE_KEY, String(now));
+      } catch {
+        // In case storage quota is restricted
+      }
+    }
+  }
+
+  /** Starts activity listeners and periodic timer checking for 5 minutes of idle time. */
+  private startAdminInactivityWatchdog(): void {
+    if (!this.isBrowser || this.watchdogIntervalId) return;
+
+    this.recordActivity();
+
+    // Listen to user interaction events across the window
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel'];
+    const onUserInteraction = () => this.recordActivity();
+
+    events.forEach((ev) => window.addEventListener(ev, onUserInteraction, { passive: true }));
+
+    // When the browser tab gains focus or becomes visible again, check if elapsed > 5 mins
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        this.checkAdminInactivity();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onVisibilityChange);
+
+    this.activityListenerCleanup = () => {
+      events.forEach((ev) => window.removeEventListener(ev, onUserInteraction));
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onVisibilityChange);
+    };
+
+    // Check every 5 seconds if 5 minutes have elapsed since last recorded interaction
+    this.watchdogIntervalId = setInterval(() => {
+      this.checkAdminInactivity();
+    }, 5000);
+  }
+
+  private checkAdminInactivity(): void {
+    if (!this.isBrowser || this.profile()?.role !== 'admin') return;
+
+    let lastActive = this.lastActivityTime;
+    try {
+      const stored = localStorage.getItem(ADMIN_LAST_ACTIVE_KEY);
+      if (stored) {
+        const parsed = Number(stored);
+        if (!isNaN(parsed) && parsed > lastActive) {
+          lastActive = parsed;
+          this.lastActivityTime = parsed;
+        }
+      }
+    } catch {
+      // Fallback to memory timestamp
+    }
+
+    if (Date.now() - lastActive >= ADMIN_INACTIVITY_LIMIT_MS) {
+      console.warn('[Security] Admin idle for 5 minutes. Logging out automatically.');
+      void this.handleAdminInactivityTimeout();
+    }
+  }
+
+  private async handleAdminInactivityTimeout(): Promise<void> {
+    this.stopAdminInactivityWatchdog();
+    if (this.isBrowser) {
+      localStorage.removeItem(ADMIN_LAST_ACTIVE_KEY);
+      sessionStorage.removeItem(ADMIN_LAST_ACTIVE_KEY);
+    }
+    await this.signOut();
+    await this.router.navigate(['/login'], {
+      queryParams: { reason: 'inactivity' },
+    });
+  }
+
+  private stopAdminInactivityWatchdog(): void {
+    if (this.watchdogIntervalId) {
+      clearInterval(this.watchdogIntervalId);
+      this.watchdogIntervalId = null;
+    }
+    if (this.activityListenerCleanup) {
+      this.activityListenerCleanup();
+      this.activityListenerCleanup = null;
+    }
+  }
 }
 
 /**
  * Route protection guard:
  * 1. Checks user authentication state and verifies active Supabase session.
- * 2. Checks user profile status (rejects suspended accounts).
- * 3. Enforces strict role access (admin only for admin routes, farmer for farmer routes).
- * 4. Redirects unauthorized users to sign-in with return URL, or to their own dashboard.
+ * 2. Enforces 5-minute inactivity timeout for admin accounts.
+ * 3. Checks user profile status (rejects suspended accounts).
+ * 4. Enforces strict role access (admin only for admin routes, farmer for farmer routes).
+ * 5. Redirects unauthorized users to sign-in with return URL, or to their own dashboard.
  */
 export function roleGuard(requiredRole: Role): CanActivateFn {
   return async (_route, state) => {
     const auth = inject(AuthService);
     const router = inject(Router);
+    const platformId = inject(PLATFORM_ID);
+    const isBrowser = isPlatformBrowser(platformId);
 
     await auth.ready;
 
@@ -242,6 +393,20 @@ export function roleGuard(requiredRole: Role): CanActivateFn {
       return router.createUrlTree(['/login'], {
         queryParams: { next: state.url },
       });
+    }
+
+    // Inactivity check for Admin accounts
+    if (profile.role === 'admin' && isBrowser) {
+      const stored = localStorage.getItem(ADMIN_LAST_ACTIVE_KEY);
+      const lastActive = stored ? Number(stored) : NaN;
+      if (!isNaN(lastActive) && Date.now() - lastActive >= ADMIN_INACTIVITY_LIMIT_MS) {
+        localStorage.removeItem(ADMIN_LAST_ACTIVE_KEY);
+        await auth.signOut();
+        return router.createUrlTree(['/login'], {
+          queryParams: { reason: 'inactivity' },
+        });
+      }
+      auth.recordActivity();
     }
 
     // Account suspended check
