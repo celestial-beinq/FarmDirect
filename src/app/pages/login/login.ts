@@ -1,6 +1,8 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 import { AuthService } from '../../core/auth.service';
+import { sanitizeEmail, sanitizeText } from '../../core/sanitizer';
 import { Supabase } from '../../core/supabase';
 
 @Component({
@@ -14,6 +16,12 @@ import { Supabase } from '../../core/supabase';
           <p class="notice">
             Accounts are not set up yet. Add your Supabase details to the .env file (see SETUP.md)
             and restart the site.
+          </p>
+        }
+
+        @if (errorParam() === 'suspended') {
+          <p class="notice notice--warning" role="alert">
+            Your account is currently suspended. Please contact support at support@farmdirect.ng.
           </p>
         }
 
@@ -130,36 +138,38 @@ import { Supabase } from '../../core/supabase';
           }
         </p>
 
-        <div class="demo-box">
-          <div class="demo-box__head">
-            <span class="demo-badge">Instant Preview</span>
-            <h3>Test with a Demo Account</h3>
-            <p>Select any role below to explore dashboards, orders, produce management and KYC:</p>
+        @if (debugMode) {
+          <div class="demo-box">
+            <div class="demo-box__head">
+              <span class="demo-badge">Developer Debug Mode</span>
+              <h3>Test with a Demo Account</h3>
+              <p>Select any role below to explore dashboards, orders, produce management and KYC:</p>
+            </div>
+            <div class="demo-box__buttons">
+              <button type="button" class="btn-demo" (click)="loginAsDemo('customer')">
+                <span class="role-icon">🛒</span>
+                <div>
+                  <strong>Customer Shopper</strong>
+                  <small>Ngozi Adebayo · Lekki Phase 1, Lagos</small>
+                </div>
+              </button>
+              <button type="button" class="btn-demo" (click)="loginAsDemo('farmer')">
+                <span class="role-icon">🚜</span>
+                <div>
+                  <strong>Verified Farmer</strong>
+                  <small>Segun Adeleke · Ogun Valley Farm</small>
+                </div>
+              </button>
+              <button type="button" class="btn-demo" (click)="loginAsDemo('admin')">
+                <span class="role-icon">🛡️</span>
+                <div>
+                  <strong>Market Administrator</strong>
+                  <small>FarmDirect HQ Admin Portal</small>
+                </div>
+              </button>
+            </div>
           </div>
-          <div class="demo-box__buttons">
-            <button type="button" class="btn-demo" (click)="loginAsDemo('customer')">
-              <span class="role-icon">🛒</span>
-              <div>
-                <strong>Customer Shopper</strong>
-                <small>Ngozi Adebayo · Lekki Phase 1, Lagos</small>
-              </div>
-            </button>
-            <button type="button" class="btn-demo" (click)="loginAsDemo('farmer')">
-              <span class="role-icon">🚜</span>
-              <div>
-                <strong>Verified Farmer</strong>
-                <small>Segun Adeleke · Ogun Valley Farm</small>
-              </div>
-            </button>
-            <button type="button" class="btn-demo" (click)="loginAsDemo('admin')">
-              <span class="role-icon">🛡️</span>
-              <div>
-                <strong>Market Administrator</strong>
-                <small>FarmDirect HQ Admin Portal</small>
-              </div>
-            </button>
-          </div>
-        </div>
+        }
       </div>
     </section>
   `,
@@ -172,6 +182,15 @@ import { Supabase } from '../../core/supabase';
       margin-bottom: 24px;
       font-size: clamp(1.8rem, 4vw, 2.4rem);
       text-align: center;
+    }
+
+    .notice--warning {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm, 8px);
+      margin-bottom: 20px;
     }
 
     .demo-box {
@@ -302,9 +321,12 @@ export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly supabase = inject(Supabase);
+  protected readonly debugMode = environment.debug;
 
   /** "?next=basket" sends a customer back to finish their order. */
   readonly next = input<string>();
+  /** "?error=suspended" displays account suspension message. */
+  readonly errorParam = input<string>('', { alias: 'error' });
 
   protected readonly mode = signal<'in' | 'up'>('in');
   protected readonly role = signal<'customer' | 'farmer'>('customer');
@@ -332,12 +354,16 @@ export class Login {
   }
 
   protected async submit(): Promise<void> {
-    const email = this.email().trim();
+    const email = sanitizeEmail(this.email());
     const password = this.password();
     this.error.set('');
 
-    if (!/^\S+@\S+\.\S+$/.test(email)) return this.error.set('Enter a valid email address.');
-    if (password.length < 8) return this.error.set('Your password needs at least 8 characters.');
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return this.error.set('Enter a valid email address.');
+    }
+    if (!password || password.trim().length < 8) {
+      return this.error.set('Your password needs at least 8 characters.');
+    }
 
     this.busy.set(true);
     try {
@@ -345,17 +371,23 @@ export class Login {
         const error = await this.auth.signIn(email, password);
         if (error) return this.error.set(error);
       } else {
-        if (!this.name().trim()) return this.error.set('Enter your full name.');
-        if (this.role() === 'farmer' && this.farmName().trim().length < 2) {
+        const fullName = sanitizeText(this.name(), 120);
+        if (!fullName) return this.error.set('Enter your full name.');
+
+        const farm = sanitizeText(this.farmName(), 120);
+        const location = sanitizeText(this.farmLocation(), 160);
+
+        if (this.role() === 'farmer' && farm.length < 2) {
           return this.error.set('Enter your farm name.');
         }
+
         const result = await this.auth.signUp({
           email,
           password,
-          fullName: this.name().trim(),
+          fullName,
           role: this.role(),
-          farmName: this.farmName().trim(),
-          farmLocation: this.farmLocation().trim(),
+          farmName: farm,
+          farmLocation: location,
         });
         if (result.error) return this.error.set(result.error);
         if (result.confirmEmail) {
@@ -377,6 +409,7 @@ export class Login {
   }
 
   protected async loginAsDemo(role: 'customer' | 'farmer' | 'admin'): Promise<void> {
+    if (!this.debugMode) return;
     this.auth.signInDemo(role);
     if (role === 'customer' && this.next() === 'basket') {
       await this.router.navigate(['/basket']);

@@ -1,6 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 import { Profile, Role } from './accounts';
+import { sanitizeEmail, sanitizeText } from './sanitizer';
 import { Supabase, friendlyError } from './supabase';
 
 const DASHBOARDS: Record<Role, string> = {
@@ -22,6 +24,15 @@ export interface SignUpDetails {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly supabase = inject(Supabase);
+
+  /** Access to the Supabase client for auth session verification. */
+  get supabaseClient() {
+    return this.supabase.client;
+  }
+
+  isSupabaseConfigured(): boolean {
+    return this.supabase.configured;
+  }
 
   /** The signed-in person's profile, or null when signed out. */
   readonly profile = signal<Profile | null>(null);
@@ -93,7 +104,17 @@ export class AuthService {
   async signIn(email: string, password: string): Promise<string | null> {
     const client = this.supabase.client;
     if (!client) return 'Sign-in is not set up yet.';
-    const { data, error } = await client.auth.signInWithPassword({ email, password });
+
+    const cleanEmail = sanitizeEmail(email);
+    if (!cleanEmail) return 'Please enter a valid email address.';
+    if (!password || password.trim().length < 8) {
+      return 'Password must be at least 8 characters.';
+    }
+
+    const { data, error } = await client.auth.signInWithPassword({
+      email: cleanEmail,
+      password,
+    });
     if (error) return friendlyError(error);
     await this.loadProfile(data.user.id);
     return null;
@@ -106,18 +127,30 @@ export class AuthService {
   async signUp(details: SignUpDetails): Promise<{ error: string | null; confirmEmail: boolean }> {
     const client = this.supabase.client;
     if (!client) return { error: 'Sign-up is not set up yet.', confirmEmail: false };
+
+    const cleanEmail = sanitizeEmail(details.email);
+    const cleanName = sanitizeText(details.fullName, 120);
+    const cleanFarmName = details.farmName ? sanitizeText(details.farmName, 120) : '';
+    const cleanFarmLocation = details.farmLocation ? sanitizeText(details.farmLocation, 160) : '';
+
+    if (!cleanEmail) return { error: 'Please enter a valid email address.', confirmEmail: false };
+    if (!cleanName) return { error: 'Please enter your full name.', confirmEmail: false };
+    if (!details.password || details.password.trim().length < 8) {
+      return { error: 'Password must be at least 8 characters.', confirmEmail: false };
+    }
+
     const { data, error } = await client.auth.signUp({
-      email: details.email,
+      email: cleanEmail,
       password: details.password,
       options: {
         emailRedirectTo: `${location.origin}/login`,
         // Read by the database when it creates the profile. The role is
         // re-checked there: nobody can sign up as an admin.
         data: {
-          full_name: details.fullName,
+          full_name: cleanName,
           role: details.role,
-          farm_name: details.farmName ?? '',
-          farm_location: details.farmLocation ?? '',
+          farm_name: cleanFarmName,
+          farm_location: cleanFarmLocation,
         },
       },
     });
@@ -131,8 +164,13 @@ export class AuthService {
     this.profile.set(null);
   }
 
-  /** Quick sign-in with mock profile for instant testing of all 3 dashboards. */
+  /** Quick sign-in with mock profile for instant testing of all 3 dashboards. Only allowed when debug mode is enabled. */
   signInDemo(role: Role): void {
+    if (!environment.debug) {
+      console.warn('Demo login is disabled in production / secure mode.');
+      return;
+    }
+
     if (role === 'admin') {
       this.profile.set({
         id: 'u-admin-1',
@@ -171,15 +209,61 @@ export class AuthService {
 }
 
 /**
- * Lets a route open only for the given role; everyone else goes to sign-in.
- * This is for convenience only — the real protection is in the database,
- * which refuses data to the wrong role whatever page is open.
+ * Route protection guard:
+ * 1. Checks user authentication state and verifies active Supabase session.
+ * 2. Checks user profile status (rejects suspended accounts).
+ * 3. Enforces strict role access (admin only for admin routes, farmer for farmer routes).
+ * 4. Redirects unauthorized users to sign-in with return URL, or to their own dashboard.
  */
-export function roleGuard(role: Role): CanActivateFn {
-  return async () => {
+export function roleGuard(requiredRole: Role): CanActivateFn {
+  return async (_route, state) => {
     const auth = inject(AuthService);
     const router = inject(Router);
+
     await auth.ready;
-    return auth.profile()?.role === role ? true : router.createUrlTree(['/login']);
+
+    // Verify session with Supabase client if configured and not debug mode
+    if (auth.isSupabaseConfigured() && !environment.debug) {
+      const client = auth.supabaseClient;
+      if (client) {
+        const { data } = await client.auth.getSession();
+        if (!data.session) {
+          return router.createUrlTree(['/login'], {
+            queryParams: { next: state.url },
+          });
+        }
+      }
+    }
+
+    const profile = auth.profile();
+
+    // Not authenticated
+    if (!profile) {
+      return router.createUrlTree(['/login'], {
+        queryParams: { next: state.url },
+      });
+    }
+
+    // Account suspended check
+    if (profile.status === 'suspended') {
+      return router.createUrlTree(['/login'], {
+        queryParams: { error: 'suspended' },
+      });
+    }
+
+    // Role authorization check:
+    // - 'admin' route requires 'admin' role
+    // - 'farmer' route requires 'farmer' role
+    // - 'customer' route accepts 'customer' or 'admin'
+    const isAuthorized =
+      profile.role === requiredRole ||
+      (requiredRole === 'customer' && profile.role === 'admin');
+
+    if (isAuthorized) {
+      return true;
+    }
+
+    // If authenticated but unauthorized for this specific role, route to their own dashboard
+    return router.createUrlTree([auth.homePath()]);
   };
 }

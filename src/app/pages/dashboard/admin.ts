@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Farmer, FarmerStatus, ORDER_STATUSES, OrderStatus, Review, tone } from '../../core/accounts';
+import { sanitizeUrl, sanitizeText } from '../../core/sanitizer';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
@@ -424,6 +425,10 @@ export class AdminDashboard {
 
   protected stars(rating: number): string {
     return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+  }
+
+  protected safeDocumentUrl(url: string | null | undefined): string {
+    return sanitizeUrl(url);
   }
 
   protected removePool(id: string, name: string): void {

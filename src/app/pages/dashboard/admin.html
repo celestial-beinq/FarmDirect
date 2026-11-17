@@ -242,14 +242,14 @@
                 </div>
               </div>
 
-              @if (f.documentUrl) {
+              @if (f.documentUrl && safeDocumentUrl(f.documentUrl)) {
                 <div class="vetting-section-title">Submitted Identity & Land Documents</div>
                 <div class="vetting-doc-preview">
-                  <img [src]="f.documentUrl" alt="Verification proof document" style="max-height: 120px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: cover;" />
+                  <img [src]="safeDocumentUrl(f.documentUrl)" alt="Verification proof document" style="max-height: 120px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: cover;" />
                   <div>
                     <strong style="display: block; font-size: 0.8125rem; color: #0f172a;">Official Identity / Land Deed</strong>
                     <small style="color: #64748b; display: block; margin-bottom: 6px;">NIMC NIN slip or registered certificate</small>
-                    <a [href]="f.documentUrl" target="_blank" rel="noopener" class="btn btn--sm btn--soft">
+                    <a [href]="safeDocumentUrl(f.documentUrl)" target="_blank" rel="noopener noreferrer" class="btn btn--sm btn--soft">
                       Open Full Document ↗
                     </a>
                   </div>

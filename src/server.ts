@@ -4,7 +4,7 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -24,26 +24,76 @@ if (process.env['TRUST_PROXY']) {
   app.set('trust proxy', Number(process.env['TRUST_PROXY']) || 1);
 }
 
+// Request size limits to protect against denial-of-service via large payloads.
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+
+/**
+ * CORS handling:
+ * Allow configured origins or local development origins.
+ */
+const configuredOrigins = (process.env['ALLOWED_ORIGINS'] ?? '')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+const isOriginAllowed = (origin: string): boolean => {
+  if (!origin) return true; // Non-browser / same-origin requests
+  if (configuredOrigins.includes(origin)) return true;
+  // Local development fallback
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
+  return false;
+};
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers['origin'];
+  if (typeof origin === 'string') {
+    if (isOriginAllowed(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Vary', 'Origin');
+    }
+  }
+
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization, apikey, x-client-info',
+  );
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
+
 /**
  * Security headers on every response.
  */
-app.use((_req, res, next) => {
+app.use((_req: Request, res: Response, next: NextFunction) => {
   // Browsers must not guess file types (stops disguised scripts).
   res.setHeader('X-Content-Type-Options', 'nosniff');
   // The site may not be embedded in another site's frame (stops clickjacking).
   res.setHeader('X-Frame-Options', 'DENY');
+  // Disable buggy legacy XSS auditor in favor of strict CSP.
+  res.setHeader('X-XSS-Protection', '0');
   // Don't leak full page addresses to other sites.
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  // The site never needs the camera, microphone or location.
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // Limit browser features: disable camera, microphone, geolocation; allow payment for Paystack.
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(self "https://*.paystack.co")',
+  );
+  // Cross-Origin isolation protections
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
 
   if (standalone) {
-    // Only ever load this site over HTTPS (takes effect on HTTPS responses).
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    // Only ever load this site over HTTPS with preloading.
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     // Limits where scripts, styles, images and network calls may come from,
     // so injected content cannot load code from, or send data to, elsewhere.
-    // ('unsafe-inline' is needed for the small inline scripts and styles
-    // Angular adds when it renders pages on the server.)
     res.setHeader(
       'Content-Security-Policy',
       [
@@ -51,12 +101,12 @@ app.use((_req, res, next) => {
         "script-src 'self' 'unsafe-inline'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com",
-        "img-src 'self' data: https://images.unsplash.com https://*.supabase.co",
-        "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+        "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.paystack.co",
         "frame-ancestors 'none'",
         "base-uri 'self'",
         "object-src 'none'",
-        "form-action 'self'",
+        "form-action 'self' https://*.paystack.co https://checkout.paystack.com",
       ].join('; '),
     );
   }
@@ -64,7 +114,65 @@ app.use((_req, res, next) => {
 });
 
 /**
- * Serve static files from /browser
+ * Factory for memory-bounded rate limiters.
+ */
+function createRateLimiter(windowMs: number, maxRequests: number, message: string) {
+  const store = new Map<string, { count: number; resetAt: number }>();
+
+  // Cleanup interval
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of store) {
+      if (entry.resetAt <= now) store.delete(key);
+    }
+  }, windowMs).unref();
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    const now = Date.now();
+    const key = req.ip ?? 'unknown';
+    const entry = store.get(key);
+
+    if (!entry || entry.resetAt <= now) {
+      store.set(key, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+
+    entry.count++;
+    if (entry.count > maxRequests) {
+      res.setHeader('Retry-After', Math.ceil((entry.resetAt - now) / 1000));
+      res.status(429).type('application/json').json({
+        error: 'Too many requests',
+        message,
+      });
+      return;
+    }
+    next();
+  };
+}
+
+/** Rate limiter for authentication routes: max 15 requests per 15 minutes. */
+const authRateLimiter = createRateLimiter(
+  15 * 60_000,
+  15,
+  'Too many sign-in attempts. Please wait 15 minutes before trying again.',
+);
+
+/** Rate limiter for general API routes: max 60 requests per minute. */
+const apiRateLimiter = createRateLimiter(
+  60_000,
+  60,
+  'Too many API requests. Please slow down and try again shortly.',
+);
+
+/** Rate limiter for page rendering: max 120 requests per minute. */
+const pageRateLimiter = createRateLimiter(
+  60_000,
+  120,
+  'Too many page requests. Please try again in a minute.',
+);
+
+/**
+ * Serve static files from /browser before rate limiters.
  */
 app.use(
   express.static(browserDistFolder, {
@@ -75,44 +183,39 @@ app.use(
 );
 
 /**
- * Rate limiting for page requests: at most 120 a minute from one address.
- * Rendering a page costs server time, so this stops one visitor (or bot)
- * from tying the server up. Static files above are not counted.
+ * Apply targeted rate limiters:
  */
-const WINDOW_MS = 60_000;
-const MAX_REQUESTS = 120;
-const hits = new Map<string, { count: number; resetAt: number }>();
+app.use('/login', authRateLimiter);
+app.use('/api', apiRateLimiter);
 
-app.use((req, res, next) => {
-  const now = Date.now();
-  const key = req.ip ?? 'unknown';
-  const entry = hits.get(key);
-
-  if (!entry || entry.resetAt <= now) {
-    hits.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return next();
-  }
-  entry.count++;
-  if (entry.count > MAX_REQUESTS) {
-    res.setHeader('Retry-After', Math.ceil((entry.resetAt - now) / 1000));
-    res.status(429).type('text/plain').send('Too many requests. Please try again in a minute.');
-    return;
-  }
-  next();
+/**
+ * Health check endpoint for container monitors and uptime checkers.
+ */
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.json({
+    status: 'healthy',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// Forget addresses whose window has passed, so the list cannot grow forever.
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of hits) {
-    if (entry.resetAt <= now) hits.delete(key);
-  }
-}, WINDOW_MS).unref();
+/**
+ * Unhandled /api routes return 404 JSON rather than executing SSR.
+ */
+app.all('/api/*', (_req: Request, res: Response) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
+/**
+ * Apply page rate limiting to SSR requests.
+ */
+app.use(pageRateLimiter);
 
 /**
  * Handle all other requests by rendering the Angular application.
  */
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   angularApp
     .handle(req)
     .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))

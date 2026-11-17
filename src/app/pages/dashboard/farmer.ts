@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { NIGERIAN_STATES, Review, tone } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
 import { CROP_CATEGORIES, Crop, UNIT_PLURALS } from '../../core/data';
+import { sanitizeNumber, sanitizeText, sanitizeUrl } from '../../core/sanitizer';
 import { ProductForm, StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
@@ -214,11 +215,11 @@ export class FarmerDashboard {
   }
 
   protected saveReply(reviewId: string, replyText: string): void {
-    const trimmed = replyText.trim();
-    if (!trimmed) return;
+    const cleanReply = sanitizeText(replyText, 1000);
+    if (!cleanReply) return;
     this.replies.update((prev) => ({
       ...prev,
-      [reviewId]: trimmed,
+      [reviewId]: cleanReply,
     }));
     this.replyingTo.set(null);
   }
@@ -331,13 +332,13 @@ export class FarmerDashboard {
     const me = this.me();
     if (!me) return;
 
-    const nin = this.kycNin().trim();
-    const residentialAddress = this.kycResidentialAddress().trim();
-    const location = this.kycFarmLocation().trim();
-    const farmSize = this.kycFarmSize().trim();
-    const cropProduces = this.kycCropProduces().trim();
-    const stateOfOrigin = this.kycStateOfOrigin().trim();
-    const documentUrl = this.kycDocumentUrl().trim();
+    const nin = this.kycNin().replace(/\D/g, '').slice(0, 11);
+    const residentialAddress = sanitizeText(this.kycResidentialAddress(), 200);
+    const location = sanitizeText(this.kycFarmLocation(), 200);
+    const farmSize = sanitizeText(this.kycFarmSize(), 60);
+    const cropProduces = sanitizeText(this.kycCropProduces(), 200);
+    const stateOfOrigin = sanitizeText(this.kycStateOfOrigin(), 60);
+    const documentUrl = sanitizeUrl(this.kycDocumentUrl());
 
     this.kycError.set('');
     this.kycSuccess.set(false);
@@ -421,8 +422,18 @@ export class FarmerDashboard {
   protected async saveProduct(): Promise<void> {
     const me = this.me();
     const editing = this.editing();
-    const form = { ...this.form(), name: this.form().name.trim() };
     if (!me || !editing) return;
+
+    const raw = this.form();
+    const form: ProductForm = {
+      name: sanitizeText(raw.name, 120),
+      category: raw.category,
+      price: sanitizeNumber(raw.price, 0),
+      unit: sanitizeText(raw.unit, 30),
+      quantity: sanitizeNumber(raw.quantity ?? 0, 0),
+      description: sanitizeText(raw.description, 2000),
+    };
+
     if (form.name.length < 2) return this.formError.set('Give the listing a name.');
     if (form.price <= 0) return this.formError.set('Enter a price above ₦0.');
 
@@ -451,8 +462,10 @@ export class FarmerDashboard {
   protected async saveProfile(name: string, location: string): Promise<void> {
     const me = this.me();
     this.saved.set(false);
-    if (!me || name.trim().length < 2) return;
-    const error = await this.store.updateFarm(me.id, name.trim(), location.trim());
+    const cleanName = sanitizeText(name, 120);
+    const cleanLocation = sanitizeText(location, 160);
+    if (!me || cleanName.length < 2) return;
+    const error = await this.store.updateFarm(me.id, cleanName, cleanLocation);
     this.saved.set(!error);
   }
 }

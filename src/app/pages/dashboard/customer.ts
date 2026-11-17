@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ORDER_STEPS, Order, OrderItem, tone } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
 import { CartService } from '../../core/cart.service';
+import { sanitizePhone, sanitizeText } from '../../core/sanitizer';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
@@ -113,9 +114,13 @@ export class CustomerDashboard {
 
   protected async saveProfile(name: string, phone: string, address: string): Promise<void> {
     this.saved.set(false);
-    if (!name.trim()) return this.formError.set('Enter your name.');
-    if (!address.trim()) return this.formError.set('Enter a delivery address.');
-    const error = await this.store.updateMyProfile(name.trim(), phone.trim(), address.trim());
+    const cleanName = sanitizeText(name, 120);
+    const cleanPhone = sanitizePhone(phone);
+    const cleanAddress = sanitizeText(address, 250);
+
+    if (!cleanName) return this.formError.set('Enter your name.');
+    if (!cleanAddress) return this.formError.set('Enter a delivery address.');
+    const error = await this.store.updateMyProfile(cleanName, cleanPhone, cleanAddress);
     this.formError.set(error ?? '');
     this.saved.set(!error);
   }
