@@ -87,3 +87,32 @@ export function tone(status: string): 'good' | 'warn' | 'bad' {
   if (['suspended', 'rejected', 'Cancelled', 'cancelled'].includes(status)) return 'bad';
   return 'warn';
 }
+
+/** Check if farmer has submitted all compulsory verification dossier items. */
+export function getFarmerVerificationErrors(farmer: Farmer | null | undefined): string[] {
+  if (!farmer) return ['Farmer profile not found.'];
+  const errors: string[] = [];
+  const nin = (farmer.nin || '').replace(/\D/g, '');
+  if (!nin || nin.length !== 11) {
+    errors.push('National Identity Number (NIN) must be exactly 11 digits.');
+  }
+  if (!farmer.residentialAddress || farmer.residentialAddress.trim().length < 5) {
+    errors.push('Complete residential address is compulsory.');
+  }
+  if (!farmer.location || farmer.location.trim().length < 3) {
+    errors.push('Farmland location / address is compulsory.');
+  }
+  if (!farmer.farmSize || farmer.farmSize.trim().length < 2) {
+    errors.push('Farm size (e.g. 5 Hectares or 10 Acres) is compulsory.');
+  }
+  if (!farmer.cropProduces || farmer.cropProduces.trim().length < 2) {
+    errors.push('Primary crop & livestock produces are compulsory.');
+  }
+  return errors;
+}
+
+/** A farmer is fully verified for listing only when status is verified AND all compulsory vetting dossier fields are valid. */
+export function isFarmerVerified(farmer: Farmer | null | undefined): boolean {
+  if (!farmer || farmer.status !== 'verified') return false;
+  return getFarmerVerificationErrors(farmer).length === 0;
+}

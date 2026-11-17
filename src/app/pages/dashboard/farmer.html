@@ -28,16 +28,16 @@
           Update & Re-submit
         </a>
       </div>
-    } @else if (!me.nin) {
-      <div class="banner banner--warn" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+    } @else if (!isVerifiedForListing()) {
+      <div class="banner banner--warn" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
         <div>
-          <strong style="color: #92400e;">Complete Farm KYC Verification</strong>
+          <strong style="color: #92400e;">Compulsory KYC &amp; NIN Verification Required</strong>
           <p style="margin: 2px 0 0; color: #b45309; font-size: 0.8125rem;">
-            Submit your National Identity Number (NIN), residential address, and farm size to get vetted and approved for selling.
+            A verified 11-digit NIN and complete farmland dossier are compulsory before you can list produce on the marketplace.
           </p>
         </div>
         <a [routerLink]="[]" [queryParams]="{ tab: 'verification' }" class="btn btn--sm btn--primary">
-          Complete KYC Now
+          Complete Verification Now
         </a>
       </div>
     } @else if (me.status === 'suspended') {
@@ -151,11 +151,55 @@
           </div>
         }
 
+        @if (!isVerifiedForListing()) {
+          <div class="banner banner--warn" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+              <div>
+                <strong style="color: #92400e; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                  🔒 NIN &amp; Farm Verification Compulsory For Listing
+                </strong>
+                <p style="margin: 4px 0 0; color: #b45309; font-size: 0.8125rem; line-height: 1.45;">
+                  Your 11-digit National Identity Number (NIN) and farm vetting dossier are compulsory before you can list produce on FarmDirect.
+                  @if (me.status === 'pending') {
+                    Your verification dossier is currently under administrator review.
+                  } @else if (me.status === 'rejected') {
+                    Your verification was rejected: {{ me.verificationNotes || 'Please correct your details.' }}
+                  } @else {
+                    Please submit your 11-digit NIN and farmland details under the Verification tab to get approved.
+                  }
+                </p>
+                @if (listingGateErrors().length > 0) {
+                  <ul style="margin: 6px 0 0; padding-left: 18px; color: #b45309; font-size: 0.75rem;">
+                    @for (err of listingGateErrors(); track err) {
+                      <li>{{ err }}</li>
+                    }
+                  </ul>
+                }
+              </div>
+              <a [routerLink]="[]" [queryParams]="{ tab: 'verification' }" class="btn btn--sm btn--primary" style="white-space: nowrap;">
+                Complete Verification Now →
+              </a>
+            </div>
+          </div>
+        }
+
+        @if (listingGateNotice()) {
+          <div class="banner banner--bad" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; color: #991b1b; font-size: 0.8125rem;">
+            {{ listingGateNotice() }}
+          </div>
+        }
+
         <div class="panel">
           <div class="panel__head">
             <h2>{{ products().length }} {{ products().length === 1 ? 'listing' : 'listings' }}</h2>
             @if (!editing()) {
-              <button type="button" class="btn btn--sm btn--primary" (click)="startAdd()">
+              <button
+                type="button"
+                class="btn btn--sm btn--primary"
+                [disabled]="!isVerifiedForListing()"
+                [title]="!isVerifiedForListing() ? 'NIN and farm verification are compulsory to list produce' : 'Add Listing'"
+                (click)="startAdd()"
+              >
                 Add Listing
               </button>
             }
@@ -785,13 +829,18 @@
 
         <div class="panel">
           <div class="panel__head">
-            <h2>National Identity & Farmland Vetting Form</h2>
+            <div>
+              <h2 style="margin: 0;">National Identity &amp; Farmland Vetting Form</h2>
+              <p style="margin: 4px 0 0; color: #64748b; font-size: 0.8125rem;">
+                National Identity Number (NIN) and farm vetting dossier are <strong>compulsory</strong> to get verified and list produce on the FarmDirect marketplace.
+              </p>
+            </div>
           </div>
 
           <form class="form" (submit)="$event.preventDefault(); submitKyc()">
             <div class="grid-2">
               <label>
-                National Identity Number (NIN)
+                National Identity Number (NIN) <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
                 <input
                   type="text"
                   placeholder="11-digit NIN (e.g. 89421039841)"
@@ -800,7 +849,7 @@
                   [value]="kycNin()"
                   (input)="kycNin.set($any($event.target).value)"
                 />
-                <small>11-digit National Identity Number issued by NIMC.</small>
+                <small>11-digit National Identity Number issued by NIMC (Compulsory for listing).</small>
               </label>
 
               <label>
@@ -818,7 +867,7 @@
             </div>
 
             <label>
-              Farmer Residential Address
+              Farmer Residential Address <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
               <input
                 type="text"
                 placeholder="Your home address (e.g. Plot 12 Quarry Hill, Abeokuta, Ogun State)"
@@ -827,12 +876,12 @@
                 [value]="kycResidentialAddress()"
                 (input)="kycResidentialAddress.set($any($event.target).value)"
               />
-              <small>Physical residence of the farm operator.</small>
+              <small>Physical residence of the farm operator (Compulsory).</small>
             </label>
 
             <div class="grid-2">
               <label>
-                Farmland Address / Location
+                Farmland Address / Location <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
                 <input
                   type="text"
                   placeholder="e.g. KM 14 Abeokuta-Ibadan Expressway, Odeda LGA"
@@ -841,11 +890,11 @@
                   [value]="kycFarmLocation()"
                   (input)="kycFarmLocation.set($any($event.target).value)"
                 />
-                <small>Physical farmland where produce is cultivated.</small>
+                <small>Physical farmland where produce is cultivated (Compulsory).</small>
               </label>
 
               <label>
-                Farm Size
+                Farm Size <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
                 <input
                   type="text"
                   placeholder="e.g. 15 Hectares / 35 Acres / 4 Plots"
@@ -854,12 +903,12 @@
                   [value]="kycFarmSize()"
                   (input)="kycFarmSize.set($any($event.target).value)"
                 />
-                <small>Total cultivated land or facility size.</small>
+                <small>Total cultivated land or facility size (Compulsory).</small>
               </label>
             </div>
 
             <label>
-              Crop & Produce Specialties
+              Crop &amp; Produce Specialties <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
               <input
                 type="text"
                 placeholder="e.g. Vine Tomatoes, Sweet Spinach, Ofada Rice, Ugu Leaves, Cassava"
@@ -868,7 +917,7 @@
                 [value]="kycCropProduces()"
                 (input)="kycCropProduces.set($any($event.target).value)"
               />
-              <small>The main crops and agricultural items produced by your farm.</small>
+              <small>The main crops and agricultural items produced by your farm (Compulsory).</small>
             </label>
 
             <label>

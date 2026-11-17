@@ -192,7 +192,27 @@
             </header>
 
             <div class="vetting-card__body">
-              <div class="vetting-section-title">Farmer Identification</div>
+              @if (!canVerifyFarmer(f)) {
+                <div class="banner banner--warn" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px;">
+                  <strong style="color: #92400e; display: block; font-size: 0.8125rem;">⚠️ Compulsory Verification Dossier Incomplete</strong>
+                  <p style="margin: 3px 0 6px; font-size: 0.75rem; color: #b45309;">
+                    A farmer cannot be verified for marketplace listing until their 11-digit NIN and complete farmland details are submitted and confirmed:
+                  </p>
+                  <ul style="margin: 0; padding-left: 18px; color: #b45309; font-size: 0.75rem;">
+                    @for (err of getFarmerErrors(f); track err) {
+                      <li>{{ err }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              @if (vettingError()) {
+                <div class="banner banner--bad" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; color: #991b1b; font-size: 0.8125rem;">
+                  {{ vettingError() }}
+                </div>
+              }
+
+              <div class="vetting-section-title">Farmer Identification (Compulsory)</div>
               <div class="vetting-grid">
                 <div class="vetting-field">
                   <label>Owner / Farmer Name</label>
@@ -203,10 +223,13 @@
                   <div class="value">{{ f.stateOfOrigin || 'Not provided' }}</div>
                 </div>
                 <div class="vetting-field">
-                  <label>National Identity Number (NIN)</label>
+                  <label>
+                    National Identity Number (NIN)
+                    <span style="color: #dc2626; font-size: 0.7rem; font-weight: 600;">* Compulsory</span>
+                  </label>
                   <div class="value" style="display: flex; align-items: center; justify-content: space-between;">
-                    <span class="mono" style="font-weight: 600;">
-                      {{ f.nin || 'Not submitted' }}
+                    <span class="mono" [style.color]="(f.nin && f.nin.length === 11) ? '#166534' : '#dc2626'" style="font-weight: 600;">
+                      {{ f.nin || 'Not submitted (Compulsory)' }}
                     </span>
                     @if (f.nin) {
                       <button
@@ -221,8 +244,13 @@
                   </div>
                 </div>
                 <div class="vetting-field">
-                  <label>Residential Address</label>
-                  <div class="value">{{ f.residentialAddress || 'Not provided' }}</div>
+                  <label>
+                    Residential Address
+                    <span style="color: #dc2626; font-size: 0.7rem; font-weight: 600;">* Compulsory</span>
+                  </label>
+                  <div class="value" [style.color]="f.residentialAddress ? 'inherit' : '#dc2626'">
+                    {{ f.residentialAddress || 'Not provided (Compulsory)' }}
+                  </div>
                 </div>
               </div>
 
@@ -292,6 +320,8 @@
                 <button
                   type="button"
                   class="btn btn--sm btn--primary"
+                  [disabled]="!canVerifyFarmer(f)"
+                  [title]="!canVerifyFarmer(f) ? 'Cannot approve: 11-digit NIN and all compulsory dossier fields are required' : 'Approve & Verify Farm'"
                   (click)="verifyFarmer(f)"
                 >
                   ✓ Approve & Verify Farm

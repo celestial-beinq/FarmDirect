@@ -1,7 +1,16 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Farmer, FarmerStatus, ORDER_STATUSES, OrderStatus, Review, tone } from '../../core/accounts';
+import {
+  Farmer,
+  FarmerStatus,
+  ORDER_STATUSES,
+  OrderStatus,
+  Review,
+  getFarmerVerificationErrors,
+  isFarmerVerified,
+  tone,
+} from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
 import { sanitizeUrl, sanitizeText } from '../../core/sanitizer';
 import { StoreService } from '../../core/store.service';
@@ -78,14 +87,26 @@ export class AdminDashboard {
     suspended: this.farmers().filter((f) => f.farmer.status === 'suspended').length,
   }));
 
+  protected readonly vettingError = signal<string | null>(null);
+
+  protected getFarmerErrors(farmer: Farmer | null): string[] {
+    return getFarmerVerificationErrors(farmer);
+  }
+
+  protected canVerifyFarmer(farmer: Farmer | null): boolean {
+    return getFarmerVerificationErrors(farmer).length === 0;
+  }
+
   protected openDossier(farmer: Farmer): void {
     this.inspectingFarmer.set(farmer);
     this.rejectionReason.set(farmer.verificationNotes || '');
+    this.vettingError.set(null);
   }
 
   protected closeDossier(): void {
     this.inspectingFarmer.set(null);
     this.rejectionReason.set('');
+    this.vettingError.set(null);
   }
 
   protected copyNin(nin?: string): void {
@@ -101,8 +122,19 @@ export class AdminDashboard {
     }, 2000);
   }
 
-  protected verifyFarmer(farmer: Farmer): void {
-    void this.store.setFarmerStatus(farmer.id, 'verified', 'Vetted & Verified by Administrator');
+  protected async verifyFarmer(farmer: Farmer): Promise<void> {
+    const errors = getFarmerVerificationErrors(farmer);
+    if (errors.length > 0) {
+      this.vettingError.set(`Cannot verify: NIN and complete verification dossier are compulsory. ${errors.join(' ')}`);
+      return;
+    }
+
+    this.vettingError.set(null);
+    const err = await this.store.setFarmerStatus(farmer.id, 'verified', 'Vetted & Verified by Administrator (NIN Confirmed)');
+    if (err) {
+      this.vettingError.set(err);
+      return;
+    }
     this.closeDossier();
   }
 

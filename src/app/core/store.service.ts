@@ -1,5 +1,14 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
-import { Farmer, FarmerStatus, Order, OrderStatus, Profile, Review } from './accounts';
+import {
+  Farmer,
+  FarmerStatus,
+  Order,
+  OrderStatus,
+  Profile,
+  Review,
+  getFarmerVerificationErrors,
+  isFarmerVerified,
+} from './accounts';
 import { AuthService } from './auth.service';
 import { CartItem } from './cart.service';
 import { Animal, Crop, CropCategory, DEFAULT_IMAGE, Pool, ProductStatus, unitsFromOption } from './data';
@@ -76,11 +85,11 @@ export class StoreService {
   /** True while the realtime connection opened by `watch()` is up. */
   readonly live = signal(false);
 
-  /** What shoppers can buy: approved listings from verified farms. */
+  /** What shoppers can buy: approved listings from verified farms with complete NIN & dossier. */
   readonly liveCrops = computed(() => {
     const verified = new Set(
       this.farmers()
-        .filter((f) => f.status === 'verified')
+        .filter((f) => isFarmerVerified(f))
         .map((f) => f.id),
     );
     return this.crops().filter((c) => c.status === 'live' && verified.has(c.farmerId));
@@ -317,7 +326,18 @@ export class StoreService {
   }
 
   /** A farmer's new listing waits for admin approval (the database enforces this). */
-  addProduct(farmId: string, form: ProductForm) {
+  addProduct(farmId: string, form: ProductForm): Promise<string | null> {
+    const farm = this.farmers().find((f) => f.id === farmId);
+    if (!farm) {
+      return Promise.resolve('Farm record not found.');
+    }
+    if (!isFarmerVerified(farm)) {
+      const errors = getFarmerVerificationErrors(farm);
+      return Promise.resolve(
+        `Cannot list produce: NIN and farm verification are compulsory before listing. ${errors.join(' ')}`,
+      );
+    }
+
     const quantity = Math.max(0, Math.floor(form.quantity ?? 0));
     const newCrop: Crop = {
       id: `crop-${Date.now()}`,
@@ -329,7 +349,7 @@ export class StoreService {
       description: form.description,
       image: DEFAULT_IMAGE[form.category],
       gallery: [DEFAULT_IMAGE[form.category]],
-      origin: this.farmers().find((f) => f.id === farmId)?.location ?? 'Verified Nigerian Farm',
+      origin: farm.location || 'Verified Nigerian Farm',
       highlights: ['Fresh harvest', 'Harvested to order'],
       tags: ['New Harvest'],
       farmerId: farmId,
@@ -418,7 +438,17 @@ export class StoreService {
     return this.change((c) => c.from('products').delete().eq('id', id));
   }
 
-  setFarmerStatus(id: string, status: FarmerStatus, notes?: string) {
+  setFarmerStatus(id: string, status: FarmerStatus, notes?: string): Promise<string | null> {
+    const targetFarmer = this.farmers().find((f) => f.id === id);
+    if (status === 'verified') {
+      const errors = getFarmerVerificationErrors(targetFarmer);
+      if (errors.length > 0) {
+        return Promise.resolve(
+          `Cannot verify farm: NIN and full verification dossier are compulsory. ${errors.join(' ')}`,
+        );
+      }
+    }
+
     this.farmers.update((list) =>
       list.map((f) =>
         f.id === id ? { ...f, status, verificationNotes: notes ?? f.verificationNotes } : f,

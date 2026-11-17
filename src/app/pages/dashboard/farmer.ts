@@ -1,7 +1,13 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NIGERIAN_STATES, Review, tone } from '../../core/accounts';
+import {
+  NIGERIAN_STATES,
+  Review,
+  getFarmerVerificationErrors,
+  isFarmerVerified,
+  tone,
+} from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
 import { CROP_CATEGORIES, Crop, UNIT_PLURALS } from '../../core/data';
 import { sanitizeNumber, sanitizeText, sanitizeUrl } from '../../core/sanitizer';
@@ -247,10 +253,14 @@ export class FarmerDashboard {
       label: 'KYC & Verification',
       icon: 'shield',
       group: 'Farm',
-      count: this.me()?.status !== 'verified' ? 1 : undefined,
+      count: !this.isVerifiedForListing() ? 1 : undefined,
     },
     { id: 'profile', label: 'Farm Profile', icon: 'leaf', group: 'Account' },
   ]);
+
+  protected readonly isVerifiedForListing = computed(() => isFarmerVerified(this.me()));
+  protected readonly listingGateErrors = computed(() => getFarmerVerificationErrors(this.me()));
+  protected readonly listingGateNotice = signal<string | null>(null);
 
   /* ---- KYC & Verification Form State ---- */
   protected readonly kycNin = signal('');
@@ -387,10 +397,15 @@ export class FarmerDashboard {
   }
 
   protected startAdd(): void {
-    if (this.me()?.status !== 'verified') {
-      this.formError.set('Your farm must be vetted and verified by an administrator before you can list produce on the marketplace.');
+    const me = this.me();
+    if (!me || !isFarmerVerified(me)) {
+      const reasons = getFarmerVerificationErrors(me);
+      this.listingGateNotice.set(
+        `NIN and KYC verification are compulsory to list produce on the marketplace. ${reasons.join(' ')}`,
+      );
       return;
     }
+    this.listingGateNotice.set(null);
     this.form.set(EMPTY_FORM);
     this.formError.set('');
     this.editing.set('new');
@@ -423,6 +438,13 @@ export class FarmerDashboard {
     const me = this.me();
     const editing = this.editing();
     if (!me || !editing) return;
+
+    if (!isFarmerVerified(me)) {
+      const reasons = getFarmerVerificationErrors(me);
+      return this.formError.set(
+        `National Identity Number (NIN) and KYC verification are compulsory before you can list produce. ${reasons.join(' ')}`,
+      );
+    }
 
     const raw = this.form();
     const form: ProductForm = {
