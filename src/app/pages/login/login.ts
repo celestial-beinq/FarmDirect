@@ -364,7 +364,7 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .auth {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       min-height: calc(100dvh - 76px);
       background: var(--cream);
     }
@@ -373,8 +373,9 @@ import { PhotoPipe } from '../../shared/pipes';
     .auth__visual {
       position: relative;
       display: flex;
-      align-items: flex-end;
-      padding: clamp(32px, 5vw, 64px);
+      align-items: center;
+      justify-content: flex-end;
+      padding: clamp(32px, 4vw, 72px);
       background-color: var(--green-900);
       background-size: cover;
       background-position: center;
@@ -387,13 +388,14 @@ import { PhotoPipe } from '../../shared/pipes';
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(180deg, rgba(18, 40, 26, 0.55) 0%, rgba(18, 40, 26, 0.93) 70%),
-        radial-gradient(circle at 15% 10%, rgba(207, 232, 110, 0.25), transparent 50%);
+        linear-gradient(180deg, rgba(18, 40, 26, 0.6) 0%, rgba(18, 40, 26, 0.94) 70%),
+        radial-gradient(circle at 20% 15%, rgba(207, 232, 110, 0.25), transparent 50%);
     }
 
     .auth__visual-inner {
       position: relative;
-      max-width: 480px;
+      max-width: 500px;
+      width: 100%;
     }
 
     .auth__kicker {
@@ -412,20 +414,22 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .auth__visual h2 {
       margin: 20px 0 14px;
-      font-size: clamp(1.9rem, 3.4vw, 2.7rem);
+      font-size: clamp(1.85rem, 3.2vw, 2.6rem);
       font-weight: 800;
+      line-height: 1.2;
     }
 
     .auth__lede {
       font-size: 1rem;
-      opacity: 0.85;
-      max-width: 42ch;
+      line-height: 1.55;
+      opacity: 0.88;
+      max-width: 44ch;
     }
 
     .auth__perks {
       display: grid;
       gap: 16px;
-      margin: 32px 0;
+      margin: 28px 0;
     }
 
     .auth__perks li {
@@ -441,7 +445,7 @@ import { PhotoPipe } from '../../shared/pipes';
       width: 38px;
       height: 38px;
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
       color: var(--lime);
     }
 
@@ -453,12 +457,12 @@ import { PhotoPipe } from '../../shared/pipes';
     .auth__perks small {
       display: block;
       font-size: 0.83rem;
-      opacity: 0.75;
+      opacity: 0.78;
     }
 
     .auth__quote {
       margin: 0;
-      padding: 18px 20px;
+      padding: 16px 20px;
       border-radius: var(--radius);
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.14);
@@ -467,33 +471,38 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .auth__quote blockquote {
       margin: 0;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-style: italic;
+      line-height: 1.5;
     }
 
     .auth__quote figcaption {
       margin-top: 8px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--lime);
     }
 
     /* ---------- Form side ---------- */
     .auth__main {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: flex-start;
       justify-content: center;
-      padding: clamp(28px, 5vw, 64px) 20px;
+      padding: clamp(32px, 4vw, 72px);
+      min-height: 100%;
+      background: var(--cream);
     }
 
     .auth__card {
       width: 100%;
-      max-width: 460px;
-      padding: clamp(24px, 4vw, 40px);
+      max-width: 490px;
+      margin: auto 0;
+      padding: clamp(24px, 3.8vw, 40px);
       border-radius: var(--radius-lg);
       background: var(--white);
       box-shadow:
-        0 1px 2px rgba(18, 40, 26, 0.04),
-        0 20px 50px -20px rgba(18, 40, 26, 0.18);
+        0 1px 3px rgba(18, 40, 26, 0.05),
+        0 20px 45px -15px rgba(18, 40, 26, 0.12);
     }
 
     .auth__back {
@@ -750,7 +759,7 @@ import { PhotoPipe } from '../../shared/pipes';
       border: 0;
       outline: 0;
       background: transparent;
-      font-size: 0.95rem;
+      font-size: 1rem;
       color: var(--ink);
     }
 
@@ -976,32 +985,160 @@ import { PhotoPipe } from '../../shared/pipes';
       }
     }
 
-    /* ---------- Responsive ---------- */
-    @media (max-width: 960px) {
-      .auth {
-        grid-template-columns: 1fr;
-        min-height: 0;
+    /* ---------- Responsive Breakpoints ---------- */
+    @media (min-width: 1600px) {
+      .auth__visual {
+        padding-right: 96px;
       }
 
+      .auth__main {
+        padding-left: 96px;
+      }
+
+      .auth__card {
+        max-width: 520px;
+      }
+
+      .auth__visual-inner {
+        max-width: 540px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .auth {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      }
+
+      .auth__visual {
+        padding: 32px 24px;
+      }
+
+      .auth__main {
+        padding: 32px 24px;
+      }
+
+      .auth__perks {
+        gap: 12px;
+        margin: 20px 0;
+      }
+
+      .auth__quote {
+        display: none;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .auth {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .auth__visual {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 220px;
+        padding: 36px 20px;
+        text-align: center;
+      }
+
+      .auth__visual-inner {
+        max-width: 520px;
+        margin: 0 auto;
+      }
+
+      .auth__perks,
+      .auth__quote,
+      .auth__lede {
+        display: none;
+      }
+
+      .auth__visual h2 {
+        font-size: 1.75rem;
+        margin: 12px 0 0;
+      }
+
+      .auth__main {
+        align-items: center;
+        justify-content: center;
+        padding: 32px 20px 48px;
+        background:
+          radial-gradient(circle at 50% 0%, rgba(207, 232, 110, 0.28), transparent 55%),
+          var(--cream);
+      }
+
+      .auth__card {
+        max-width: 500px;
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 560px) {
       .auth__visual {
         display: none;
       }
 
       .auth__main {
-        background:
-          radial-gradient(circle at 0% 0%, rgba(207, 232, 110, 0.35), transparent 45%),
-          var(--cream);
+        padding: 16px 12px 32px;
+        align-items: stretch;
       }
-    }
 
-    @media (max-width: 480px) {
-      .auth__main {
-        padding: 16px;
+      .auth__card {
+        max-width: 100%;
+        padding: 22px 16px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(18, 40, 26, 0.08);
+      }
+
+      .auth__head h1 {
+        font-size: 1.55rem;
       }
 
       .roles__grid,
       .field-row {
         grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .field__control {
+        height: 48px;
+      }
+
+      .auth-submit {
+        height: 48px;
+      }
+
+      .tabs {
+        margin: 18px 0 16px;
+      }
+
+      .tabs button {
+        padding: 9px 8px;
+        font-size: 0.85rem;
+      }
+    }
+
+    @media (max-height: 720px) and (min-width: 861px) {
+      .auth__visual {
+        padding-top: 20px;
+        padding-bottom: 20px;
+      }
+
+      .auth__perks {
+        margin: 14px 0;
+        gap: 8px;
+      }
+
+      .auth__quote {
+        display: none;
+      }
+
+      .auth__card {
+        padding: 22px 28px;
+      }
+
+      .auth-form {
+        gap: 12px;
       }
     }
   `,
