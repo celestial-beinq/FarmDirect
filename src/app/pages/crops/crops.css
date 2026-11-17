@@ -36,8 +36,12 @@
   outline: none;
 }
 
+.field input:focus {
+  outline: none;
+}
+
 .field:focus-within {
-  outline: 2px solid var(--green-900);
+  outline: none;
 }
 
 .field--select {
