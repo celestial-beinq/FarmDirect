@@ -203,7 +203,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 /**
  * Unhandled /api routes return 404 JSON rather than executing SSR.
  */
-app.all('/api/*', (_req: Request, res: Response) => {
+app.use('/api', (_req: Request, res: Response) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
