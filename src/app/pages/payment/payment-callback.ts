@@ -6,7 +6,6 @@ import { CartService } from '../../core/cart.service';
 import { StoreService } from '../../core/store.service';
 import { Supabase } from '../../core/supabase';
 import { Icon } from '../../shared/icon';
-import { NairaPipe } from '../../shared/pipes';
 
 export interface ReceiptItem {
   title: string;
@@ -31,7 +30,7 @@ export interface ReceiptData {
  */
 @Component({
   selector: 'app-payment-callback',
-  imports: [RouterLink, Icon, NairaPipe],
+  imports: [RouterLink, Icon],
   templateUrl: './payment-callback.html',
   styleUrl: './payment-callback.css',
 })
