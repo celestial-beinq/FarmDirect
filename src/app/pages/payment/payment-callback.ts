@@ -1,3 +1,4 @@
+import { UpperCasePipe } from '@angular/common';
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Order } from '../../core/accounts';
@@ -47,7 +48,7 @@ export class PaymentCallback {
   protected readonly message = signal('');
 
   protected readonly receipt = signal<ReceiptData>({
-    orderCode: '0427',
+    orderCode: 'ORD-2048',
     date: this.formatReceiptDate(),
     items: [],
     total: 0,
@@ -61,15 +62,16 @@ export class PaymentCallback {
     });
   }
 
-  /** Formats date to receipt style: "18.11.26 • 09:41" */
+  /** Formats date to receipt style: "11 AUG 2026 · 14:32" */
   protected formatReceiptDate(dStr?: string): string {
     const d = dStr ? new Date(dStr) : new Date();
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
     const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = String(d.getFullYear()).slice(-2);
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
     const hours = String(d.getHours()).padStart(2, '0');
     const mins = String(d.getMinutes()).padStart(2, '0');
-    return `${day}.${month}.${year} • ${hours}:${mins}`;
+    return `${day} ${month} ${year} · ${hours}:${mins}`;
   }
 
   /** Formats amounts with 2 decimal places e.g. "1,200.00" */
@@ -146,14 +148,14 @@ export class PaymentCallback {
         );
         const total = matchedOrders.reduce((sum, o) => sum + o.total, 0);
         const orderCode = matchedOrders
-          .map((o) => o.code.replace(/^FD-/, ''))
+          .map((o) => 'ORD-' + o.code.replace(/^FD-/, ''))
           .join(', ');
         const date = this.formatReceiptDate(matchedOrders[0]?.date);
         const address = matchedOrders[0]?.address;
         const customerName = matchedOrders[0]?.customerName;
 
         this.receipt.set({
-          orderCode: orderCode || '0427',
+          orderCode: orderCode || 'ORD-2048',
           date,
           items,
           total,
@@ -169,7 +171,7 @@ export class PaymentCallback {
           qty: i.qty,
         }));
         const total = cartBackup.reduce((sum, i) => sum + i.unitPrice * i.qty, 0);
-        const orderCode = String(Math.floor(1000 + Math.random() * 9000));
+        const orderCode = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
         const date = this.formatReceiptDate();
 
         this.receipt.set({

@@ -106,59 +106,75 @@
         @if (visible().length > 0) {
           <div class="grid">
             @for (crop of visible(); track crop.id) {
-              <article class="card crop">
-                <div class="crop__media">
-                  <a [routerLink]="['/crops', crop.id]" class="crop__image-link" [attr.aria-label]="crop.name">
-                    <img [src]="crop.image | photo: 600" [alt]="crop.name" loading="lazy" />
-                  </a>
-                  <div class="crop__stock-badge">
-                    @if (crop.quantity <= 0) {
-                      <span class="stock-tag stock-tag--out">Out of Stock</span>
-                    } @else if (crop.quantity < 5) {
-                      <span class="stock-tag stock-tag--low">Only {{ crop.quantity }} {{ crop.unit }} left</span>
-                    } @else {
-                      <span class="stock-tag stock-tag--in">{{ crop.quantity }} {{ crop.unit === 'bunch' ? 'bunches' : crop.unit + 's' }} left</span>
-                    }
-                  </div>
-                </div>
-                <div class="crop__body">
-                  <div class="crop__meta">
-                    <span class="crop__category">{{ crop.category }}</span>
-                    @if (crop.origin) {
-                      <span class="crop__meta-dot">•</span>
-                      <span class="crop__origin">{{ crop.origin.split(',')[0] }}</span>
-                    }
-                  </div>
-                  <h2 class="crop__title">
-                    <a [routerLink]="['/crops', crop.id]">{{ crop.name }}</a>
-                  </h2>
-                  <div class="crop__price-row">
-                    <span class="crop__price">{{ crop.price | naira }}</span>
-                    <span class="crop__unit">/ {{ crop.unit }}</span>
-                  </div>
-                  @if (crop.tags.length > 0) {
-                    <div class="crop__tags">
-                      @for (tag of crop.tags.slice(0, 2); track tag) {
-                        <span class="chip">{{ tag }}</span>
-                      }
-                    </div>
+              <article class="crop">
+                <!-- Background media link covering whole card -->
+                <a [routerLink]="['/crops', crop.id]" class="crop__bg-link" [attr.aria-label]="crop.name">
+                  <img [src]="crop.image | photo: 600" [alt]="crop.name" class="crop__bg-img" loading="lazy" />
+                  <div class="crop__scrim"></div>
+                </a>
+
+                <!-- Stock Badge top-left -->
+                <div class="crop__stock-badge">
+                  @if (crop.quantity <= 0) {
+                    <span class="stock-tag stock-tag--out">Out of Stock</span>
+                  } @else if (crop.quantity < 5) {
+                    <span class="stock-tag stock-tag--low">Only {{ crop.quantity }} {{ crop.unit }} left</span>
+                  } @else {
+                    <span class="stock-tag stock-tag--in">{{ crop.quantity }} {{ crop.unit === 'bunch' ? 'bunches' : crop.unit + 's' }} left</span>
                   }
-                  <div class="crop__actions">
+                </div>
+
+                <!-- Floating Bottom Card (Framer Team Hover Card pattern) -->
+                <div class="crop__floating-card">
+                  <div class="crop__main">
+                    <div class="crop__info">
+                      <div class="crop__meta">
+                        <span class="crop__category">{{ crop.category }}</span>
+                        @if (crop.origin) {
+                          <span class="crop__meta-dot">•</span>
+                          <span class="crop__origin">{{ crop.origin.split(',')[0] }}</span>
+                        }
+                      </div>
+                      <h2 class="crop__title">
+                        <a [routerLink]="['/crops', crop.id]">{{ crop.name }}</a>
+                      </h2>
+                      <div class="crop__price-row">
+                        <span class="crop__price">{{ crop.price | naira }}</span>
+                        <span class="crop__unit">/ {{ crop.unit }}</span>
+                      </div>
+                    </div>
+
                     <button
                       type="button"
-                      class="btn btn--primary btn--quick-add"
+                      class="crop__action-btn"
+                      [class.is-added]="addedId() === crop.id"
                       [disabled]="crop.quantity <= 0"
                       (click)="quickAdd(crop, $event)"
+                      [attr.aria-label]="'Add ' + crop.name + ' to basket'"
                     >
                       @if (addedId() === crop.id) {
-                        <app-icon name="check" [size]="15" /> Added!
+                        <app-icon name="check" [size]="16" />
                       } @else {
-                        <app-icon name="basket" [size]="15" /> Add to Basket
+                        <app-icon name="basket" [size]="16" />
                       }
                     </button>
-                    <a [routerLink]="['/crops', crop.id]" class="btn btn--soft btn--details" aria-label="View product details">
-                      <app-icon name="arrow-right" [size]="15" />
-                    </a>
+                  </div>
+
+                  <!-- Drawer revealed on hover -->
+                  <div class="crop__drawer">
+                    <div class="crop__drawer-inner">
+                      @if (crop.tags.length > 0) {
+                        <div class="crop__tags">
+                          @for (tag of crop.tags.slice(0, 2); track tag) {
+                            <span class="chip">{{ tag }}</span>
+                          }
+                        </div>
+                      }
+                      <a [routerLink]="['/crops', crop.id]" class="crop__details-link">
+                        <span>Details</span>
+                        <app-icon name="arrow-right" [size]="13" />
+                      </a>
+                    </div>
                   </div>
                 </div>
               </article>
