@@ -222,6 +222,7 @@ export class StoreService {
             customerId: o.customer_id,
             customerName: o.customer_name,
             farmerId: o.farm_id,
+            paymentId: o.payment_id,
             date: o.created_at,
             total: o.total,
             status: o.status,

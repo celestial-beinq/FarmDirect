@@ -64,6 +64,7 @@ export interface Order {
   customerId: string;
   customerName: string;
   farmerId: string;
+  paymentId?: string;
   date: string;
   items: OrderItem[];
   total: number;
