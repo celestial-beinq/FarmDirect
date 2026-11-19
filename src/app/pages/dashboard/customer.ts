@@ -31,7 +31,6 @@ export class CustomerDashboard {
   protected readonly Math = Math;
 
   /* ---- Orders in progress view, search, date filter & pagination ---- */
-  protected readonly viewMode = signal<'table' | 'cards'>('table');
   protected readonly orderSearch = signal('');
   protected readonly statusFilter = signal<'all' | OrderStatus>('all');
   protected readonly datePreset = signal<'all' | 'today' | '7days' | '30days' | 'custom'>('all');
@@ -170,8 +169,7 @@ export class CustomerDashboard {
 
   protected readonly orderStatuses = ORDER_STATUSES;
 
-  /* ---- My Orders tab: view, search, date filter & pagination ---- */
-  protected readonly myOrdersViewMode = signal<'table' | 'cards'>('table');
+  /* ---- My Orders tab: search, date filter & pagination ---- */
   protected readonly myOrdersSearch = signal('');
   protected readonly myOrdersStatusFilter = signal<'all' | OrderStatus>('all');
   protected readonly myOrdersDatePreset = signal<'all' | 'today' | '7days' | '30days' | 'custom'>('all');
