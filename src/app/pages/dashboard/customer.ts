@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { ORDER_STEPS, Order, OrderItem, tone } from '../../core/accounts';
+import { ORDER_STEPS, Order, OrderItem, OrderStatus, tone } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
 import { CartService } from '../../core/cart.service';
 import { sanitizePhone, sanitizeText } from '../../core/sanitizer';

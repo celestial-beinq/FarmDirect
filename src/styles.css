@@ -1097,6 +1097,149 @@ select:focus-visible,
   cursor: not-allowed;
 }
 
+/* Dashboard Tools Filters, Table Stepper & Expanded Accordion */
+.dash-filter-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--dash-border);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--dash-muted);
+  font-size: 0.8125rem;
+}
+
+.dash-filter-select select {
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--dash-text);
+  cursor: pointer;
+}
+
+.dash-date-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dash-date-range input[type='date'] {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--dash-border);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--dash-text);
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.order-items-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.order-mini-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+  flex: none;
+}
+
+.order-mini-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #475569;
+  flex: none;
+}
+
+.progress-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 105px;
+}
+
+.progress-mini__bars {
+  display: flex;
+  gap: 3px;
+  height: 5px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.progress-mini__segment {
+  flex: 1;
+  background: #e2e8f0;
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.progress-mini__segment.is-done {
+  background: #16a34a;
+}
+
+.progress-mini__text {
+  font-size: 0.7rem;
+  color: var(--dash-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table__expanded-row td {
+  background: #f8fafc !important;
+  padding: 16px 20px !important;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.order-expanded-card {
+  background: #ffffff;
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.order-expanded-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.order-expanded-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--dash-text);
+}
+
+.order-card-wrap {
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.order-card-wrap:last-child {
+  border-bottom: none;
+}
+
 /* Live Pulse status */
 .live {
   display: inline-flex;
