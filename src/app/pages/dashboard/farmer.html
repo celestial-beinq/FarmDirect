@@ -671,11 +671,11 @@
                   </a>
                 </div>
               } @else {
-                <div class="review-card__product">
-                  <div class="review-card__product-info">
-                    <h3 class="review-card__product-name">{{ productName(review.productId) }}</h3>
-                    <p class="review-card__product-meta">FarmDirect Listing</p>
-                  </div>
+                <div class="review-card__unlisted-chip">
+                  <span class="review-card__unlisted-icon"><app-icon name="box" [size]="14" /></span>
+                  <span class="review-card__unlisted-label">Removed listing</span>
+                  <span class="review-card__dot">·</span>
+                  <span class="review-card__unlisted-id">Product ID: <code>{{ review.productId }}</code></span>
                 </div>
               }
 

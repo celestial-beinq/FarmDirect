@@ -796,7 +796,7 @@
               type="button"
               class="review-chip"
               [class.is-active]="filterRating() === 0"
-              (click)="filterRating.set(0)"
+              (click)="setFilterRating(0)"
             >
               All Reviews
               <span class="review-chip__count">{{ reviews().length }}</span>
@@ -807,7 +807,7 @@
                   type="button"
                   class="review-chip"
                   [class.is-active]="filterRating() === star"
-                  (click)="filterRating.set(star)"
+                  (click)="setFilterRating(star)"
                 >
                   {{ star }} ★
                   <span class="review-chip__count">{{ ratingCount(star) }}</span>
@@ -823,7 +823,7 @@
                 type="search"
                 placeholder="Search reviews, authors, products…"
                 [value]="searchQuery()"
-                (input)="searchQuery.set($any($event.target).value)"
+                (input)="setSearchQuery($any($event.target).value)"
                 aria-label="Filter reviews"
               />
             </div>
@@ -833,7 +833,7 @@
 
       <!-- Review Cards List -->
       <div class="reviews-list">
-        @for (review of filteredReviews(); track review.id) {
+        @for (review of pagedReviews(); track review.id) {
           <article class="review-card">
             <!-- Header: Customer avatar, name, verified badge & star rating -->
             <div class="review-card__header">
@@ -842,15 +842,17 @@
                   {{ initials(review.author) }}
                 </span>
                 <div class="review-card__identity">
-                  <strong>
-                    {{ review.author }}
+                  <div class="review-card__identity-row">
+                    <strong class="review-card__author-name">{{ review.author }}</strong>
                     <span class="review-card__verified">
                       <app-icon name="check" [size]="11" /> Verified Buyer
                     </span>
-                  </strong>
+                  </div>
                   <p class="review-card__date">
                     <app-icon name="clock" [size]="12" />
-                    {{ review.date | date: 'mediumDate' }} · ID: {{ review.id }}
+                    <span>{{ review.date | date: 'mediumDate' }}</span>
+                    <span class="review-card__dot">·</span>
+                    <span class="review-card__id-pill">ID: {{ review.id }}</span>
                   </p>
                 </div>
               </div>
@@ -860,8 +862,8 @@
                   @for (star of [1, 2, 3, 4, 5]; track star) {
                     <svg
                       class="review-star-svg"
-                      width="18"
-                      height="18"
+                      width="17"
+                      height="17"
                       viewBox="0 0 24 24"
                       [attr.fill]="star <= review.rating ? '#f59e0b' : '#e2e8f0'"
                       aria-hidden="true"
@@ -874,9 +876,9 @@
               </div>
             </div>
 
-            <!-- Product Context Pill / Strip -->
+            <!-- Product Context: Product Strip if active, discreet chip if unlisted -->
             @if (product(review.productId); as prod) {
-              <div class="review-card__product">
+              <div class="review-card__product-strip">
                 <img
                   [src]="prod.image | photo: 120"
                   [alt]="prod.name"
@@ -884,49 +886,57 @@
                   loading="lazy"
                 />
                 <div class="review-card__product-info">
+                  <span class="review-card__product-tag">Item Reviewed</span>
                   <h3 class="review-card__product-name">
                     <a [routerLink]="productLink(review.productId)">{{ prod.name }}</a>
                   </h3>
                   <p class="review-card__product-meta">
-                    Product ID: {{ prod.id }}
+                    Product ID: <code>{{ prod.id }}</code>
                   </p>
                 </div>
                 <a
                   [routerLink]="productLink(review.productId)"
-                  class="btn btn--sm btn--soft"
+                  class="review-card__view-btn"
                   title="View product details"
                 >
-                  <app-icon name="eye" [size]="13" /> View Listing
+                  <app-icon name="eye" [size]="13" />
+                  <span>View Listing</span>
                 </a>
               </div>
             } @else {
-              <div class="review-card__product">
-                <div class="review-card__product-info">
-                  <h3 class="review-card__product-name">{{ productName(review.productId) }}</h3>
-                  <p class="review-card__product-meta">Product ID: {{ review.productId }}</p>
-                </div>
+              <div class="review-card__unlisted-chip">
+                <span class="review-card__unlisted-icon"><app-icon name="box" [size]="14" /></span>
+                <span class="review-card__unlisted-label">Removed listing</span>
+                <span class="review-card__dot">·</span>
+                <span class="review-card__unlisted-id">Product ID: <code>{{ review.productId }}</code></span>
               </div>
             }
 
             <!-- Review Testimonial Body -->
             @if (review.comment) {
-              <blockquote class="review-card__comment">
-                "{{ review.comment }}"
-              </blockquote>
+              <div class="review-card__quote-wrap">
+                <svg class="review-card__quote-mark" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                </svg>
+                <blockquote class="review-card__comment">
+                  {{ review.comment }}
+                </blockquote>
+              </div>
             }
 
             <!-- Card Actions -->
             <div class="review-card__foot">
-              <span style="font-size: 0.72rem; color: var(--dash-muted);">
-                Customer ID: {{ review.customerId }}
-              </span>
+              <div class="review-card__customer-tag">
+                <app-icon name="user" [size]="12" />
+                <span>Customer ID: <code>{{ review.customerId }}</code></span>
+              </div>
               <button
                 type="button"
                 class="review-btn-action review-btn-action--danger"
                 (click)="removeReview(review)"
               >
                 <app-icon name="trash" [size]="13" />
-                Delete Review
+                <span>Delete Review</span>
               </button>
             </div>
           </article>
@@ -940,7 +950,7 @@
                   type="button"
                   class="btn btn--sm btn--soft"
                   style="margin-top: 10px; display: block; margin-left: auto; margin-right: auto;"
-                  (click)="filterRating.set(0); searchQuery.set('');"
+                  (click)="setFilterRating(0); setSearchQuery('');"
                 >
                   Clear Filters
                 </button>
@@ -951,6 +961,60 @@
           </div>
         }
       </div>
+
+      <!-- Pagination for Reviews -->
+      @if (filteredReviews().length > reviewPageSize()) {
+        <div class="pager" style="margin-top: 20px;">
+          <div class="pager__summary">
+            Showing
+            <strong>{{ reviewPageStart() + 1 }}</strong>–<strong>{{ Math.min(reviewPageStart() + reviewPageSize(), filteredReviews().length) }}</strong>
+            of <strong>{{ filteredReviews().length }}</strong> reviews
+          </div>
+          <div class="pager__controls">
+            <label class="pager__size">
+              <span>Per page</span>
+              <select
+                [value]="reviewPageSize()"
+                (change)="setReviewPageSize($any($event.target).value)"
+              >
+                @for (size of reviewPageSizes; track size) {
+                  <option [value]="size">{{ size }}</option>
+                }
+              </select>
+            </label>
+            <button
+              type="button"
+              class="pager__btn"
+              [disabled]="reviewPage() <= 1"
+              (click)="goToReviewPage(reviewPage() - 1)"
+              aria-label="Previous page"
+            >
+              <app-icon name="chevron-left" [size]="14" />
+            </button>
+            <div class="pager__pages">
+              @for (p of reviewPageNumbers(); track p) {
+                <button
+                  type="button"
+                  class="pager__page"
+                  [class.pager__page--active]="p === reviewPage()"
+                  (click)="goToReviewPage(p)"
+                >
+                  {{ p }}
+                </button>
+              }
+            </div>
+            <button
+              type="button"
+              class="pager__btn"
+              [disabled]="reviewPage() >= reviewPageCount()"
+              (click)="goToReviewPage(reviewPage() + 1)"
+              aria-label="Next page"
+            >
+              <app-icon name="chevron-right" [size]="14" />
+            </button>
+          </div>
+        </div>
+      }
     }
 
     @case ('customers') {
