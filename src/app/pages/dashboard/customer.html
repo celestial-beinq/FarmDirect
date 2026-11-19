@@ -8,93 +8,472 @@
 
     @switch (active()) {
       @case ('orders') {
-        <h1>My Orders</h1>
-        <p>Follow each order from the farm to your door.</p>
-
-        @for (order of orders(); track order.id) {
-          <article class="order">
-            <div class="order__head">
-              <div>
-                <h3>Order {{ order.code }}</h3>
-                <p>
-                  {{ order.date | date: 'mediumDate' }} · {{ store.farmerName(order.farmerId) }}
-                </p>
-              </div>
-              <span class="badge-status" [class]="'badge-status--' + tone(order.status)">
-                {{ order.status }}
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h1 style="margin: 0;">My Orders</h1>
+              <span class="badge-status badge-status--good" style="font-size: 0.72rem;">
+                {{ matchingMyOrders().length }} orders
               </span>
             </div>
+            <p style="margin: 4px 0 0;">Follow each order from the farm to your door.</p>
+          </div>
 
-            <ul class="order__items">
-              @for (item of order.items; track $index) {
-                <li>
-                  <img [src]="item.image | photo: 120" alt="" />
-                  <span
-                    >{{ item.title }} <small>{{ item.detail }} × {{ item.qty }}</small></span
-                  >
-                  @if (order.status === 'Delivered' && reviewLink(item); as link) {
-                    <a [routerLink]="link" fragment="reviews" class="btn btn--sm btn--soft"
-                      >Review</a
-                    >
-                  }
-                  <strong>{{ item.unitPrice * item.qty | naira }}</strong>
-                </li>
+          <!-- View Switcher -->
+          <div class="seg" role="group" aria-label="View switch">
+            <button
+              type="button"
+              [attr.aria-pressed]="myOrdersViewMode() === 'table'"
+              (click)="myOrdersViewMode.set('table')"
+              title="Detailed Table View"
+            >
+              <app-icon name="list" [size]="14" /> Table
+            </button>
+            <button
+              type="button"
+              [attr.aria-pressed]="myOrdersViewMode() === 'cards'"
+              (click)="myOrdersViewMode.set('cards')"
+              title="Card View"
+            >
+              <app-icon name="grid" [size]="14" /> Cards
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="dash-tools" style="margin: 14px 0 16px;">
+          <!-- Search Query -->
+          <label class="dash-search" style="min-width: 200px;">
+            <app-icon name="search" [size]="16" />
+            <input
+              type="search"
+              placeholder="Search order #, farm, or crop..."
+              aria-label="Search my orders"
+              [value]="myOrdersSearch()"
+              (input)="setMyOrdersSearch($any($event.target).value)"
+            />
+          </label>
+
+          <!-- Date Presets -->
+          <label class="dash-filter-select">
+            <app-icon name="calendar" [size]="15" />
+            <select
+              aria-label="Filter by date range"
+              (change)="setMyOrdersDatePreset($any($event.target).value)"
+            >
+              <option value="all" [selected]="myOrdersDatePreset() === 'all'">All Dates</option>
+              <option value="today" [selected]="myOrdersDatePreset() === 'today'">Today</option>
+              <option value="7days" [selected]="myOrdersDatePreset() === '7days'">Past 7 Days</option>
+              <option value="30days" [selected]="myOrdersDatePreset() === '30days'">Past 30 Days</option>
+              <option value="custom" [selected]="myOrdersDatePreset() === 'custom'">Custom Date Range…</option>
+            </select>
+          </label>
+
+          <!-- Custom Date Range Inputs -->
+          @if (myOrdersDatePreset() === 'custom') {
+            <div class="dash-date-range">
+              <input
+                type="date"
+                aria-label="Start date"
+                title="From date"
+                [value]="myOrdersDateFrom()"
+                (change)="setMyOrdersDateFrom($any($event.target).value)"
+              />
+              <span class="muted" style="font-size: 0.75rem;">to</span>
+              <input
+                type="date"
+                aria-label="End date"
+                title="To date"
+                [value]="myOrdersDateTo()"
+                (change)="setMyOrdersDateTo($any($event.target).value)"
+              />
+            </div>
+          }
+
+          <!-- Status Filter -->
+          <label class="dash-filter-select">
+            <select
+              aria-label="Filter by order status"
+              (change)="setMyOrdersStatusFilter($any($event.target).value)"
+            >
+              <option value="all" [selected]="myOrdersStatusFilter() === 'all'">All Statuses</option>
+              @for (st of orderStatuses; track st) {
+                <option [value]="st" [selected]="myOrdersStatusFilter() === st">{{ st }}</option>
               }
-            </ul>
+            </select>
+          </label>
 
-            @if (order.status === 'Awaiting payment') {
-              <p class="notice">
-                This order has not been paid for. If you already paid, it will update within a
-                minute or two.
-              </p>
-            } @else if (order.status !== 'Cancelled') {
-              <ol class="tracker" [attr.aria-label]="'Order progress: ' + order.status">
-                @for (step of steps; track step; let i = $index) {
-                  <li [class.is-done]="i <= stepIndex(order)">{{ step }}</li>
-                }
-              </ol>
-            }
+          <!-- Reset Filters -->
+          @if (hasActiveMyOrdersFilters()) {
+            <button
+              type="button"
+              class="btn btn--sm btn--soft"
+              (click)="resetMyOrdersFilters()"
+              title="Reset all search and date filters"
+            >
+              <app-icon name="close" [size]="13" /> Reset
+            </button>
+          }
 
-            <div class="order__foot">
-              <span
-                >Total <strong>{{ order.total | naira }}</strong></span
-              >
-              <div class="order__actions">
-                <button
-                  type="button"
-                  class="btn btn--sm btn--soft"
-                  (click)="reorder(order)"
-                >
-                  <app-icon name="basket" [size]="14" /> Buy Again
-                </button>
+          <span class="dash-count" style="margin-left: auto;">
+            <b>{{ matchingMyOrders().length }}</b> of {{ orders().length }} orders
+          </span>
+        </div>
+
+        <div class="panel">
+          <!-- View 1: Detailed Table View -->
+          @if (myOrdersViewMode() === 'table') {
+            <div class="table-wrap">
+              <table class="table orders-table">
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Date</th>
+                    <th>Farm</th>
+                    <th>Items</th>
+                    <th class="num">Amount</th>
+                    <th>Progress</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (order of pagedMyOrders(); track order.id) {
+                    <tr [class.is-expanded]="myOrdersExpandedId() === order.id">
+                      <td>
+                        <div class="cell-single-line">
+                          <strong class="mono" style="font-size: 0.85rem;">{{ order.code }}</strong>
+                          <span class="dot-sep">·</span>
+                          <span class="muted" style="font-size: 0.75rem;">{{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="cell-single-line">
+                          <span>{{ order.date | date: 'mediumDate' }}</span>
+                          <span class="dot-sep">·</span>
+                          <span class="muted" style="font-size: 0.75rem;">{{ order.date | date: 'shortTime' }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="cell-single-line" style="font-weight: 500;">
+                          {{ store.farmerName(order.farmerId) }}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="cell-single-line order-items-preview" [title]="itemsTooltip(order)">
+                          @for (item of order.items.slice(0, 3); track $index) {
+                            <img [src]="item.image | photo: 40" [alt]="item.title" class="order-mini-thumb" />
+                          }
+                          @if (order.items.length > 3) {
+                            <span class="order-mini-more">+{{ order.items.length - 3 }}</span>
+                          }
+                          <span style="font-size: 0.75rem; color: #475569;">
+                            {{ itemsSummary(order) }}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="num">
+                        <strong>{{ order.total | naira }}</strong>
+                      </td>
+                      <td>
+                        @if (order.status === 'Cancelled') {
+                          <span class="badge-status badge-status--bad">Cancelled</span>
+                        } @else if (order.status === 'Delivered') {
+                          <div class="cell-single-line">
+                            <span class="badge-status badge-status--good">Delivered</span>
+                          </div>
+                        } @else {
+                          <div
+                            class="progress-mini-inline"
+                            [attr.aria-label]="'Stage ' + (stepIndex(order) + 1) + ' of ' + steps.length + ': ' + order.status"
+                          >
+                            <div class="progress-mini__bars">
+                              @for (step of steps; track step; let i = $index) {
+                                <span
+                                  class="progress-mini__segment"
+                                  [class.is-done]="i <= stepIndex(order)"
+                                  [title]="step"
+                                ></span>
+                              }
+                            </div>
+                            <span class="progress-mini__text">
+                              {{ order.status }} ({{ stepIndex(order) + 1 }}/{{ steps.length }})
+                            </span>
+                          </div>
+                        }
+                      </td>
+                      <td>
+                        <span class="badge-status" [class]="'badge-status--' + tone(order.status)">
+                          {{ order.status }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="actions">
+                          <button
+                            type="button"
+                            class="btn btn--sm btn--soft"
+                            (click)="toggleMyOrdersExpand(order.id)"
+                            [attr.aria-expanded]="myOrdersExpandedId() === order.id"
+                          >
+                            <app-icon [name]="myOrdersExpandedId() === order.id ? 'minus' : 'plus'" [size]="12" />
+                            {{ myOrdersExpandedId() === order.id ? 'Close' : 'Details' }}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    @if (myOrdersExpandedId() === order.id) {
+                      <tr class="table__expanded-row">
+                        <td colspan="8">
+                          <div class="order-expanded-card">
+                            <div class="order-expanded-header">
+                              <div>
+                                <h4>Order {{ order.code }} Details</h4>
+                                <small class="muted">
+                                  {{ store.farmerName(order.farmerId) }} · Ordered on {{ order.date | date: 'medium' }}
+                                </small>
+                              </div>
+                              <span class="badge-status" [class]="'badge-status--' + tone(order.status)">
+                                {{ order.status }}
+                              </span>
+                            </div>
+
+                            @if (order.status === 'Awaiting payment') {
+                              <p class="notice" style="margin-bottom: 12px;">
+                                This order has not been paid for. If you already paid, it will update within a
+                                minute or two.
+                              </p>
+                            } @else if (order.status !== 'Cancelled') {
+                              <ol class="tracker" [attr.aria-label]="'Order progress: ' + order.status">
+                                @for (step of steps; track step; let i = $index) {
+                                  <li [class.is-done]="i <= stepIndex(order)">{{ step }}</li>
+                                }
+                              </ol>
+                            }
+
+                            <!-- Items ordered -->
+                            <ul class="order__items" style="margin-top: 16px;">
+                              @for (item of order.items; track $index) {
+                                <li>
+                                  <img [src]="item.image | photo: 120" alt="" />
+                                  <span>
+                                    {{ item.title }} <small>{{ item.detail }} × {{ item.qty }}</small>
+                                  </span>
+                                  @if (order.status === 'Delivered' && reviewLink(item); as link) {
+                                    <a [routerLink]="link" fragment="reviews" class="btn btn--sm btn--soft">Review</a>
+                                  }
+                                  <strong>{{ item.unitPrice * item.qty | naira }}</strong>
+                                </li>
+                              }
+                            </ul>
+
+                            <!-- Expanded Card Actions & Delivery Info -->
+                            <div class="order__foot" style="margin-top: 14px; padding-top: 12px;">
+                              <div>
+                                <small class="muted" style="display: block;">Delivery Address:</small>
+                                <span style="font-size: 0.825rem; font-weight: 500;">
+                                  {{ order.address || me.address || 'Address on profile' }}
+                                </span>
+                              </div>
+                              <div class="order__actions">
+                                <button
+                                  type="button"
+                                  class="btn btn--sm btn--soft"
+                                  (click)="reorder(order)"
+                                >
+                                  <app-icon name="basket" [size]="14" /> Buy Again
+                                </button>
+                                @if (order.status === 'Dispatched') {
+                                  <button
+                                    type="button"
+                                    class="btn btn--sm btn--primary"
+                                    (click)="store.advanceOrder(order.id, 'Delivered')"
+                                  >
+                                    Confirm Received
+                                  </button>
+                                }
+                                @if (order.status === 'Awaiting payment') {
+                                  <button
+                                    type="button"
+                                    class="btn btn--sm btn--danger"
+                                    (click)="store.advanceOrder(order.id, 'Cancelled')"
+                                  >
+                                    Cancel Order
+                                  </button>
+                                }
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  } @empty {
+                    <tr>
+                      <td colspan="8" class="panel__empty">
+                        @if (hasActiveMyOrdersFilters()) {
+                          <p>No orders match your search or date filter.</p>
+                          <button
+                            type="button"
+                            class="btn btn--sm btn--soft"
+                            style="margin-top: 8px;"
+                            (click)="resetMyOrdersFilters()"
+                          >
+                            Reset filters
+                          </button>
+                        } @else {
+                          <p>Your orders will appear here once you place one.</p>
+                          <a routerLink="/crops" class="btn btn--sm btn--primary" style="margin-top: 8px;">
+                            Shop the Harvest
+                          </a>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <!-- View 2: Cards View -->
+          @if (myOrdersViewMode() === 'cards') {
+            @for (order of pagedMyOrders(); track order.id) {
+              <article class="order" style="margin-bottom: 16px;">
+                <div class="order__head">
+                  <div>
+                    <h3>Order {{ order.code }}</h3>
+                    <p>
+                      {{ order.date | date: 'mediumDate' }} · {{ store.farmerName(order.farmerId) }}
+                    </p>
+                  </div>
+                  <span class="badge-status" [class]="'badge-status--' + tone(order.status)">
+                    {{ order.status }}
+                  </span>
+                </div>
+
+                <ul class="order__items">
+                  @for (item of order.items; track $index) {
+                    <li>
+                      <img [src]="item.image | photo: 120" alt="" />
+                      <span>{{ item.title }} <small>{{ item.detail }} × {{ item.qty }}</small></span>
+                      @if (order.status === 'Delivered' && reviewLink(item); as link) {
+                        <a [routerLink]="link" fragment="reviews" class="btn btn--sm btn--soft">Review</a>
+                      }
+                      <strong>{{ item.unitPrice * item.qty | naira }}</strong>
+                    </li>
+                  }
+                </ul>
+
                 @if (order.status === 'Awaiting payment') {
-                  <button
-                    type="button"
-                    class="btn btn--sm btn--danger"
-                    (click)="store.advanceOrder(order.id, 'Cancelled')"
-                  >
-                    Cancel Order
-                  </button>
+                  <p class="notice">
+                    This order has not been paid for. If you already paid, it will update within a
+                    minute or two.
+                  </p>
+                } @else if (order.status !== 'Cancelled') {
+                  <ol class="tracker" [attr.aria-label]="'Order progress: ' + order.status">
+                    @for (step of steps; track step; let i = $index) {
+                      <li [class.is-done]="i <= stepIndex(order)">{{ step }}</li>
+                    }
+                  </ol>
                 }
-                @if (order.status === 'Dispatched') {
+
+                <div class="order__foot">
+                  <span>Total <strong>{{ order.total | naira }}</strong></span>
+                  <div class="order__actions">
+                    <button
+                      type="button"
+                      class="btn btn--sm btn--soft"
+                      (click)="reorder(order)"
+                    >
+                      <app-icon name="basket" [size]="14" /> Buy Again
+                    </button>
+                    @if (order.status === 'Awaiting payment') {
+                      <button
+                        type="button"
+                        class="btn btn--sm btn--danger"
+                        (click)="store.advanceOrder(order.id, 'Cancelled')"
+                      >
+                        Cancel Order
+                      </button>
+                    }
+                    @if (order.status === 'Dispatched') {
+                      <button
+                        type="button"
+                        class="btn btn--sm btn--primary"
+                        (click)="store.advanceOrder(order.id, 'Delivered')"
+                      >
+                        Confirm Received
+                      </button>
+                    }
+                  </div>
+                </div>
+              </article>
+            } @empty {
+              <div class="panel__empty">
+                @if (hasActiveMyOrdersFilters()) {
+                  <p>No orders match your filter criteria.</p>
                   <button
                     type="button"
-                    class="btn btn--sm btn--primary"
-                    (click)="store.advanceOrder(order.id, 'Delivered')"
+                    class="btn btn--sm btn--soft"
+                    style="margin-top: 8px;"
+                    (click)="resetMyOrdersFilters()"
                   >
-                    Confirm Received
+                    Reset filters
                   </button>
+                } @else {
+                  <h2>No orders yet</h2>
+                  <p class="muted">Your orders will appear here once you place one.</p>
+                  <a routerLink="/crops" class="btn btn--primary" style="margin-top: 8px;">Shop the Harvest</a>
                 }
               </div>
+            }
+          }
+
+          <!-- Pagination Controls for My Orders -->
+          @if (matchingMyOrders().length > 0) {
+            <div class="pager" style="margin-top: 14px;">
+              <label>
+                Rows per page
+                <select (change)="setMyOrdersPageSize($any($event.target).value)">
+                  @for (size of myOrdersPageSizes; track size) {
+                    <option [value]="size" [selected]="size === myOrdersPageSize()">{{ size }}</option>
+                  }
+                </select>
+              </label>
+              <div>
+                <span>
+                  {{ myOrdersPageStart() + 1 }} to {{ Math.min(myOrdersPageStart() + pagedMyOrders().length, matchingMyOrders().length) }} of
+                  {{ matchingMyOrders().length }}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Previous page"
+                  [disabled]="myOrdersPage() === 1"
+                  (click)="goToMyOrdersPage(myOrdersPage() - 1)"
+                >
+                  <app-icon name="chevron-left" [size]="16" />
+                </button>
+                @for (number of myOrdersPageNumbers(); track number) {
+                  <button
+                    type="button"
+                    [attr.aria-label]="'Page ' + number"
+                    [attr.aria-current]="number === myOrdersPage() ? 'page' : null"
+                    (click)="goToMyOrdersPage(number)"
+                  >
+                    {{ number }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  aria-label="Next page"
+                  [disabled]="myOrdersPage() === myOrdersPageCount()"
+                  (click)="goToMyOrdersPage(myOrdersPage() + 1)"
+                >
+                  <app-icon name="chevron-right" [size]="16" />
+                </button>
+              </div>
             </div>
-          </article>
-        } @empty {
-          <div class="empty">
-            <h2>No orders yet</h2>
-            <p class="muted">Your orders will appear here once you place one.</p>
-            <a routerLink="/crops" class="btn btn--primary">Shop the Harvest</a>
-          </div>
-        }
+          }
+        </div>
       }
 
       @case ('shares') {
