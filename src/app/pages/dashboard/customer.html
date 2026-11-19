@@ -339,7 +339,7 @@
           <!-- View 1: Detailed Table View -->
           @if (viewMode() === 'table') {
             <div class="table-wrap">
-              <table class="table">
+              <table class="table orders-table">
                 <thead>
                   <tr>
                     <th>Order</th>
@@ -356,27 +356,35 @@
                   @for (order of pageOrders(); track order.id) {
                     <tr [class.is-expanded]="expandedOrderId() === order.id">
                       <td>
-                        <strong class="mono" style="font-size: 0.85rem;">{{ order.code }}</strong>
-                        <small>{{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}</small>
+                        <div class="cell-single-line">
+                          <strong class="mono" style="font-size: 0.85rem;">{{ order.code }}</strong>
+                          <span class="dot-sep">·</span>
+                          <span class="muted" style="font-size: 0.75rem;">{{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}</span>
+                        </div>
                       </td>
                       <td>
-                        <div>{{ order.date | date: 'mediumDate' }}</div>
-                        <small class="muted">{{ order.date | date: 'shortTime' }}</small>
+                        <div class="cell-single-line">
+                          <span>{{ order.date | date: 'mediumDate' }}</span>
+                          <span class="dot-sep">·</span>
+                          <span class="muted" style="font-size: 0.75rem;">{{ order.date | date: 'shortTime' }}</span>
+                        </div>
                       </td>
                       <td>
-                        <div style="font-weight: 500;">{{ store.farmerName(order.farmerId) }}</div>
+                        <div class="cell-single-line" style="font-weight: 500;">
+                          {{ store.farmerName(order.farmerId) }}
+                        </div>
                       </td>
                       <td>
-                        <div class="order-items-preview" [title]="itemsTooltip(order)">
+                        <div class="cell-single-line order-items-preview" [title]="itemsTooltip(order)">
                           @for (item of order.items.slice(0, 3); track $index) {
                             <img [src]="item.image | photo: 40" [alt]="item.title" class="order-mini-thumb" />
                           }
                           @if (order.items.length > 3) {
                             <span class="order-mini-more">+{{ order.items.length - 3 }}</span>
                           }
-                          <small style="display: block; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                          <span style="font-size: 0.75rem; color: #475569;">
                             {{ itemsSummary(order) }}
-                          </small>
+                          </span>
                         </div>
                       </td>
                       <td class="num">
@@ -384,7 +392,7 @@
                       </td>
                       <td>
                         <div
-                          class="progress-mini"
+                          class="progress-mini-inline"
                           [attr.aria-label]="'Stage ' + (stepIndex(order) + 1) + ' of ' + steps.length + ': ' + order.status"
                         >
                           <div class="progress-mini__bars">

@@ -1098,6 +1098,49 @@ select:focus-visible,
 }
 
 /* Dashboard Tools Filters, Table Stepper & Expanded Accordion */
+.orders-table {
+  min-width: 920px;
+}
+
+.orders-table th,
+.orders-table td {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+.orders-table td small {
+  display: inline;
+}
+
+.cell-single-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  line-height: 1.2;
+}
+
+.dot-sep {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.progress-mini-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+.progress-mini-inline .progress-mini__bars {
+  width: 56px;
+  flex: none;
+}
+
 .dash-filter-select {
   display: inline-flex;
   align-items: center;
