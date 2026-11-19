@@ -1,5 +1,3 @@
-import { UpperCasePipe } from '@angular/common';
-import { UpperCasePipe } from '@angular/common';
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Order } from '../../core/accounts';
@@ -32,7 +30,7 @@ export interface ReceiptData {
  */
 @Component({
   selector: 'app-payment-callback',
-  imports: [RouterLink, Icon, UpperCasePipe],
+  imports: [RouterLink, Icon],
   templateUrl: './payment-callback.html',
   styleUrl: './payment-callback.css',
 })
