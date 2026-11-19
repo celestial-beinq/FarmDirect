@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { ORDER_STEPS, Order, OrderItem, OrderStatus, tone } from '../../core/accounts';
+import { ORDER_STEPS, ORDER_STATUSES, Order, OrderItem, OrderStatus, tone } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
 import { CartService } from '../../core/cart.service';
 import { sanitizePhone, sanitizeText } from '../../core/sanitizer';
@@ -166,6 +166,151 @@ export class CustomerDashboard {
     this.dateFrom.set('');
     this.dateTo.set('');
     this.pageWanted.set(1);
+  }
+
+  protected readonly orderStatuses = ORDER_STATUSES;
+
+  /* ---- My Orders tab: view, search, date filter & pagination ---- */
+  protected readonly myOrdersViewMode = signal<'table' | 'cards'>('table');
+  protected readonly myOrdersSearch = signal('');
+  protected readonly myOrdersStatusFilter = signal<'all' | OrderStatus>('all');
+  protected readonly myOrdersDatePreset = signal<'all' | 'today' | '7days' | '30days' | 'custom'>('all');
+  protected readonly myOrdersDateFrom = signal('');
+  protected readonly myOrdersDateTo = signal('');
+  protected readonly myOrdersExpandedId = signal<string | null>(null);
+
+  protected readonly myOrdersPageSizes = [5, 10, 15, 25];
+  protected readonly myOrdersPageSize = signal(5);
+  private readonly myOrdersPageWanted = signal(1);
+
+  protected readonly hasActiveMyOrdersFilters = computed(() => {
+    return (
+      Boolean(this.myOrdersSearch().trim()) ||
+      this.myOrdersStatusFilter() !== 'all' ||
+      this.myOrdersDatePreset() !== 'all' ||
+      Boolean(this.myOrdersDateFrom()) ||
+      Boolean(this.myOrdersDateTo())
+    );
+  });
+
+  protected readonly matchingMyOrders = computed(() => {
+    const list = this.orders();
+    const search = this.myOrdersSearch().trim().toLowerCase();
+    const status = this.myOrdersStatusFilter();
+    const preset = this.myOrdersDatePreset();
+    const from = this.myOrdersDateFrom();
+    const to = this.myOrdersDateTo();
+
+    const now = Date.now();
+    const dayMs = 86400000;
+
+    return list.filter((order) => {
+      if (status !== 'all' && order.status !== status) {
+        return false;
+      }
+
+      if (search) {
+        const farm = this.store.farmerName(order.farmerId)?.toLowerCase() ?? '';
+        const code = order.code.toLowerCase();
+        const items = order.items.map((i) => i.title.toLowerCase()).join(' ');
+        if (!code.includes(search) && !farm.includes(search) && !items.includes(search)) {
+          return false;
+        }
+      }
+
+      if (preset !== 'all') {
+        const orderTime = new Date(order.date).getTime();
+        const orderDateStr = order.date.slice(0, 10);
+
+        if (preset === 'today') {
+          const todayStr = new Date().toISOString().slice(0, 10);
+          if (orderDateStr !== todayStr) return false;
+        } else if (preset === '7days') {
+          if (orderTime < now - 7 * dayMs) return false;
+        } else if (preset === '30days') {
+          if (orderTime < now - 30 * dayMs) return false;
+        } else if (preset === 'custom') {
+          if (from && orderDateStr < from) return false;
+          if (to && orderDateStr > to) return false;
+        }
+      }
+
+      return true;
+    });
+  });
+
+  protected readonly myOrdersPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.matchingMyOrders().length / this.myOrdersPageSize())),
+  );
+  protected readonly myOrdersPage = computed(() =>
+    Math.min(this.myOrdersPageWanted(), this.myOrdersPageCount()),
+  );
+  protected readonly myOrdersPageStart = computed(() => (this.myOrdersPage() - 1) * this.myOrdersPageSize());
+  protected readonly pagedMyOrders = computed(() =>
+    this.matchingMyOrders().slice(
+      this.myOrdersPageStart(),
+      this.myOrdersPageStart() + this.myOrdersPageSize(),
+    ),
+  );
+  protected readonly myOrdersPageNumbers = computed(() => {
+    const total = this.myOrdersPageCount();
+    const current = this.myOrdersPage();
+    const first = Math.max(1, Math.min(current - 2, total - 4));
+    const length = Math.min(5, total);
+    return Array.from({ length }, (_, i) => first + i);
+  });
+
+  protected setMyOrdersSearch(val: string): void {
+    this.myOrdersSearch.set(val);
+    this.myOrdersPageWanted.set(1);
+  }
+
+  protected setMyOrdersStatusFilter(val: 'all' | OrderStatus): void {
+    this.myOrdersStatusFilter.set(val);
+    this.myOrdersPageWanted.set(1);
+  }
+
+  protected setMyOrdersDatePreset(val: 'all' | 'today' | '7days' | '30days' | 'custom'): void {
+    this.myOrdersDatePreset.set(val);
+    if (val !== 'custom') {
+      this.myOrdersDateFrom.set('');
+      this.myOrdersDateTo.set('');
+    }
+    this.myOrdersPageWanted.set(1);
+  }
+
+  protected setMyOrdersDateFrom(val: string): void {
+    this.myOrdersDateFrom.set(val);
+    this.myOrdersDatePreset.set('custom');
+    this.myOrdersPageWanted.set(1);
+  }
+
+  protected setMyOrdersDateTo(val: string): void {
+    this.myOrdersDateTo.set(val);
+    this.myOrdersDatePreset.set('custom');
+    this.myOrdersPageWanted.set(1);
+  }
+
+  protected setMyOrdersPageSize(val: string | number): void {
+    this.myOrdersPageSize.set(Number(val));
+    this.myOrdersPageWanted.set(1);
+  }
+
+  protected goToMyOrdersPage(p: number): void {
+    this.myOrdersPageWanted.set(p);
+  }
+
+  protected toggleMyOrdersExpand(orderId: string): void {
+    this.myOrdersExpandedId.set(this.myOrdersExpandedId() === orderId ? null : orderId);
+  }
+
+  protected resetMyOrdersFilters(): void {
+    this.myOrdersSearch.set('');
+    this.myOrdersStatusFilter.set('all');
+    this.myOrdersDatePreset.set('all');
+    this.myOrdersDateFrom.set('');
+    this.myOrdersDateTo.set('');
+    this.myOrdersPageWanted.set(1);
   }
 
   protected itemsSummary(order: Order): string {
