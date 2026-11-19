@@ -198,6 +198,10 @@ export class AdminDashboard {
   /** Search query for review comment, author, or product name. */
   protected readonly searchQuery = signal<string>('');
 
+  protected readonly reviewPageSizes = [5, 10, 20];
+  protected readonly reviewPageSize = signal<number>(5);
+  private readonly reviewPageWanted = signal<number>(1);
+
   protected readonly filteredReviews = computed(() => {
     let list = this.reviews();
     const star = this.filterRating();
@@ -215,6 +219,48 @@ export class AdminDashboard {
     }
     return list;
   });
+
+  protected readonly reviewPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.filteredReviews().length / this.reviewPageSize())),
+  );
+  protected readonly reviewPage = computed(() =>
+    Math.min(this.reviewPageWanted(), this.reviewPageCount()),
+  );
+  protected readonly reviewPageStart = computed(
+    () => (this.reviewPage() - 1) * this.reviewPageSize(),
+  );
+  protected readonly pagedReviews = computed(() =>
+    this.filteredReviews().slice(
+      this.reviewPageStart(),
+      this.reviewPageStart() + this.reviewPageSize(),
+    ),
+  );
+  protected readonly reviewPageNumbers = computed(() => {
+    const total = this.reviewPageCount();
+    const current = this.reviewPage();
+    const first = Math.max(1, Math.min(current - 2, total - 4));
+    const length = Math.min(5, total);
+    return Array.from({ length }, (_, i) => first + i);
+  });
+
+  protected setReviewPageSize(size: string | number): void {
+    this.reviewPageSize.set(Number(size));
+    this.reviewPageWanted.set(1);
+  }
+
+  protected goToReviewPage(p: number): void {
+    this.reviewPageWanted.set(p);
+  }
+
+  protected setFilterRating(rating: number): void {
+    this.filterRating.set(rating);
+    this.reviewPageWanted.set(1);
+  }
+
+  protected setSearchQuery(q: string): void {
+    this.searchQuery.set(q);
+    this.reviewPageWanted.set(1);
+  }
 
   protected readonly satisfactionRate = computed(() => {
     const list = this.reviews();
