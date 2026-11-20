@@ -10,41 +10,56 @@
         <ul class="lines">
           @for (item of cart.items(); track item.key) {
             <li class="line">
-              <a [routerLink]="item.link"><img [src]="item.image | photo: 240" alt="" /></a>
-              <div class="line__info">
-                <a [routerLink]="item.link"
-                  ><h2>{{ item.title }}</h2></a
-                >
-                <p class="muted">{{ item.detail }}</p>
-                @if (!item.fixedQty) {
-                  <div class="stepper">
-                    <button
-                      type="button"
-                      aria-label="Fewer"
-                      (click)="cart.setQty(item.key, item.qty - 1)"
-                    >
-                      <app-icon name="minus" [size]="14" />
-                    </button>
-                    <output>{{ item.qty }}</output>
-                    <button
-                      type="button"
-                      aria-label="More"
-                      (click)="cart.setQty(item.key, item.qty + 1)"
-                    >
-                      <app-icon name="plus" [size]="14" />
-                    </button>
+              <a [routerLink]="item.link" class="line__media" [attr.aria-label]="item.title">
+                <img [src]="item.image | photo: 240" [alt]="item.title" loading="lazy" />
+              </a>
+
+              <div class="line__content">
+                <div class="line__header">
+                  <div class="line__info">
+                    <a [routerLink]="item.link" class="line__title">
+                      <h2>{{ item.title }}</h2>
+                    </a>
+                    <p class="line__detail">{{ item.detail }}</p>
                   </div>
-                }
-              </div>
-              <div class="line__end">
-                <strong class="price">{{ item.unitPrice * item.qty | naira }}</strong>
-                <button
-                  type="button"
-                  [attr.aria-label]="'Remove ' + item.title"
-                  (click)="cart.remove(item.key)"
-                >
-                  <app-icon name="trash" [size]="18" />
-                </button>
+                  <div class="line__price-wrap">
+                    <strong class="line__price">{{ item.unitPrice * item.qty | naira }}</strong>
+                    @if (item.qty > 1) {
+                      <span class="line__unit-price">{{ item.unitPrice | naira }} each</span>
+                    }
+                  </div>
+                </div>
+
+                <div class="line__actions">
+                  @if (!item.fixedQty) {
+                    <div class="stepper">
+                      <button
+                        type="button"
+                        aria-label="Decrease quantity"
+                        (click)="cart.setQty(item.key, item.qty - 1)"
+                      >
+                        <app-icon name="minus" [size]="14" />
+                      </button>
+                      <output>{{ item.qty }}</output>
+                      <button
+                        type="button"
+                        aria-label="Increase quantity"
+                        (click)="cart.setQty(item.key, item.qty + 1)"
+                      >
+                        <app-icon name="plus" [size]="14" />
+                      </button>
+                    </div>
+                  }
+                  <button
+                    type="button"
+                    class="line__remove"
+                    [attr.aria-label]="'Remove ' + item.title"
+                    (click)="cart.remove(item.key)"
+                  >
+                    <app-icon name="trash" [size]="15" />
+                    <span>Remove</span>
+                  </button>
+                </div>
               </div>
             </li>
           }

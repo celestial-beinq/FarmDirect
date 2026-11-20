@@ -21,14 +21,14 @@ interface CycleInfo {
       <div class="container cycle-inner">
         <div class="cycle-status">
           @if (cycle().isHarvestingWeekend) {
-            <span class="badge-status badge-status--weekend">
+            <span class="cycle-badge cycle-badge--weekend">
               <span class="dot dot--weekend"></span> Farm Harvest & Packing Weekend
             </span>
             <p class="cycle-msg">
               Farmers are actively harvesting this week's orders! Now accepting orders for <strong>Sunday, {{ cycle().nextSundayStr }}</strong>.
             </p>
           } @else if (cycle().isUrgent) {
-            <span class="badge-status badge-status--urgent">
+            <span class="cycle-badge cycle-badge--urgent">
               <span class="dot dot--urgent"></span> Orders Closing Soon
             </span>
             <p class="cycle-msg">
@@ -36,7 +36,7 @@ interface CycleInfo {
               <strong class="timer">{{ cycle().hours }}h {{ cycle().minutes }}m {{ cycle().seconds }}s</strong> left for this Sunday's delivery ({{ cycle().nextSundayStr }}).
             </p>
           } @else {
-            <span class="badge-status">
+            <span class="cycle-badge">
               <span class="dot"></span> Sunday Batch Open
             </span>
             <p class="cycle-msg">
@@ -82,7 +82,7 @@ interface CycleInfo {
       flex-wrap: wrap;
     }
 
-    .badge-status {
+    .cycle-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -94,14 +94,19 @@ interface CycleInfo {
       border-radius: 999px;
       background: rgba(207, 232, 110, 0.18);
       color: #cfe86e;
+      white-space: nowrap;
     }
 
-    .badge-status--urgent {
+    .cycle-badge::before {
+      display: none !important;
+    }
+
+    .cycle-badge--urgent {
       background: rgba(239, 68, 68, 0.25);
       color: #fca5a5;
     }
 
-    .badge-status--weekend {
+    .cycle-badge--weekend {
       background: rgba(59, 130, 246, 0.2);
       color: #93c5fd;
     }
@@ -112,6 +117,7 @@ interface CycleInfo {
       border-radius: 50%;
       background: #cfe86e;
       animation: pulse 2s infinite;
+      flex-shrink: 0;
     }
 
     .dot--urgent {

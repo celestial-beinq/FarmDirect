@@ -7,20 +7,63 @@
 
 .line {
   display: flex;
-  gap: 18px;
-  padding: 20px 0;
+  gap: 20px;
+  padding: 22px 0;
   border-bottom: 1px solid var(--line);
+  align-items: flex-start;
 }
 
 .line:first-child {
   padding-top: 0;
 }
 
-.line img {
-  width: 92px;
-  height: 92px;
-  object-fit: cover;
-  border-radius: 10px;
+/* Framed media container for product thumbnail */
+.line__media {
+  width: 90px;
+  height: 90px;
+  min-width: 90px;
+  border-radius: 12px;
+  background: #f7f6f0;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.line__media:hover {
+  border-color: rgba(30, 86, 49, 0.25);
+}
+
+.line__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+}
+
+.line__media:hover img {
+  transform: scale(1.05);
+}
+
+.line__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 90px;
+  flex: 1;
+  min-width: 0;
+  gap: 12px;
+}
+
+.line__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
 }
 
 .line__info {
@@ -28,66 +71,125 @@
   min-width: 0;
 }
 
-.line h2 {
-  font-size: 1.05rem;
+.line__title {
+  text-decoration: none;
+  color: var(--text);
 }
 
-.line p {
+.line__title h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+  transition: color 0.15s ease;
+}
+
+.line__title:hover h2 {
+  color: var(--green-900);
+}
+
+.line__detail {
   font-size: 0.85rem;
+  color: var(--muted);
+  margin: 3px 0 0;
+  line-height: 1.4;
+}
+
+.line__price-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.line__price {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--green-900);
+  font-family: var(--font-display, inherit);
+  letter-spacing: -0.01em;
+}
+
+.line__unit-price {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Actions: stepper on left, remove on right */
+.line__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .stepper {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 10px;
-  padding: 3px;
+  gap: 2px;
+  padding: 3px 4px;
   border-radius: 999px;
   background: var(--sand);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .stepper button {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
 
 .stepper button:hover {
   background: var(--white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stepper button:active {
+  transform: scale(0.92);
 }
 
 .stepper output {
-  min-width: 26px;
+  min-width: 28px;
   text-align: center;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text);
 }
 
-.line__end {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-
-.line__end .price {
-  font-size: 1.1rem;
-}
-
-.line__end button {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+/* Modern remove button with icon and label */
+.line__remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-left: auto;
 }
 
-.line__end button:hover {
-  background: var(--cream);
+.line__remove:hover {
+  background: #fde8e8;
   color: var(--danger);
+  border-color: rgba(220, 38, 38, 0.15);
+}
+
+.line__remove:active {
+  transform: scale(0.96);
 }
 
 .summary {
