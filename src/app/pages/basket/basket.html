@@ -15,22 +15,25 @@
               </a>
 
               <div class="line__content">
-                <div class="line__header">
+                <div class="line__top">
                   <div class="line__info">
                     <a [routerLink]="item.link" class="line__title">
                       <h2>{{ item.title }}</h2>
                     </a>
                     <p class="line__detail">{{ item.detail }}</p>
                   </div>
-                  <div class="line__price-wrap">
-                    <strong class="line__price">{{ item.unitPrice * item.qty | naira }}</strong>
-                    @if (item.qty > 1) {
-                      <span class="line__unit-price">{{ item.unitPrice | naira }} each</span>
-                    }
-                  </div>
+
+                  <button
+                    type="button"
+                    class="line__remove"
+                    [attr.aria-label]="'Remove ' + item.title"
+                    (click)="cart.remove(item.key)"
+                  >
+                    <app-icon name="trash" [size]="16" />
+                  </button>
                 </div>
 
-                <div class="line__actions">
+                <div class="line__bottom">
                   @if (!item.fixedQty) {
                     <div class="stepper">
                       <button
@@ -50,15 +53,13 @@
                       </button>
                     </div>
                   }
-                  <button
-                    type="button"
-                    class="line__remove"
-                    [attr.aria-label]="'Remove ' + item.title"
-                    (click)="cart.remove(item.key)"
-                  >
-                    <app-icon name="trash" [size]="15" />
-                    <span>Remove</span>
-                  </button>
+
+                  <div class="line__pricing">
+                    @if (item.qty > 1) {
+                      <span class="line__unit-price">{{ item.unitPrice | naira }} each</span>
+                    }
+                    <strong class="line__price">{{ item.unitPrice * item.qty | naira }}</strong>
+                  </div>
                 </div>
               </div>
             </li>
