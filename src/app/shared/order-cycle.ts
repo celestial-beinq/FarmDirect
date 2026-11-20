@@ -198,26 +198,21 @@ export class OrderCycle implements OnInit, OnDestroy {
     const day = now.getDay(); // 0 is Sunday, 4 is Thursday, 5 Friday, 6 Saturday
 
     // Thursday cutoff is day 4 at 23:59:59
-    let targetThursday = new Date(now);
-    let targetSunday = new Date(now);
-
+    const targetThursday = new Date(now);
     let daysUntilThursday = (4 - day + 7) % 7;
-    // If today is Thursday and past 23:59:59 (handled by time check), jump to next week
     targetThursday.setDate(now.getDate() + daysUntilThursday);
     targetThursday.setHours(23, 59, 59, 999);
 
-    const isHarvestingWeekend = day === 5 || day === 6; // Friday or Saturday
-    if (isHarvestingWeekend || (day === 4 && now.getTime() > targetThursday.getTime())) {
-      // Current cycle closed, targeting next week
-      daysUntilThursday += 7;
-      targetThursday.setDate(now.getDate() + daysUntilThursday);
-      targetThursday.setHours(23, 59, 59, 999);
+    // If today is Thursday and past 23:59:59 cut-off, target next Thursday (+7 days)
+    if (day === 4 && now.getTime() > targetThursday.getTime()) {
+      targetThursday.setDate(targetThursday.getDate() + 7);
     }
 
     // Delivery Sunday is 3 days after targetThursday
-    targetSunday = new Date(targetThursday);
+    const targetSunday = new Date(targetThursday);
     targetSunday.setDate(targetThursday.getDate() + 3);
 
+    const isHarvestingWeekend = day === 5 || day === 6; // Friday or Saturday
     const diff = Math.max(0, targetThursday.getTime() - now.getTime());
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));

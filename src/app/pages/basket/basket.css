@@ -251,6 +251,38 @@
 @media (max-width: 860px) {
   .layout {
     grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 580px) {
+  .line {
+    gap: 14px;
+    padding: 16px 0;
+  }
+
+  .line__media {
+    width: 76px;
+    height: 76px;
+    min-width: 76px;
+  }
+
+  .line__header {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .line__price-wrap {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .line__remove span {
+    display: none;
+  }
+
+  .line__remove {
+    padding: 6px;
   }
 }
 
