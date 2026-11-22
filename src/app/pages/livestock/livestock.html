@@ -128,3 +128,54 @@
     }
   </div>
 </section>
+
+<!-- Standards -->
+<section class="standards">
+  <div class="container standards__inner">
+    <div>
+      <span class="eyebrow eyebrow--light">Our livestock standards</span>
+      <h2>Healthy animals you can trace back to the herd</h2>
+      <p>
+        Market animals are often trekked or trucked for days, sometimes given drugs to look heavier,
+        and sold with no health check. Ours come from verified pastoralists, and you know the breed,
+        weight and origin before you pay.
+      </p>
+    </div>
+    <ul>
+      @for (s of standards; track s.title) {
+        <li>
+          <app-icon [name]="s.icon" [size]="22" />
+          <div>
+            <strong>{{ s.title }}</strong>
+            <span>{{ s.text }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- Breeds -->
+<section class="section section--tint">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Know your breeds</span>
+      <h2>The Nigerian breeds we sell</h2>
+      <p>Each breed suits a different table, from everyday stew meat to Sallah celebrations.</p>
+    </div>
+    <div class="breeds">
+      @for (b of breeds; track b.name) {
+        <article class="breed">
+          <img [src]="b.image | photo: 600" [alt]="b.name" loading="lazy" />
+          <div class="breed__body">
+            <p class="breed__meta">
+              <span class="tag-mini">{{ b.type }}</span> {{ b.from }}
+            </p>
+            <h3>{{ b.name }}</h3>
+            <p>{{ b.text }}</p>
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</section>

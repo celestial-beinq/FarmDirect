@@ -3,7 +3,8 @@ import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/cart.service';
 import { CROP_CATEGORIES, Crop, CropCategory, buyOptions } from '../../core/data';
 import { StoreService } from '../../core/store.service';
-import { Icon } from '../../shared/icon';
+import { SPOT_TIPS } from '../../core/content';
+import { Icon, IconName } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 
 type Sort = 'popular' | 'low' | 'high' | 'name';
@@ -19,6 +20,16 @@ const PAGE_SIZE = 12;
 export class Crops {
   protected readonly categories = CROP_CATEGORIES;
   protected readonly store = inject(StoreService);
+
+  /** Short promises shown above the list. */
+  protected readonly trust: { icon: IconName; text: string }[] = [
+    { icon: 'shield', text: 'Verified farms only' },
+    { icon: 'leaf', text: 'No carbide, no dyes, no Sniper' },
+    { icon: 'pin', text: 'Farm & region on every item' },
+    { icon: 'clock', text: 'Harvested after you order' },
+  ];
+  /** Market checks for the foods people buy most (the rest are on /real-food). */
+  protected readonly tips = SPOT_TIPS.slice(0, 4);
   private readonly cart = inject(CartService);
 
   /** All agricultural states represented in the marketplace */

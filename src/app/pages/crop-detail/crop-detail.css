@@ -301,3 +301,26 @@
   50% { opacity: 0.7; }
 }
 
+
+/* Four tabs: scroll sideways on narrow screens instead of wrapping. */
+.tabs {
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 24px;
+}
+
+.tabs button {
+  flex: none;
+  white-space: nowrap;
+}
+
+.without-item app-icon {
+  color: var(--danger) !important;
+}
+
+.tab-link {
+  color: var(--green-800);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -2,12 +2,13 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/cart.service';
 import { BuyOption, STORAGE_TIPS, buyOptions, unitsFromOption } from '../../core/data';
+import { GROWN_WITHOUT } from '../../core/content';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { Reviews } from '../../shared/reviews';
 
-type Tab = 'Details' | 'Storage Tips' | 'Delivery Info';
+type Tab = 'Details' | 'Grown Without' | 'Storage Tips' | 'Delivery Info';
 
 @Component({
   selector: 'app-crop-detail',
@@ -37,7 +38,9 @@ export class CropDetail {
     return [...groups].map(([name, options]) => ({ name, options }));
   });
 
-  protected readonly tabs: Tab[] = ['Details', 'Storage Tips', 'Delivery Info'];
+  protected readonly tabs: Tab[] = ['Details', 'Grown Without', 'Storage Tips', 'Delivery Info'];
+  /** The farm promises that apply to crops (the last-but-one is about livestock). */
+  protected readonly grownWithout = GROWN_WITHOUT.filter((item) => !/livestock/i.test(item));
   protected readonly tab = signal<Tab>('Details');
   protected readonly photoIndex = signal(0);
   protected readonly chosenLabel = signal<string | null>(null);

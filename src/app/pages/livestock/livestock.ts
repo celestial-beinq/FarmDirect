@@ -2,7 +2,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ANIMAL_TYPES, AnimalType } from '../../core/data';
 import { StoreService } from '../../core/store.service';
-import { Icon } from '../../shared/icon';
+import { BREEDS } from '../../core/content';
+import { Icon, IconName } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 
 @Component({
@@ -13,6 +14,30 @@ import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 })
 export class Livestock {
   protected readonly store = inject(StoreService);
+
+  protected readonly breeds = BREEDS;
+  protected readonly standards: { icon: IconName; title: string; text: string }[] = [
+    {
+      icon: 'shield',
+      title: 'Vet-checked before sale',
+      text: 'Every animal is inspected for disease and condition before it is listed.',
+    },
+    {
+      icon: 'leaf',
+      title: 'Pasture-raised',
+      text: 'Grazed on open pasture by pastoralists, not fattened with steroids in a pen.',
+    },
+    {
+      icon: 'pin',
+      title: 'Breed & origin listed',
+      text: 'You see the breed, live weight and the state it comes from on every listing.',
+    },
+    {
+      icon: 'box',
+      title: 'Hygienic processing',
+      text: 'Slaughtered in clean facilities, portioned, sealed and kept cold to your door.',
+    },
+  ];
 
   protected readonly types = ANIMAL_TYPES;
   protected readonly type = signal<AnimalType | 'All'>('All');

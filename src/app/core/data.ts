@@ -8,24 +8,57 @@ import { buyOptions as priceOptions, unitsFromOption } from '../../../supabase/f
 export { UNIT_PLURALS, unitsFromOption } from '../../../supabase/functions/_shared/pricing';
 export type { BuyOption } from '../../../supabase/functions/_shared/pricing';
 
-/** Builds an image URL. Accepts a full URL, or a stock-photo id. */
+/**
+ * Builds an image URL. Accepts a full URL, a site path such as
+ * "/images/yam.jpg" (photos kept in public/images), or an Unsplash photo id.
+ */
 export function photo(image: string, width = 800): string {
   if (!image) return '';
-  if (image.startsWith('http')) return image;
+  if (image.startsWith('http') || image.startsWith('/')) return image;
   return `https://images.unsplash.com/photo-${image}?w=${width}&q=70&auto=format&fit=crop`;
 }
 
+/** A photo kept in public/images (credited on /photo-credits). */
+const local = (key: string) => `/images/${key}.jpg`;
+
+/** Photos of real Nigerian produce, markets, farms and livestock. */
 export const IMAGES = {
-  vegMix: '1464226184884-fa280b87c399',
-  fruitMix: '1610832958506-aa56368176cf',
-  potatoes: '1518977676601-b53f82aba655',
-  rice: '1586201375761-83865001e31c',
-  cow: '1570042225831-d98fa7577f1e',
-  harvest: '1605000797499-95a51c5269ae',
-  farmer: '1574943320219-553eb213f72d',
-  wheat: '1500937386664-56d1dfef3854',
-  sunset: '1500382017468-9049fed747ef',
-  seedlings: '1523348837708-15d4a09cfac2',
+  // Scenes
+  market: local('market'),
+  vegmarket: local('vegmarket'),
+  farmer: local('farmer'),
+  farmfield: local('farmfield'),
+  harvestbasket: local('harvestbasket'),
+  herder: local('herder'),
+  dishes: local('dishes'),
+  // Produce
+  tomatoes: local('tomatoes'),
+  ugu: local('ugu'),
+  mango: local('mango'),
+  plantain: local('plantain'),
+  oranges: local('oranges'),
+  yam: local('yam'),
+  maize: local('maize'),
+  beans: local('beans'),
+  rice: local('rice'),
+  palmoil: local('palmoil'),
+  onions: local('onions'),
+  // Livestock
+  whitefulani: local('whitefulani'),
+  gudali: local('gudali'),
+  redbororo: local('redbororo'),
+  redsokoto: local('redsokoto'),
+  dwarfgoat: local('dwarfgoat'),
+  balami: local('balami'),
+  // Older names still used around the site
+  vegMix: local('vegmarket'),
+  fruitMix: local('mango'),
+  potatoes: local('yam'),
+  cow: local('whitefulani'),
+  harvest: local('harvestbasket'),
+  wheat: local('farmfield'),
+  sunset: local('herder'),
+  seedlings: local('ugu'),
 } as const;
 
 /* ------------------------------ Crops ------------------------------ */

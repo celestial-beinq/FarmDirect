@@ -157,6 +157,20 @@
                 }
               </ul>
             }
+            @case ('Grown Without') {
+              <p>
+                This comes from a verified farm that has agreed to FarmDirect's growing rules. It
+                is grown and stored without:
+              </p>
+              <ul>
+                @for (item of grownWithout; track item) {
+                  <li class="without-item"><app-icon name="close" [size]="16" /> {{ item }}</li>
+                }
+              </ul>
+              <p>
+                <a routerLink="/real-food" class="tab-link">How we check our farms →</a>
+              </p>
+            }
             @case ('Storage Tips') {
               <p>{{ storageTip() }}</p>
             }

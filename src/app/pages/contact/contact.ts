@@ -6,7 +6,7 @@ import { Icon } from '../../shared/icon';
 /** Where contact-form messages are addressed. Keep in sync with the footer. */
 const CONTACT_EMAIL = 'hello@farmdirect.example';
 
-type Topic = 'order' | 'farmer' | 'livestock' | 'account' | 'other';
+type Topic = 'order' | 'quality' | 'farmer' | 'livestock' | 'account' | 'other';
 
 @Component({
   selector: 'app-contact',
@@ -26,6 +26,13 @@ type Topic = 'order' | 'farmer' | 'livestock' | 'account' | 'other';
           <p class="info__lede">
             Questions about an order, joining as a farmer or a livestock pool? Send us a message and
             a real person will get back to you.
+          </p>
+          <p class="info__lede">
+            <strong>Something not right with your food?</strong> If anything you bought from us
+            looks, smells or tastes wrong, choose "Food quality concern" and tell us. We trace it to
+            the farm and follow it up. See our
+            <a routerLink="/real-food" class="info__link">Real Food Guide</a> for what to look out
+            for.
           </p>
 
           <ul class="info__cards">
@@ -295,6 +302,13 @@ type Topic = 'order' | 'farmer' | 'livestock' | 'account' | 'other';
       gap: 16px;
     }
 
+    .info__link {
+      color: var(--green-800);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
     .topics {
       display: flex;
       flex-wrap: wrap;
@@ -494,6 +508,7 @@ export class Contact {
 
   protected readonly topics: { value: Topic; label: string }[] = [
     { value: 'order', label: 'An order' },
+    { value: 'quality', label: 'Food quality concern' },
     { value: 'farmer', label: 'Selling as a farmer' },
     { value: 'livestock', label: 'Livestock pools' },
     { value: 'account', label: 'My account' },

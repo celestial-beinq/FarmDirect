@@ -102,7 +102,7 @@ interface Step {
     <!-- Livestock pools -->
     <section class="section">
       <div class="container pools">
-        <img [src]="img.cow | photo: 1000" alt="A healthy cow grazing on a farm" loading="lazy" />
+        <img [src]="img.whitefulani | photo: 1000" alt="White Fulani cattle grazing in Nigeria" loading="lazy" />
         <div>
           <span class="eyebrow">Shared livestock</span>
           <h2>Too much cow for one family? Share it.</h2>
@@ -516,6 +516,22 @@ export class HowItWorks {
     {
       q: 'How do I know the produce is genuine?',
       a: 'Every farmer goes through verification before listing, and every item shows its farm region. Produce is harvested only after you order, so it is never forced-ripened or stored for weeks.',
+    },
+    {
+      q: 'Do your farmers use carbide, Sniper or dyes?',
+      a: 'No. Every farm agrees not to ripen fruit with calcium carbide, not to treat stored food with dichlorvos (Sniper) or other insecticides, and not to colour food with dyes. Farms that break these rules are suspended. Our Real Food Guide explains how to spot these at the market too.',
+    },
+    {
+      q: 'Is your food genetically modified?',
+      a: 'Farms declare the seed they plant, and we list local and heritage varieties. If you want to know a particular item’s seed source, ask us and we will check with the farm.',
+    },
+    {
+      q: 'Is the livestock given drugs or steroids?',
+      a: 'Our animals are raised on pasture by verified pastoralists and checked by a vet before sale. We do not accept animals fattened with steroids.',
+    },
+    {
+      q: 'What if something arrives that is not right?',
+      a: 'Tell us within 24 hours of delivery with a photo, from your account or the contact page. We will replace it or refund you, and we follow it up with the farm.',
     },
     {
       q: 'How do livestock pools work?',

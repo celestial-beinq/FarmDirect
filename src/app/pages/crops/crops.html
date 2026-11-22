@@ -3,6 +3,15 @@
   <nav aria-label="Breadcrumb"><a routerLink="/">Home</a> / Crops</nav>
 </section>
 
+<div class="trust">
+  <div class="container trust__inner">
+    @for (point of trust; track point.text) {
+      <span><app-icon [name]="point.icon" [size]="18" /> {{ point.text }}</span>
+    }
+    <a routerLink="/real-food">Why it matters <app-icon name="arrow-right" [size]="14" /></a>
+  </div>
+</div>
+
 <section class="section">
   <div class="container">
     <div class="toolbar">
@@ -223,6 +232,31 @@
           </div>
         }
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- Know the real thing -->
+<section class="section section--tint">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Know the real thing</span>
+      <h2>What natural produce looks, smells and feels like</h2>
+      <p>Use these checks wherever you shop. Everything on this page should pass them.</p>
+    </div>
+    <div class="tips">
+      @for (tip of tips; track tip.food) {
+        <article class="tip">
+          <h3>{{ tip.food }}</h3>
+          <p class="tip__real"><app-icon name="check" [size]="16" /> {{ tip.real }}</p>
+          <p class="tip__warn"><app-icon name="info" [size]="16" /> {{ tip.warning }}</p>
+        </article>
+      }
+    </div>
+    <div class="tips__more">
+      <a routerLink="/real-food" fragment="spot" class="btn btn--primary btn--pill">
+        See the full guide <app-icon name="arrow-right" [size]="18" />
+      </a>
     </div>
   </div>
 </section>

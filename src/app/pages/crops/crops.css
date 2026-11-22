@@ -502,3 +502,100 @@
     height: 340px;
   }
 }
+
+/* ---------- Trust strip under the banner ---------- */
+.trust {
+  background: var(--lime-soft);
+  border-bottom: 1px solid var(--line);
+}
+
+.trust__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 28px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--green-800);
+}
+
+.trust__inner span,
+.trust__inner a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trust__inner a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Know the real thing ---------- */
+.tips {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.tip {
+  padding: 22px 20px;
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.tip h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.tip p {
+  display: flex;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #3c453e;
+}
+
+.tip p app-icon {
+  margin-top: 2px;
+}
+
+.tip__real app-icon {
+  color: #4d7c0f;
+}
+
+.tip__warn {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.tip__warn app-icon {
+  color: var(--danger);
+}
+
+.tips__more {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+@media (max-width: 1000px) {
+  .tips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .tips {
+    grid-template-columns: 1fr;
+  }
+
+  .trust__inner {
+    justify-content: flex-start;
+    font-size: 0.82rem;
+  }
+}
