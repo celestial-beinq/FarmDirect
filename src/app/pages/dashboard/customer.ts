@@ -10,10 +10,11 @@ import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
 import { Insights } from './insights';
+import { DashSettings } from './settings';
 
 @Component({
   selector: 'app-customer-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell, Insights, Icon],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell, Insights, Icon, DashSettings],
   templateUrl: './customer.html',
 })
 export class CustomerDashboard {
@@ -389,6 +390,7 @@ export class CustomerDashboard {
       count: this.shares().length,
     },
     { id: 'profile', label: 'Profile & Address', icon: 'user', group: 'Account' },
+    { id: 'settings', label: 'Settings', icon: 'settings', group: 'Account' },
   ]);
 
   protected readonly saved = signal(false);

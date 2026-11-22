@@ -16,6 +16,8 @@ import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
 import { Insights } from './insights';
+import { DashSettings } from './settings';
+import { SettingsService } from '../../core/settings.service';
 
 const EMPTY_FORM: ProductForm = {
   name: '',
@@ -28,7 +30,7 @@ const EMPTY_FORM: ProductForm = {
 
 @Component({
   selector: 'app-farmer-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, Icon, DashShell, Insights],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, Icon, DashShell, Insights, DashSettings],
   templateUrl: './farmer.html',
 })
 export class FarmerDashboard {
@@ -74,9 +76,11 @@ export class FarmerDashboard {
   protected readonly pendingCount = computed(
     () => this.products().filter((p) => p.status === 'pending').length,
   );
-  /** Produce items with quantity < 5 that trigger low-stock alerts */
+  /** Below this many units a listing counts as low stock (set in Settings). */
+  protected readonly lowStockThreshold = inject(SettingsService).lowStockThreshold;
+  /** Produce items under the farmer's low-stock level. */
   protected readonly lowStockItems = computed(() =>
-    this.products().filter((p) => p.quantity < 5),
+    this.products().filter((p) => p.quantity < this.lowStockThreshold()),
   );
   /** Produce items that have run out of stock (quantity === 0) */
   protected readonly outOfStockItems = computed(() =>
@@ -256,6 +260,7 @@ export class FarmerDashboard {
       count: !this.isVerifiedForListing() ? 1 : undefined,
     },
     { id: 'profile', label: 'Farm Profile', icon: 'leaf', group: 'Account' },
+    { id: 'settings', label: 'Settings', icon: 'settings', group: 'Account' },
   ]);
 
   protected readonly isVerifiedForListing = computed(() => isFarmerVerified(this.me()));

@@ -1,0 +1,191 @@
+<h1>Settings</h1>
+<p>Manage your account, notifications and security.</p>
+
+@if (me(); as me) {
+  <!-- Account -->
+  <section class="panel settings">
+    <div class="panel__head">
+      <div>
+        <h2>Account</h2>
+        <p class="muted">Signed in as {{ me.email }}</p>
+      </div>
+    </div>
+
+    @if (role() === 'customer') {
+      <div class="settings__row">
+        <div>
+          <strong>Name, phone &amp; delivery address</strong>
+          <small>{{ me.name || 'No name yet' }} · {{ me.phone || 'No phone yet' }}</small>
+        </div>
+        <a [routerLink]="[]" [queryParams]="{ tab: 'profile' }" class="btn btn--sm btn--soft">Edit</a>
+      </div>
+    } @else {
+      <form
+        class="form"
+        (submit)="$event.preventDefault(); saveAccount(name.value, phone.value)"
+      >
+        <label
+          >Full name
+          <input #name [value]="me.name" required maxlength="120" (input)="accountSaved.set(false)"
+        /></label>
+        <label
+          >Phone
+          <input #phone type="tel" [value]="me.phone" maxlength="30" (input)="accountSaved.set(false)"
+        /></label>
+        <label class="wide">Email <input [value]="me.email" disabled /></label>
+        <div class="form__foot">
+          <button type="submit" class="btn btn--primary">Save Changes</button>
+          @if (accountSaved()) {
+            <span class="form__saved" role="status">Saved</span>
+          }
+          @if (accountError()) {
+            <span class="form__error" role="alert">{{ accountError() }}</span>
+          }
+        </div>
+      </form>
+      @if (role() === 'farmer') {
+        <p class="muted settings__note">
+          Farm name and location are on the
+          <a [routerLink]="[]" [queryParams]="{ tab: 'profile' }">Farm Profile</a> tab.
+        </p>
+      }
+    }
+  </section>
+
+  <!-- Notifications -->
+  <section class="panel settings">
+    <div class="panel__head">
+      <div>
+        <h2>Email notifications</h2>
+        <p class="muted">Choose what we email you about. Changes save as you go.</p>
+      </div>
+      @if (prefsSaved()) {
+        <span class="form__saved" role="status">Saved</span>
+      }
+    </div>
+
+    @for (topic of topics(); track topic.id) {
+      <label class="settings__row">
+        <div>
+          <strong>{{ topic.label }}</strong>
+          <small>{{ topic.hint }}</small>
+        </div>
+        <input
+          type="checkbox"
+          role="switch"
+          class="switch"
+          [checked]="settingsService.settings().notify[topic.id]"
+          [disabled]="prefsBusy()"
+          (change)="setTopic(topic.id, $any($event.target).checked)"
+        />
+      </label>
+    }
+    @if (prefsError()) {
+      <p class="form__error" role="alert">{{ prefsError() }}</p>
+    }
+  </section>
+
+  <!-- Farm preferences -->
+  @if (role() === 'farmer') {
+    <section class="panel settings">
+      <div class="panel__head">
+        <div>
+          <h2>Stock</h2>
+          <p class="muted">Controls the low-stock warnings on your dashboard.</p>
+        </div>
+      </div>
+      <form
+        class="settings__row"
+        (submit)="$event.preventDefault(); setLowStock(threshold.value)"
+      >
+        <label for="low-stock">
+          <strong>Low-stock level</strong>
+          <small>A listing with fewer units than this is flagged as low stock.</small>
+        </label>
+        <span class="settings__inline">
+          <input
+            #threshold
+            id="low-stock"
+            type="number"
+            min="1"
+            max="1000"
+            step="1"
+            class="settings__number"
+            [value]="settingsService.lowStockThreshold()"
+          />
+          <button type="submit" class="btn btn--sm btn--soft" [disabled]="prefsBusy()">Save</button>
+        </span>
+      </form>
+    </section>
+  }
+
+  <!-- Security -->
+  <section class="panel settings">
+    <div class="panel__head">
+      <div>
+        <h2>Security</h2>
+        <p class="muted">Keep your account safe.</p>
+      </div>
+    </div>
+
+    <form
+      #pwForm
+      class="form"
+      (submit)="$event.preventDefault(); changePassword(pwForm, pw.value, pw2.value)"
+    >
+      <label
+        >New password
+        <input #pw type="password" autocomplete="new-password" minlength="8" maxlength="72" required
+      /></label>
+      <label
+        >Confirm new password
+        <input #pw2 type="password" autocomplete="new-password" minlength="8" maxlength="72" required
+      /></label>
+      <div class="form__foot">
+        <button type="submit" class="btn btn--primary" [disabled]="passwordBusy()">
+          {{ passwordBusy() ? 'Updating…' : 'Change Password' }}
+        </button>
+        @if (passwordSaved()) {
+          <span class="form__saved" role="status">Password changed</span>
+        }
+        @if (passwordError()) {
+          <span class="form__error" role="alert">{{ passwordError() }}</span>
+        }
+      </div>
+    </form>
+
+    @if (role() === 'admin') {
+      <div class="settings__row settings__row--top">
+        <div>
+          <strong>Automatic sign-out</strong>
+          <small>
+            Admin accounts are signed out after {{ idleMinutes }} minutes without activity. This is
+            fixed for security and can't be turned off.
+          </small>
+        </div>
+        <span class="badge-status badge-status--good">On</span>
+      </div>
+    }
+
+    <div class="settings__row settings__row--top">
+      <div>
+        <strong>Sign out of all devices</strong>
+        <small>Ends every session on every phone and computer, including this one.</small>
+      </div>
+      @if (confirmingSignOut()) {
+        <span class="settings__inline">
+          <button type="button" class="btn btn--sm btn--ghost" (click)="confirmingSignOut.set(false)">
+            Cancel
+          </button>
+          <button type="button" class="btn btn--sm btn--danger" (click)="signOutEverywhere()">
+            Sign out everywhere
+          </button>
+        </span>
+      } @else {
+        <button type="button" class="btn btn--sm btn--soft" (click)="confirmingSignOut.set(true)">
+          Sign out all
+        </button>
+      }
+    </div>
+  </section>
+}

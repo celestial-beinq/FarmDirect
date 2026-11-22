@@ -52,7 +52,7 @@
         <div style="flex: 1;">
           <strong style="color: #8c5700; font-size: 0.95rem;">Low Produce Stock Alert</strong>
           <p style="margin: 2px 0 0; color: #784800; font-size: 0.88rem; line-height: 1.4;">
-            You have <b>{{ lowStockItems().length }}</b> produce item{{ lowStockItems().length === 1 ? '' : 's' }} with less than 5 baskets/units remaining
+            You have <b>{{ lowStockItems().length }}</b> produce item{{ lowStockItems().length === 1 ? '' : 's' }} with less than {{ lowStockThreshold() }} baskets/units remaining
             @if (outOfStockItems().length > 0) {
               (<b>{{ outOfStockItems().length }}</b> currently finished and shown as <b>Not Available</b> to customers)
             }.
@@ -228,8 +228,8 @@
                           <span class="badge-status badge-status--bad" title="Out of stock - marked not available to customers">
                             Finished (0 left)
                           </span>
-                        } @else if (product.quantity < 5) {
-                          <span class="badge-status badge-status--warn" title="Low stock alert: less than 5 remaining">
+                        } @else if (product.quantity < lowStockThreshold()) {
+                          <span class="badge-status badge-status--warn" [title]="'Low stock alert: less than ' + lowStockThreshold() + ' remaining'">
                             ⚠️ Low ({{ product.quantity }} {{ product.unit }}{{ product.quantity === 1 ? '' : 's' }})
                           </span>
                         } @else {
@@ -986,6 +986,10 @@
             </div>
           </form>
         </div>
+      }
+
+      @case ('settings') {
+        <app-dash-settings />
       }
 
       @default {

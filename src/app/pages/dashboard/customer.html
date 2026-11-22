@@ -449,6 +449,10 @@
         </div>
       }
 
+      @case ('settings') {
+        <app-dash-settings />
+      }
+
       @default {
         <h1>Welcome back{{ me.name ? ', ' + me.name : '' }}</h1>
         <p>Here is what is happening with your orders.</p>

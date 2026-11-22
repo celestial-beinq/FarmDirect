@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Role } from '../../core/accounts';
 import { ADMIN_INACTIVITY_LIMIT_MS, AuthService } from '../../core/auth.service';
@@ -8,7 +8,7 @@ import { StoreService } from '../../core/store.service';
 
 /**
  * The Settings tab, shared by the customer, farmer and admin dashboards.
- * Sections shown depend on the role.
+ * Sections shown depend on the signed-in user's role.
  */
 @Component({
   selector: 'app-dash-settings',
@@ -21,9 +21,9 @@ export class DashSettings {
   private readonly router = inject(Router);
   protected readonly settingsService = inject(SettingsService);
 
-  readonly role = input.required<Role>();
-
   protected readonly me = this.auth.profile;
+  /** The signed-in user's role decides which sections and options show. */
+  protected readonly role = computed<Role>(() => this.me()?.role ?? 'customer');
   protected readonly topics = computed(() => NOTIFY_TOPICS[this.role()]);
   protected readonly idleMinutes = ADMIN_INACTIVITY_LIMIT_MS / 60000;
 

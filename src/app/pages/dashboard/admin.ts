@@ -18,10 +18,11 @@ import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
 import { Insights } from './insights';
+import { DashSettings } from './settings';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, Icon, DashShell, Insights],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, Icon, DashShell, Insights, DashSettings],
   templateUrl: './admin.html',
 })
 export class AdminDashboard {
@@ -327,6 +328,7 @@ export class AdminDashboard {
     },
     { id: 'customers', label: 'Customers', icon: 'user', group: 'People' },
     { id: 'reviews', label: 'Reviews', icon: 'star', group: 'People' },
+    { id: 'settings', label: 'Settings', icon: 'settings', group: 'Account' },
   ]);
 
   /* ---- Orders table: filter by status, search, and page through ---- */
