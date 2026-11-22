@@ -79,6 +79,7 @@ const ICONS = {
     'M9.900 9.900a3 3 0 0 0 4.200 4.200',
   ],
   'arrow-left': ['M19 12H5', 'M11 6l-6 6l6 6'],
+  settings: ['M4 6h10', 'M18 6h2', 'M4 12h4', 'M12 12h8', 'M4 18h8', 'M16 18h4', 'M16 4v4', 'M10 10v4', 'M14 16v4'],
 } satisfies Record<string, string[]>;
 
 export type IconName = keyof typeof ICONS;

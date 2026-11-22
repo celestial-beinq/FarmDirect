@@ -11,6 +11,8 @@ export interface Profile {
   address: string;
   status: 'active' | 'suspended';
   joined: string;
+  /** Raw saved settings; read them through SettingsService. */
+  settings?: Record<string, unknown>;
 }
 
 export type FarmerStatus = 'verified' | 'pending' | 'rejected' | 'suspended';

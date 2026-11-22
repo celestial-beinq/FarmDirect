@@ -138,9 +138,28 @@ export class AuthService {
             address: data.address,
             status: data.status,
             joined: data.created_at,
+            settings: data.settings ?? undefined,
           }
         : null,
     );
+  }
+
+  /** Sets a new password for the signed-in user. Returns an error message, or null. */
+  async changePassword(password: string, confirm: string): Promise<string | null> {
+    if (!password || password.length < 8) return 'Password must be at least 8 characters.';
+    if (password.length > 72) return 'Password must be 72 characters or fewer.';
+    if (password !== confirm) return 'The two passwords do not match.';
+    const client = this.supabase.client;
+    if (!client) return 'Password changes are not available in demo mode.';
+    const { error } = await client.auth.updateUser({ password });
+    return error ? friendlyError(error) : null;
+  }
+
+  /** Signs this account out on every device and browser, including this one. */
+  async signOutEverywhere(): Promise<void> {
+    const client = this.supabase.client;
+    if (client) await client.auth.signOut({ scope: 'global' });
+    await this.signOut();
   }
 
   /** Returns an error message, or null on success. */
