@@ -126,7 +126,7 @@ export class SettingsService {
     const clean = normalise(profile.role, next);
 
     this.writeLocal(profile.id, clean);
-    this.auth.profile.set({ ...profile, settings: clean });
+    this.auth.profile.set({ ...profile, settings: { ...clean } });
 
     const client = this.supabase.client;
     if (!client || !isUuid(profile.id)) return null; // demo mode: browser copy only
