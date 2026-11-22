@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/cart.service';
+import { FOOD_CONCERNS, GROWN_WITHOUT, REGIONS, seasonFor } from '../../core/content';
 import { Crop, IMAGES, POSTS, buyOptions } from '../../core/data';
 import { StoreService } from '../../core/store.service';
 import { Icon, IconName } from '../../shared/icon';
@@ -18,10 +19,18 @@ export class Home {
 
   protected readonly img = IMAGES;
   protected readonly posts = POSTS;
+  /** The first three food concerns, with a link to the full guide. */
+  protected readonly concerns = FOOD_CONCERNS.slice(0, 3);
+  protected readonly without = GROWN_WITHOUT;
+  protected readonly regions = REGIONS;
+  protected readonly season = seasonFor();
   protected readonly ticker = [
     'Order Thursday',
     'Receive Sunday',
+    'No carbide ripening',
+    'Verified farms only',
     'No middlemen',
+    'Vet-checked livestock',
     'Traceable to the farm',
   ];
 

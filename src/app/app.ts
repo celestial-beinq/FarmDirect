@@ -40,6 +40,7 @@ export class App {
     { path: '/about', label: 'About Us', exact: false },
     { path: '/crops', label: 'Crops', exact: false },
     { path: '/livestock', label: 'Livestock', exact: false },
+    { path: '/real-food', label: 'Real Food', exact: false },
     { path: '/how-it-works', label: 'How It Works', exact: false },
     { path: '/contact', label: 'Contact', exact: false },
   ];

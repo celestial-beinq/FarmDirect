@@ -43,6 +43,16 @@ export const routes: Routes = [
     title: 'How It Works: FarmDirect',
     loadComponent: () => import('./pages/how-it-works/how-it-works').then((m) => m.HowItWorks),
   },
+  {
+    path: 'real-food',
+    title: 'Real Food Guide: FarmDirect',
+    loadComponent: () => import('./pages/real-food/real-food').then((m) => m.RealFood),
+  },
+  {
+    path: 'photo-credits',
+    title: 'Photo Credits: FarmDirect',
+    loadComponent: () => import('./pages/credits/credits').then((m) => m.Credits),
+  },
   // The blog was replaced by "How It Works"; keep old links working.
   { path: 'blog', redirectTo: 'how-it-works', pathMatch: 'full' },
   {

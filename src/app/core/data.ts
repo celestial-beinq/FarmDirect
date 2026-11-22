@@ -128,6 +128,9 @@ export interface Post {
   minutes: number;
   excerpt: string;
   image: string;
+  /** Where the card leads. */
+  link: string;
+  fragment?: string;
 }
 
 export const POSTS: Post[] = [
@@ -137,7 +140,9 @@ export const POSTS: Post[] = [
     minutes: 5,
     excerpt:
       'Uniform colour, a hard core and no smell are warning signs. Here is what naturally ripened fruit looks like.',
-    image: IMAGES.fruitMix,
+    image: IMAGES.mango,
+    link: '/real-food',
+    fragment: 'spot',
   },
   {
     title: 'From Farm Gate to Your Gate in Three Days',
@@ -145,6 +150,7 @@ export const POSTS: Post[] = [
     minutes: 6,
     excerpt: 'Why we only harvest after you order, and what happens between Thursday and Sunday.',
     image: IMAGES.harvest,
+    link: '/how-it-works',
   },
   {
     title: 'Sharing a Cow: A Simple Guide for Families',
@@ -152,6 +158,7 @@ export const POSTS: Post[] = [
     minutes: 8,
     excerpt:
       'How buying pools work, what a share gets you, and how the meat is portioned and packed.',
-    image: IMAGES.sunset,
+    image: IMAGES.whitefulani,
+    link: '/livestock',
   },
 ];

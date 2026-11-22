@@ -35,8 +35,43 @@
   </div>
 </div>
 
+<!-- The problem -->
+<section class="section problem">
+  <div class="container">
+    <div class="problem__head">
+      <div>
+        <span class="eyebrow">Why we exist</span>
+        <h2>Nigerians deserve to know what they are eating</h2>
+      </div>
+      <p>
+        Fruit ripened overnight with carbide. Beans sprayed with insecticide to keep weevils away.
+        Palm oil coloured with dye. Food that passes through so many hands that nobody can say where
+        it came from, or what seed it grew from. We started FarmDirect to give families a way to buy
+        real food straight from farms that have been checked.
+      </p>
+    </div>
+    <div class="problem__grid">
+      @for (c of concerns; track c.title) {
+        <article class="problem__card">
+          <img [src]="c.image | photo: 600" alt="" loading="lazy" />
+          <div>
+            <h3>{{ c.title }}</h3>
+            <p>{{ c.text }}</p>
+            <p class="problem__answer"><app-icon name="check" [size]="16" /> {{ c.answer }}</p>
+          </div>
+        </article>
+      }
+    </div>
+    <div class="center">
+      <a routerLink="/real-food" class="btn btn--primary btn--pill">
+        Read the Real Food Guide <app-icon name="arrow-right" [size]="18" />
+      </a>
+    </div>
+  </div>
+</section>
+
 <!-- How it works -->
-<section class="section" id="how-it-works">
+<section class="section section--tint" id="how-it-works">
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">How it Works</span>
@@ -111,6 +146,69 @@
   </div>
 </section>
 
+<!-- Grown without -->
+<section class="without">
+  <div class="container without__inner">
+    <div>
+      <span class="eyebrow eyebrow--light">The FarmDirect promise</span>
+      <h2>Every farm agrees to grow and raise food without</h2>
+      <a routerLink="/real-food" class="without__link">
+        How we verify farms <app-icon name="arrow-right" [size]="16" />
+      </a>
+    </div>
+    <ul>
+      @for (item of without; track item) {
+        <li><app-icon name="close" [size]="16" /> {{ item }}</li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- In season now -->
+<section class="section">
+  <div class="container season">
+    <img [src]="season.image | photo: 900" alt="" loading="lazy" />
+    <div>
+      <span class="eyebrow">In season now</span>
+      <h2>{{ season.name }}</h2>
+      <p>{{ season.note }}</p>
+      <ul class="season__foods">
+        @for (food of season.foods; track food) {
+          <li class="chip">{{ food }}</li>
+        }
+      </ul>
+      <div class="season__cta">
+        <a routerLink="/crops" class="btn btn--primary btn--pill">Shop what's fresh</a>
+        <a routerLink="/real-food" fragment="seasons" class="btn btn--ghost btn--pill"
+          >See the full calendar</a
+        >
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Regions -->
+<section class="section section--tint">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Where your food comes from</span>
+      <h2>Grown across Nigeria, by the regions that grow it best</h2>
+    </div>
+    <div class="regions">
+      @for (r of regions; track r.name) {
+        <article class="region">
+          <img [src]="r.image | photo: 600" alt="" loading="lazy" />
+          <div class="region__body">
+            <h3>{{ r.name }}</h3>
+            <p class="region__states"><app-icon name="pin" [size]="14" /> {{ r.states }}</p>
+            <p>{{ r.grows }}</p>
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
 <!-- Trending -->
 <section class="section">
   <div class="container">
@@ -153,11 +251,15 @@
     <div class="posts">
       @for (post of posts; track post.title) {
         <article class="post">
-          <img [src]="post.image | photo: 700" alt="" loading="lazy" />
+          <a [routerLink]="post.link" [fragment]="post.fragment">
+            <img [src]="post.image | photo: 700" alt="" loading="lazy" />
+          </a>
           <p class="post__meta">
             <strong>{{ post.topic }}</strong> {{ post.minutes }} min read
           </p>
-          <h3>{{ post.title }}</h3>
+          <h3>
+            <a [routerLink]="post.link" [fragment]="post.fragment">{{ post.title }}</a>
+          </h3>
           <p>{{ post.excerpt }}</p>
         </article>
       }
