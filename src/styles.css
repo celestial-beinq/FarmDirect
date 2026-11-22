@@ -615,6 +615,7 @@ select:focus-visible,
 
 /* Refined Panels */
 .panel {
+  min-width: 0;
   margin-bottom: 18px;
   padding: 16px;
   border: 1px solid var(--dash-border);
@@ -650,7 +651,11 @@ select:focus-visible,
 
 /* Clean Data Tables */
 .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
@@ -678,6 +683,13 @@ select:focus-visible,
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
   color: #1e293b;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.table td small {
+  white-space: nowrap;
 }
 
 .table tr:last-child td {
