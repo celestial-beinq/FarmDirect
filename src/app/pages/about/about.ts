@@ -18,8 +18,8 @@ import { PhotoPipe } from '../../shared/pipes';
     <section class="section">
       <div class="container about">
         <div class="about__photos">
-          <img [src]="img.market | photo: 900" alt="Fresh produce at a Nigerian market" />
-          <img [src]="img.farmer | photo: 600" alt="A Nigerian farmer at work" loading="lazy" />
+          <img [src]="img.market | photo: 900" alt="A trader selling fresh peppers, okra and palm oil at a Nigerian market" />
+          <img [src]="img.farmer | photo: 600" alt="A Nigerian farmer carrying freshly harvested plantain" loading="lazy" />
         </div>
         <div>
           <span class="eyebrow">Our mission</span>
@@ -128,7 +128,7 @@ import { PhotoPipe } from '../../shared/pipes';
     <!-- Farmers -->
     <section class="section">
       <div class="container farmers">
-        <img [src]="img.farmfield | photo: 1000" alt="Farmland in Nigeria" loading="lazy" />
+        <img [src]="img.farmfield | photo: 1000" alt="Farmland in Adamawa State, Nigeria" loading="lazy" />
         <div>
           <span class="eyebrow">For farmers</span>
           <h2>Grow honestly, and get paid fairly for it</h2>

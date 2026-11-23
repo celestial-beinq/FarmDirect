@@ -23,7 +23,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
   imports: [RouterLink, Icon, PhotoPipe],
   template: `
     <section class="rf-hero">
-      <img [src]="img.market | photo: 1600" alt="Fresh produce on sale at a Nigerian market" />
+      <img [src]="img.market | photo: 1600" alt="A trader selling fresh peppers, okra and palm oil at a Nigerian market" />
       <div class="rf-hero__shade"></div>
       <div class="container rf-hero__body">
         <nav aria-label="Breadcrumb"><a routerLink="/">Home</a> / Real Food Guide</nav>
@@ -116,7 +116,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
             We don't buy from markets or middlemen. Every listing comes from a named farm that has
             passed these checks, and you can see the farm and region on every product.
           </p>
-          <img [src]="img.farmer | photo: 900" alt="A Nigerian farmer at work on a farm" loading="lazy" />
+          <img [src]="img.farmer | photo: 900" alt="A Nigerian farmer carrying freshly harvested plantain" loading="lazy" />
         </div>
         <ol class="verify__steps">
           @for (step of verify; track step.title; let i = $index) {

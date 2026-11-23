@@ -29,6 +29,14 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "source": "https://commons.wikimedia.org/wiki/File:Fresh_ugu_leaves_displayed_at_market_stall.jpg"
   },
   {
+    "file": "/images/ewedu.jpg",
+    "title": "Ewedu Leaf",
+    "author": "Beeyah15",
+    "licence": "CC BY-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Ewedu_Leaf.jpg"
+  },
+  {
     "file": "/images/shoko.jpg",
     "title": "Nigerian spinach (Celosia argentea) with flowers",
     "author": "Kamawal222",
@@ -91,6 +99,14 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Garden_egg_at_monday_market_02.jpg"
+  },
+  {
+    "file": "/images/vegmarket.jpg",
+    "title": "A Vegetable Seller at bakin dogo's market, Kaduna State",
+    "author": "Zmu'az4Z",
+    "licence": "CC BY-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:A_Vegetable_Seller_at_bakin_dogo%27s_market,_Kaduna_State.jpg"
   },
   {
     "file": "/images/mango.jpg",
@@ -277,6 +293,14 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "source": "https://commons.wikimedia.org/wiki/File:Ofada_Rice.jpg"
   },
   {
+    "file": "/images/rice.jpg",
+    "title": "Abakaliki rice mill 71",
+    "author": "MediaMOF",
+    "licence": "CC BY-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Abakaliki_rice_mill_71.jpg"
+  },
+  {
     "file": "/images/beans.jpg",
     "title": "Varieties of Beans at Bakin Dogo market Kaduna 03",
     "author": "Weyham",
@@ -339,6 +363,22 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Sorghum_on_sale_at_the_Monday_Market_in_Kakuri,_Kaduna,_Nigeria.jpg"
+  },
+  {
+    "file": "/images/acha.jpg",
+    "title": "The fonio harvest",
+    "author": "Alfonso Castellanos",
+    "licence": "CC BY-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:The_fonio_harvest.jpg"
+  },
+  {
+    "file": "/images/groundnut.jpg",
+    "title": "Groundnuts for selling",
+    "author": "MaiDenzel",
+    "licence": "CC BY-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Groundnuts_for_selling.jpg"
   },
   {
     "file": "/images/sesame.jpg",
@@ -438,11 +478,11 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
   },
   {
     "file": "/images/whitefulani.jpg",
-    "title": "Crossbreed White Fulani Cattle in Yobe",
-    "author": "Mr.Eid&amp;min",
+    "title": "FULANI NOMAD MOVING FROM KANO STATE TO NIGER COUNTRY",
+    "author": "Sani Ahmad Usman",
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Crossbreed_White_Fulani_Cattle_in_Yobe.jpg"
+    "source": "https://commons.wikimedia.org/wiki/File:FULANI_NOMAD_MOVING_FROM_KANO_STATE_TO_NIGER_COUNTRY.jpg"
   },
   {
     "file": "/images/gudali.jpg",
@@ -454,11 +494,11 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
   },
   {
     "file": "/images/redbororo.jpg",
-    "title": "Red Bororo Cattles",
-    "author": "Fulani215",
+    "title": "Flock of cows with a Herdsmen",
+    "author": "Audu king",
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Red_Bororo_Cattles.jpg"
+    "source": "https://commons.wikimedia.org/wiki/File:Flock_of_cows_with_a_Herdsmen.jpg"
   },
   {
     "file": "/images/redsokoto.jpg",
@@ -486,11 +526,11 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
   },
   {
     "file": "/images/market.jpg",
-    "title": "Young Vendor Selling Palm Oil and Foodstuffs in a Local Market",
-    "author": "Pharouqenr",
+    "title": "Foodstuff Trader 01",
+    "author": "LauraB1",
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Young_Vendor_Selling_Palm_Oil_and_Foodstuffs_in_a_Local_Market.jpg"
+    "source": "https://commons.wikimedia.org/wiki/File:Foodstuff_Trader_01.jpg"
   },
   {
     "file": "/images/tomatoes2.jpg",
@@ -566,10 +606,10 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
   },
   {
     "file": "/images/balami.jpg",
-    "title": "A ram in the market",
-    "author": "Iwai-Dialax",
-    "licence": "CC BY 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:A_ram_in_the_market.jpg"
+    "title": "Rams 2",
+    "author": "Obedmakolo",
+    "licence": "CC BY-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Rams_2.jpg"
   }
 ];
