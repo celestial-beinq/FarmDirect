@@ -21,6 +21,7 @@ import {
   MOCK_PROFILES,
   MOCK_REVIEWS,
 } from './mock-data';
+import { sanitizeNumber, sanitizePhone, sanitizeText, sanitizeUrl } from './sanitizer';
 import { Supabase, friendlyError } from './supabase';
 
 const isUuid = (id: string) =>
@@ -33,6 +34,24 @@ export interface ProductForm {
   unit: string;
   quantity?: number;
   description: string;
+}
+
+const CROP_CATEGORY_SET = new Set<string>(['Vegetables', 'Fruits', 'Tubers', 'Grains']);
+
+/**
+ * Cleans a product form right before it is saved, whatever page it came from.
+ * The limits match the database's own rules (which are the real protection,
+ * since anyone can call the database directly).
+ */
+function cleanProductForm(form: ProductForm): ProductForm {
+  return {
+    name: sanitizeText(form.name, 120),
+    category: (CROP_CATEGORY_SET.has(form.category) ? form.category : 'Vegetables') as CropCategory,
+    price: Math.round(sanitizeNumber(form.price, 1, 100_000_000)),
+    unit: sanitizeText(form.unit, 20) || 'kg',
+    quantity: Math.floor(sanitizeNumber(form.quantity ?? 0, 0, 1_000_000)),
+    description: sanitizeText(form.description, 2000),
+  };
 }
 
 /** How long until a pool closes, in words. */
@@ -327,7 +346,9 @@ export class StoreService {
   }
 
   /** A farmer's new listing waits for admin approval (the database enforces this). */
-  addProduct(farmId: string, form: ProductForm): Promise<string | null> {
+  addProduct(farmId: string, rawForm: ProductForm): Promise<string | null> {
+    const form = cleanProductForm(rawForm);
+    if (form.name.length < 2) return Promise.resolve('Enter a product name.');
     const farm = this.farmers().find((f) => f.id === farmId);
     if (!farm) {
       return Promise.resolve('Farm record not found.');
@@ -374,7 +395,9 @@ export class StoreService {
     );
   }
 
-  updateProduct(id: string, form: ProductForm, wasRejected: boolean) {
+  updateProduct(id: string, rawForm: ProductForm, wasRejected: boolean) {
+    const form = cleanProductForm(rawForm);
+    if (form.name.length < 2) return Promise.resolve('Enter a product name.');
     const quantity = Math.max(0, Math.floor(form.quantity ?? 0));
     this.crops.update((list) =>
       list.map((c) =>
@@ -413,7 +436,7 @@ export class StoreService {
 
   /** Quick inline update for product stock quantity. */
   async updateStock(id: string, quantity: number): Promise<string | null> {
-    const qty = Math.max(0, Math.floor(quantity));
+    const qty = Math.floor(sanitizeNumber(quantity, 0, 1_000_000));
     // Optimistically update local crop list
     this.crops.update((crops) =>
       crops.map((c) => (c.id === id ? { ...c, quantity: qty } : c)),
@@ -439,7 +462,8 @@ export class StoreService {
     return this.change((c) => c.from('products').delete().eq('id', id));
   }
 
-  setFarmerStatus(id: string, status: FarmerStatus, notes?: string): Promise<string | null> {
+  setFarmerStatus(id: string, status: FarmerStatus, rawNotes?: string): Promise<string | null> {
+    const notes = rawNotes === undefined ? undefined : sanitizeText(rawNotes, 1000);
     const targetFarmer = this.farmers().find((f) => f.id === id);
     if (status === 'verified') {
       const errors = getFarmerVerificationErrors(targetFarmer);
@@ -465,7 +489,7 @@ export class StoreService {
 
   submitFarmerVerification(
     id: string,
-    data: {
+    rawData: {
       nin: string;
       residentialAddress: string;
       location: string;
@@ -475,6 +499,15 @@ export class StoreService {
       documentUrl?: string;
     },
   ) {
+    const data = {
+      nin: rawData.nin.replace(/\D/g, '').slice(0, 20),
+      residentialAddress: sanitizeText(rawData.residentialAddress, 300),
+      location: sanitizeText(rawData.location, 160),
+      farmSize: sanitizeText(rawData.farmSize, 100),
+      cropProduces: sanitizeText(rawData.cropProduces, 300),
+      stateOfOrigin: sanitizeText(rawData.stateOfOrigin, 60),
+      documentUrl: sanitizeUrl(rawData.documentUrl).slice(0, 500),
+    };
     this.farmers.update((list) =>
       list.map((f) =>
         f.id === id
@@ -503,7 +536,10 @@ export class StoreService {
     );
   }
 
-  updateFarm(id: string, name: string, location: string) {
+  updateFarm(id: string, rawName: string, rawLocation: string) {
+    const name = sanitizeText(rawName, 120);
+    const location = sanitizeText(rawLocation, 160);
+    if (name.length < 2) return Promise.resolve('Enter your farm name.');
     return this.change((c) => c.from('farms').update({ name, location }).eq('id', id));
   }
 
@@ -511,7 +547,10 @@ export class StoreService {
     return this.change((c) => c.from('profiles').update({ status }).eq('id', id));
   }
 
-  async updateMyProfile(name: string, phone: string, address: string): Promise<string | null> {
+  async updateMyProfile(rawName: string, rawPhone: string, rawAddress: string): Promise<string | null> {
+    const name = sanitizeText(rawName, 120);
+    const phone = sanitizePhone(rawPhone);
+    const address = sanitizeText(rawAddress, 300);
     const id = this.auth.userId();
     if (!id) return 'Please sign in first.';
     this.profiles.update((list) =>
@@ -680,7 +719,10 @@ export class StoreService {
    * Adds or updates my review. The database refuses it unless I have a
    * delivered order containing this product.
    */
-  async saveReview(productId: string, rating: number, comment: string): Promise<string | null> {
+  async saveReview(productId: string, rawRating: number, rawComment: string): Promise<string | null> {
+    const rating = Math.round(sanitizeNumber(rawRating, 1, 5));
+    const comment = sanitizeText(rawComment, 1000);
+    if (!isUuid(productId)) return 'This product cannot be reviewed.';
     const client = this.supabase.client;
     const customerId = this.auth.userId();
     if (!client || !customerId) return 'Please sign in first.';

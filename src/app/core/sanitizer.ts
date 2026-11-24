@@ -41,6 +41,13 @@ export function sanitizeUrl(url: unknown, fallback = ''): string {
     return fallback;
   }
 
+  // "//evil.com" and "/\evil.com" look like site paths but browsers treat them
+  // as links to another website. Backslashes, quotes, angle brackets and
+  // whitespace never belong in a link we store.
+  if (/^[/\\]{2}|^\/\\/.test(clean) || /[\\\s"'<>`]/.test(clean)) {
+    return fallback;
+  }
+
   // Must match safe schemes or relative paths
   if (SAFE_URL_SCHEME_PATTERN.test(clean)) {
     return clean;
