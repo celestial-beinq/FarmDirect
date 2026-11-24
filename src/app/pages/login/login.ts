@@ -603,11 +603,11 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .auth__card {
       width: 100%;
-      max-width: 490px;
+      max-width: 420px;
       min-width: 0;
       margin: auto;
       box-sizing: border-box;
-      padding: clamp(24px, 3.5vw, 40px);
+      padding: clamp(20px, 2.5vw, 30px);
       border-radius: var(--radius-lg);
       background: var(--white);
       box-shadow:
@@ -619,8 +619,8 @@ import { PhotoPipe } from '../../shared/pipes';
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 22px;
-      font-size: 0.83rem;
+      margin-bottom: 14px;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--muted);
     }
@@ -630,14 +630,14 @@ import { PhotoPipe } from '../../shared/pipes';
     }
 
     .auth__head h1 {
-      font-size: clamp(1.6rem, 3vw, 2rem);
+      font-size: clamp(1.4rem, 2.4vw, 1.65rem);
       font-weight: 800;
     }
 
     .auth__head p {
-      margin-top: 6px;
+      margin-top: 4px;
       color: var(--muted);
-      font-size: 0.93rem;
+      font-size: 0.86rem;
     }
 
     /* Tabs */
@@ -645,18 +645,18 @@ import { PhotoPipe } from '../../shared/pipes';
       position: relative;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      margin: 24px 0 20px;
+      margin: 18px 0 16px;
       padding: 4px;
-      border-radius: 12px;
+      border-radius: 10px;
       background: var(--cream);
     }
 
     .tabs button {
       position: relative;
       z-index: 1;
-      padding: 10px 12px;
-      border-radius: 9px;
-      font-size: 0.88rem;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 0.84rem;
       font-weight: 600;
       color: var(--muted);
       transition: color 0.2s;
@@ -832,7 +832,7 @@ import { PhotoPipe } from '../../shared/pipes';
     /* Form */
     .auth-form {
       display: grid;
-      gap: 16px;
+      gap: 12px;
       width: 100%;
       max-width: 100%;
       min-width: 0;
@@ -856,9 +856,9 @@ import { PhotoPipe } from '../../shared/pipes';
     .roles legend,
     .field label {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
       padding: 0;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       font-weight: 600;
       color: #2f3a33;
     }
@@ -970,11 +970,11 @@ import { PhotoPipe } from '../../shared/pipes';
     .field__control {
       display: flex;
       align-items: center;
-      gap: 10px;
-      height: 50px;
-      padding: 0 14px;
+      gap: 9px;
+      height: 42px;
+      padding: 0 12px;
       border: 1.5px solid var(--line);
-      border-radius: 12px;
+      border-radius: 10px;
       background: var(--field-bg);
       color: #8a938c;
       width: 100%;
@@ -1008,7 +1008,7 @@ import { PhotoPipe } from '../../shared/pipes';
       border: 0;
       outline: 0;
       background: transparent;
-      font-size: 1rem;
+      font-size: 0.92rem;
       color: var(--ink);
       box-sizing: border-box;
     }
@@ -1073,13 +1073,13 @@ import { PhotoPipe } from '../../shared/pipes';
       justify-content: center;
       gap: 8px;
       width: 100%;
-      height: 52px;
-      margin-top: 4px;
-      border-radius: 12px;
+      height: 44px;
+      margin-top: 2px;
+      border-radius: 10px;
       background: var(--green-900);
       color: var(--white);
       font-weight: 700;
-      font-size: 0.97rem;
+      font-size: 0.92rem;
       transition:
         background 0.15s,
         transform 0.15s,
@@ -1126,13 +1126,13 @@ import { PhotoPipe } from '../../shared/pipes';
     .switch,
     .help {
       text-align: center;
-      font-size: 0.9rem;
+      font-size: 0.84rem;
       color: var(--muted);
     }
 
     .switch {
-      margin-top: 22px;
-      padding-top: 20px;
+      margin-top: 16px;
+      padding-top: 14px;
       border-top: 1px solid var(--line);
     }
 
@@ -1239,7 +1239,7 @@ import { PhotoPipe } from '../../shared/pipes';
     /* Big screens: let the text and the form grow a little so they don't look lost. */
     @media (min-width: 1600px) {
       .auth__card {
-        max-width: 540px;
+        max-width: 440px;
       }
 
       .auth__visual-inner {
@@ -1358,11 +1358,15 @@ import { PhotoPipe } from '../../shared/pipes';
       }
 
       .field__control {
-        height: 48px;
+        height: 46px;
+      }
+
+      .field__control input {
+        font-size: 1rem;
       }
 
       .auth-submit {
-        height: 48px;
+        height: 46px;
       }
 
       .tabs {
