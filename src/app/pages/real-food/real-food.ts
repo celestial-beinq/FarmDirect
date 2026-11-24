@@ -9,7 +9,7 @@ import {
   seasonFor,
 } from '../../core/content';
 import { IMAGES } from '../../core/data';
-import { Icon } from '../../shared/icon';
+import { Icon, IconName } from '../../shared/icon';
 import { PhotoPipe } from '../../shared/pipes';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -23,21 +23,61 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
   imports: [RouterLink, Icon, PhotoPipe],
   template: `
     <section class="rf-hero">
-      <img [src]="img.market | photo: 1600" alt="A trader selling fresh peppers, okra and palm oil at a Nigerian market" />
-      <div class="rf-hero__shade"></div>
-      <div class="container rf-hero__body">
-        <nav aria-label="Breadcrumb"><a routerLink="/">Home</a> / Real Food Guide</nav>
-        <h1>Is your food really what it looks like?</h1>
-        <p>
-          Bright yellow mangoes that are hard inside. Beans that smell of insecticide. Palm oil
-          that's redder than it should be. Here is what's happening to food in Nigeria, how to spot
-          it, and how to buy from farms you can trust.
-        </p>
-        <div class="rf-hero__cta">
-          <a routerLink="/crops" class="btn btn--lime btn--pill">
-            Shop verified produce <app-icon name="arrow-right" [size]="18" />
-          </a>
-          <a [routerLink]="[]" fragment="spot" class="btn btn--pill rf-hero__ghost">How to spot fake food</a>
+      <div class="container rf-hero__grid">
+        <!-- Copy -->
+        <div class="rf-hero__copy">
+          <nav aria-label="Breadcrumb" class="rf-hero__crumbs">
+            <a routerLink="/">Home</a> <span aria-hidden="true">/</span> Real Food Guide
+          </nav>
+          <h1>Is your food <em>really</em> what it looks like?</h1>
+          <p class="rf-hero__lead">
+            Here is what's happening to food on its way to Nigerian kitchens, how to spot it, and how
+            to buy from farms you can trust.
+          </p>
+
+          <ul class="rf-hero__signs" aria-label="Common warning signs">
+            @for (sign of signs; track sign.text) {
+              <li>
+                <span class="rf-hero__sign-icon"><app-icon [name]="sign.icon" [size]="16" /></span>
+                {{ sign.text }}
+              </li>
+            }
+          </ul>
+
+          <div class="rf-hero__cta">
+            <a routerLink="/crops" class="btn btn--lime btn--pill">
+              Shop verified produce <app-icon name="arrow-right" [size]="18" />
+            </a>
+            <a [routerLink]="[]" fragment="spot" class="btn btn--pill rf-hero__ghost">
+              How to spot fake food
+            </a>
+          </div>
+        </div>
+
+        <!-- Photo collage -->
+        <div class="rf-hero__media">
+          <figure class="rf-hero__photo rf-hero__photo--main">
+            <img
+              [src]="img.market | photo: 900"
+              alt="A trader selling fresh peppers, okra and palm oil at a Nigerian market"
+            />
+          </figure>
+          <figure class="rf-hero__photo">
+            <img [src]="img.mango | photo: 600" alt="Green mangoes growing on a mango tree" />
+            <figcaption>Left on the tree to ripen</figcaption>
+          </figure>
+          <figure class="rf-hero__photo">
+            <img [src]="img.palmoil | photo: 600" alt="Red palm oil on sale at a market in Kaduna" />
+            <figcaption>Palm oil, nothing added</figcaption>
+          </figure>
+
+          <div class="rf-hero__badge" aria-hidden="true">
+            <app-icon name="shield" [size]="22" />
+            <div>
+              <strong>Verified farms only</strong>
+              <span>Farm &amp; region on every item</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -206,70 +246,214 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
       font-size: clamp(1.6rem, 3.4vw, 2.3rem);
     }
 
-    /* Hero */
+    /* Hero: copy on a solid panel, photos beside it (never stretched behind text) */
     .rf-hero {
       position: relative;
-      min-height: 520px;
-      display: flex;
-      align-items: flex-end;
-      color: var(--white);
       overflow: hidden;
+      background:
+        radial-gradient(circle at 85% 15%, rgba(207, 232, 110, 0.14), transparent 45%),
+        radial-gradient(circle at 10% 100%, rgba(207, 232, 110, 0.08), transparent 40%),
+        var(--green-900);
+      color: var(--white);
     }
 
-    .rf-hero > img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .rf-hero__grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 56px;
+      align-items: center;
+      padding-top: 72px;
+      padding-bottom: 80px;
     }
 
-    .rf-hero__shade {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(18, 40, 26, 0.35) 0%, rgba(18, 40, 26, 0.92) 75%);
+    .rf-hero__crumbs {
+      display: flex;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.6);
     }
 
-    .rf-hero__body {
-      position: relative;
-      padding-top: 120px;
-      padding-bottom: 64px;
+    .rf-hero__crumbs a {
+      color: rgba(255, 255, 255, 0.85);
     }
 
-    .rf-hero nav {
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 0.95rem;
-      opacity: 0.85;
+    .rf-hero__crumbs a:hover {
+      color: var(--lime);
     }
 
     .rf-hero h1 {
-      max-width: 16ch;
-      margin: 12px 0 16px;
-      font-size: clamp(2.1rem, 6vw, 3.6rem);
-      line-height: 1.05;
+      max-width: 13ch;
+      margin: 18px 0 18px;
+      font-size: clamp(2.3rem, 5.4vw, 4rem);
+      line-height: 1.02;
+      letter-spacing: -0.02em;
     }
 
-    .rf-hero p {
-      max-width: 58ch;
-      font-size: 1.05rem;
-      color: rgba(255, 255, 255, 0.88);
+    .rf-hero h1 em {
+      position: relative;
+      font-style: normal;
+      color: var(--lime);
+      white-space: nowrap;
+    }
+
+    /* Hand-drawn style underline under "really". */
+    .rf-hero h1 em::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -0.06em;
+      height: 0.16em;
+      border-radius: 999px;
+      background: var(--lime);
+      opacity: 0.35;
+      transform: rotate(-1.5deg);
+    }
+
+    .rf-hero__lead {
+      max-width: 46ch;
+      font-size: 1.08rem;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .rf-hero__signs {
+      display: grid;
+      gap: 10px;
+      margin: 26px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rf-hero__signs li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .rf-hero__sign-icon {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.18);
+      color: #fca5a5;
     }
 
     .rf-hero__cta {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-top: 28px;
+      margin-top: 32px;
     }
 
     .rf-hero__ghost {
-      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      border: 1.5px solid rgba(255, 255, 255, 0.45);
       color: var(--white);
     }
 
     .rf-hero__ghost:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--white);
+    }
+
+    /* Collage: one tall photo and two stacked ones. */
+    .rf-hero__media {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 14px;
+      height: 520px;
+    }
+
+    .rf-hero__photo {
+      position: relative;
+      margin: 0;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      background: var(--green-800);
+    }
+
+    .rf-hero__photo--main {
+      grid-row: 1 / -1;
+    }
+
+    .rf-hero__photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .rf-hero__photo figcaption {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      display: inline-flex;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(18, 40, 26, 0.78);
+      backdrop-filter: blur(4px);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--white);
+    }
+
+    .rf-hero__badge {
+      position: absolute;
+      left: -28px;
+      bottom: 36px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      background: var(--white);
+      color: var(--ink);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .rf-hero__badge app-icon {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--lime);
+      color: var(--green-900);
+    }
+
+    .rf-hero__badge strong {
+      display: block;
+      font-size: 0.92rem;
+    }
+
+    .rf-hero__badge span {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 960px) {
+      .rf-hero__grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding-top: 48px;
+        padding-bottom: 56px;
+      }
+
+      .rf-hero__media {
+        height: 420px;
+      }
+
+      .rf-hero__badge {
+        left: 16px;
+        bottom: 16px;
+      }
     }
 
     /* Concerns */
@@ -650,8 +834,20 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
     }
 
     @media (max-width: 560px) {
-      .rf-hero {
-        min-height: 460px;
+      .rf-hero__media {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 220px 130px;
+        height: auto;
+      }
+
+      .rf-hero__photo--main {
+        grid-row: auto;
+        grid-column: 1 / -1;
+      }
+
+      .rf-hero__badge {
+        position: static;
+        grid-column: 1 / -1;
       }
 
       .concerns,
@@ -664,6 +860,12 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 })
 export class RealFood {
   protected readonly img = IMAGES;
+  /** The warning signs listed in the hero. */
+  protected readonly signs: { icon: IconName; text: string }[] = [
+    { icon: 'clock', text: 'Mangoes bright yellow outside, hard inside' },
+    { icon: 'info', text: 'Beans with a sharp insecticide smell' },
+    { icon: 'eye', text: 'Palm oil redder than it should be' },
+  ];
   protected readonly concerns = FOOD_CONCERNS;
   protected readonly tips = SPOT_TIPS;
   protected readonly verify = VERIFY_STEPS;

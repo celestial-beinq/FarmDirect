@@ -398,11 +398,11 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
   },
   {
     "file": "/images/palmoil.jpg",
-    "title": "PALM OIL IN GOMBE OLD MARKET",
-    "author": "Yahuzaishat",
+    "title": "Palm Oil at kakuri kaduna state 01",
+    "author": "Dorcas Atule",
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:PALM_OIL_IN_GOMBE_OLD_MARKET.jpg"
+    "source": "https://commons.wikimedia.org/wiki/File:Palm_Oil_at_kakuri_kaduna_state_01.jpg"
   },
   {
     "file": "/images/honey.jpg",
