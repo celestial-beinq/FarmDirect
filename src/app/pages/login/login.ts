@@ -1269,8 +1269,8 @@ import { PhotoPipe } from '../../shared/pipes';
       }
 
       .auth__card {
-        max-width: 450px;
-        padding: 24px 20px;
+        max-width: 420px;
+        padding: 22px 20px;
       }
 
       .auth__perks {
@@ -1324,9 +1324,9 @@ import { PhotoPipe } from '../../shared/pipes';
       }
 
       .auth__card {
-        max-width: 480px;
+        max-width: 420px;
         margin: 0 auto;
-        padding: 28px 24px;
+        padding: 24px 20px;
       }
     }
 
