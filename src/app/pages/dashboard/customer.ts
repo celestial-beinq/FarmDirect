@@ -323,27 +323,13 @@ export class CustomerDashboard {
     return order.items.map((i) => `${i.title} (${i.qty}×)`).join(', ');
   }
 
-  protected readonly me = computed(() => {
-    return (
-      this.auth.profile() ?? {
-        id: 'u-cust-1',
-        role: 'customer' as const,
-        name: 'Ngozi Adebayo',
-        email: 'ngozi.adebayo@gmail.com',
-        phone: '0805 333 4455',
-        address: 'Plot 18 Admiralty Way, Lekki Phase 1, Lagos',
-        status: 'active' as const,
-        joined: '2026-06-12T14:20:00Z',
-      }
-    );
-  });
+  protected readonly me = computed(() => this.auth.profile());
 
-  /** My orders, newest first. (The database only sends me my own; falls back to mock demo orders) */
+  /** My orders, newest first. */
   protected readonly orders = computed(() => {
-    const uid = this.me().id;
-    const all = this.store.orders();
-    const own = all.filter((o) => o.customerId === uid);
-    return own.length ? own : all.slice(0, 5);
+    const uid = this.me()?.id;
+    if (!uid) return [];
+    return this.store.orders().filter((o) => o.customerId === uid);
   });
   protected readonly openOrders = computed(() =>
     this.orders().filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled'),

@@ -67,14 +67,14 @@ export class StoreService {
   private readonly supabase = inject(Supabase);
   private readonly auth = inject(AuthService);
 
-  readonly farmers = signal<Farmer[]>(MOCK_FARMERS);
+  readonly farmers = signal<Farmer[]>(this.supabase.configured ? [] : MOCK_FARMERS);
   /** Every crop listing this user is allowed to see. */
-  readonly crops = signal<Crop[]>(MOCK_CROPS);
-  readonly animals = signal<Animal[]>(MOCK_ANIMALS);
-  readonly pools = signal<Pool[]>(MOCK_POOLS);
-  readonly orders = signal<Order[]>(MOCK_ORDERS);
+  readonly crops = signal<Crop[]>(this.supabase.configured ? [] : MOCK_CROPS);
+  readonly animals = signal<Animal[]>(this.supabase.configured ? [] : MOCK_ANIMALS);
+  readonly pools = signal<Pool[]>(this.supabase.configured ? [] : MOCK_POOLS);
+  readonly orders = signal<Order[]>([]);
   /** Profiles this user may see: just their own, or everyone for admins. */
-  readonly profiles = signal<Profile[]>(MOCK_PROFILES);
+  readonly profiles = signal<Profile[]>([]);
 
   /** False until the first load has finished. */
   readonly loaded = signal(false);
@@ -152,7 +152,7 @@ export class StoreService {
             documentUrl: f.document_url,
             verificationNotes: f.verification_notes,
           }))
-        : MOCK_FARMERS,
+        : (this.supabase.configured ? [] : MOCK_FARMERS),
     );
 
     const productRows: any[] = products.data ?? [];
@@ -238,7 +238,7 @@ export class StoreService {
               qty: i.qty,
             })),
           }))
-        : MOCK_ORDERS,
+        : (this.supabase.configured || signedIn ? [] : MOCK_ORDERS),
     );
 
     const profileRows: any[] = profiles.data ?? [];
@@ -254,7 +254,7 @@ export class StoreService {
             status: p.status,
             joined: p.created_at,
           }))
-        : MOCK_PROFILES,
+        : (this.supabase.configured ? [] : MOCK_PROFILES),
     );
 
     this.updatedAt.set(new Date());
@@ -655,13 +655,20 @@ export class StoreService {
   async loadReviews(productIds?: string[]): Promise<Review[]> {
     const client = this.supabase.client;
     let list: Review[] = [];
-    if (client && productIds?.length !== 0) {
+    if (client && productIds && productIds.length > 0) {
       let query = client.from('reviews').select('*').order('created_at', { ascending: false });
-      if (productIds) query = query.in('product_id', productIds);
+      query = query.in('product_id', productIds);
       const { data } = await query.limit(200);
       list = (data ?? []).map(toReview);
+    } else if (client && !productIds) {
+      const { data } = await client
+        .from('reviews')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      list = (data ?? []).map(toReview);
     }
-    if (list.length === 0) {
+    if (list.length === 0 && !this.supabase.configured) {
       list = productIds
         ? MOCK_REVIEWS.filter((r) => productIds.includes(r.productId))
         : MOCK_REVIEWS;

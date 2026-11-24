@@ -52,19 +52,23 @@ export class FarmerDashboard {
 
   /** My farm. */
   protected readonly me = computed(() =>
-    this.store.farmers().find((f) => f.ownerId === this.auth.userId()) ?? this.store.farmers()[0],
+    this.store.farmers().find((f) => f.ownerId === this.auth.userId()),
   );
   protected readonly suspended = computed(() => this.auth.profile()?.status === 'suspended');
 
-  protected readonly products = computed(() =>
-    this.store.crops().filter((p) => p.farmerId === this.me()?.id),
-  );
+  protected readonly products = computed(() => {
+    const farmId = this.me()?.id;
+    if (!farmId) return [];
+    return this.store.crops().filter((p) => p.farmerId === farmId);
+  });
   /** Paid orders for my farm, newest first. */
-  protected readonly orders = computed(() =>
-    this.store
+  protected readonly orders = computed(() => {
+    const farmId = this.me()?.id;
+    if (!farmId) return [];
+    return this.store
       .orders()
-      .filter((o) => o.farmerId === this.me()?.id && o.status !== 'Awaiting payment'),
-  );
+      .filter((o) => o.farmerId === farmId && o.status !== 'Awaiting payment');
+  });
   /** Orders that still need something from me. */
   protected readonly toFulfil = computed(() =>
     this.orders().filter((o) => o.status === 'Placed' || o.status === 'Confirmed'),
@@ -135,10 +139,7 @@ export class FarmerDashboard {
   /** Active review id being replied to by the farmer. */
   protected readonly replyingTo = signal<string | null>(null);
   /** Farmer replies stored locally / by review id. */
-  protected readonly replies = signal<Record<string, string>>({
-    'rev-1': 'Thank you so much Ngozi! We harvested these tomatoes at daybreak right before dispatch. So thrilled your jollof turned out wonderful!',
-    'rev-2': 'Thank you Emeka! Our Ofada is processed with modern destoning machinery to guarantee that pristine, stone-free authentic quality.',
-  });
+  protected readonly replies = signal<Record<string, string>>({});
   /** Review ID recently copied to clipboard for visual feedback. */
   protected readonly copiedId = signal<string | null>(null);
 
@@ -311,6 +312,10 @@ export class FarmerDashboard {
     // Load reviews for my products whenever the product list changes.
     effect(() => {
       const ids = this.products().map((p) => p.id);
+      if (ids.length === 0) {
+        untracked(() => this.reviews.set([]));
+        return;
+      }
       untracked(async () => this.reviews.set(await this.store.loadReviews(ids)));
     });
 

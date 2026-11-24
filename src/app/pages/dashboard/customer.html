@@ -835,4 +835,14 @@
       }
     }
   </app-dash-shell>
+} @else if (store.loaded()) {
+  <section class="section">
+    <div class="container">
+      <div class="empty">
+        <h2>Sign-in required</h2>
+        <p class="muted">Please sign in to view your account dashboard.</p>
+        <a routerLink="/login" class="btn btn--primary">Sign In</a>
+      </div>
+    </div>
+  </section>
 }
