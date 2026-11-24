@@ -32,6 +32,8 @@ export const IMAGES = {
   herder: local('herder'),
   /** Portrait, 1280px wide: for tall frames that would blur a landscape photo. */
   yamfarm: local('yamfarm'),
+  /** 1920px wide: for full-height background panels. */
+  harvestWide: local('harvestbasket-wide'),
   dishes: local('dishes'),
   // Produce
   tomatoes: local('tomatoes'),

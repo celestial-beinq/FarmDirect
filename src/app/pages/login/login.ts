@@ -16,7 +16,7 @@ import { PhotoPipe } from '../../shared/pipes';
       <!-- Brand panel -->
       <aside
         class="auth__visual"
-        [style.background-image]="'url(' + (img.harvest | photo: 1200) + ')'"
+        [style.background-image]="'url(' + (img.harvestWide | photo: 1920) + ')'"
       >
         <div class="auth__visual-inner">
           <span class="auth__kicker">
@@ -465,7 +465,8 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .auth {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(460px, 540px);
+      /* Two equal halves, so neither side swamps the other on wide screens. */
+      grid-template-columns: minmax(0, 1fr) minmax(460px, 1fr);
       min-height: calc(100dvh - 76px);
       width: 100%;
       background: var(--cream);
@@ -477,7 +478,7 @@ import { PhotoPipe } from '../../shared/pipes';
       position: relative;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: center;
       padding: clamp(32px, 4vw, 72px);
       background-color: var(--green-900);
       background-size: cover;
@@ -1234,21 +1235,22 @@ import { PhotoPipe } from '../../shared/pipes';
     }
 
     /* ---------- Responsive Breakpoints ---------- */
+    /* Big screens: let the text and the form grow a little so they don't look lost. */
     @media (min-width: 1600px) {
-      .auth__visual {
-        padding-right: 96px;
-      }
-
-      .auth__main {
-        padding-left: 96px;
-      }
-
       .auth__card {
-        max-width: 520px;
+        max-width: 540px;
       }
 
       .auth__visual-inner {
-        max-width: 540px;
+        max-width: 580px;
+      }
+
+      .auth__visual h2 {
+        font-size: 3rem;
+      }
+
+      .auth__lede {
+        font-size: 1.1rem;
       }
     }
 

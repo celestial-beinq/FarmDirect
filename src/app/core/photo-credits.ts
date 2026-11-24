@@ -605,6 +605,14 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "source": "https://commons.wikimedia.org/wiki/File:Baskets_of_freshly_harvested_tomatoes_at_Pambeguwa_perishable_market_04.jpg"
   },
   {
+    "file": "/images/harvestbasket-wide.jpg",
+    "title": "Baskets of freshly harvested tomatoes at Pambeguwa perishable market 04",
+    "author": "Friday musa",
+    "licence": "CC BY-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Baskets_of_freshly_harvested_tomatoes_at_Pambeguwa_perishable_market_04.jpg"
+  },
+  {
     "file": "/images/balami.jpg",
     "title": "Rams 2",
     "author": "Obedmakolo",
