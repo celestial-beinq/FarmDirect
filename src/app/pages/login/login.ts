@@ -1650,6 +1650,8 @@ export class Login implements OnInit, OnDestroy {
   protected readonly resendMessage = signal('');
   protected readonly resendBusy = signal(false);
   private cooldownTimer: ReturnType<typeof setInterval> | null = null;
+  /** Hides the "new code sent" message after a few seconds. */
+  private resendMessageTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly busy = signal(false);
   protected readonly error = signal('');
@@ -1668,6 +1670,7 @@ export class Login implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.resendMessageTimer) clearTimeout(this.resendMessageTimer);
     if (this.cooldownTimer) {
       clearInterval(this.cooldownTimer);
       this.cooldownTimer = null;
@@ -1887,7 +1890,16 @@ export class Login implements OnInit, OnDestroy {
         this.demoCodeHint.set(res.demoCode);
       }
       this.resendMessage.set('A new confirmation code has been sent to your email.');
+      if (this.resendMessageTimer) clearTimeout(this.resendMessageTimer);
+      this.resendMessageTimer = setTimeout(() => this.resendMessage.set(''), 4000);
       this.startResendCooldown(45);
+      // The old code no longer works: empty the boxes for the new one.
+      this.confirmationCode.set('');
+      const input = document.getElementById('auth-code') as HTMLInputElement | null;
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
     } finally {
       this.resendBusy.set(false);
     }
