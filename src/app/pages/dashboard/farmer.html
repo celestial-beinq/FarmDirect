@@ -586,7 +586,7 @@
             <div style="display: flex; align-items: center; gap: 10px;">
               <div class="dash-search" style="min-width: 260px;">
                 <app-icon name="search" [size]="15" />
-                <input
+                <input maxlength="100"
                   type="search"
                   placeholder="Filter reviews or products…"
                   [value]="searchQuery()"
@@ -734,7 +734,7 @@
                   <label [for]="'reply-input-' + review.id" style="display:block; font-size: 0.75rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
                     Your public response to {{ review.author }}:
                   </label>
-                  <textarea
+                  <textarea maxlength="1000"
                     [id]="'reply-input-' + review.id"
                     #replyInput
                     placeholder="Thank the customer or share details about how this batch was harvested and packed…"
@@ -922,7 +922,7 @@
 
             <label>
               Proof of Farmland / Identity Document Link (Optional)
-              <input
+              <input maxlength="500"
                 type="url"
                 placeholder="https://... (photo of ID card, cooperative cert, or land lease)"
                 [value]="kycDocumentUrl()"

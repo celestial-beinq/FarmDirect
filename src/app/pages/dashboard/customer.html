@@ -25,7 +25,7 @@
           <!-- Search Query -->
           <label class="dash-search" style="min-width: 200px;">
             <app-icon name="search" [size]="16" />
-            <input
+            <input maxlength="100"
               type="search"
               placeholder="Search order #, farm, or crop..."
               aria-label="Search my orders"
@@ -425,7 +425,7 @@
               >Phone
               <input #phone type="tel" [value]="me.phone" maxlength="30" (input)="saved.set(false)"
             /></label>
-            <label class="wide">Email <input [value]="me.email" disabled /></label>
+            <label class="wide">Email <input maxlength="254" [value]="me.email" disabled /></label>
             <label class="wide">
               Delivery address
               <textarea
@@ -507,7 +507,7 @@
             <!-- Search Query -->
             <label class="dash-search" style="min-width: 200px;">
               <app-icon name="search" [size]="16" />
-              <input
+              <input maxlength="100"
                 type="search"
                 placeholder="Search order #, farm, or crop..."
                 aria-label="Search orders in progress"

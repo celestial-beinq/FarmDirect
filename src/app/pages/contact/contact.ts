@@ -104,7 +104,7 @@ const CONTACT_EMAIL = 'hello@farmdirect.example';
                 </div>
                 <div class="field">
                   <label for="c-email">Email address</label>
-                  <input
+                  <input maxlength="254"
                     #e
                     id="c-email"
                     type="email"

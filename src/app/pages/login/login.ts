@@ -315,7 +315,7 @@ import { PhotoPipe } from '../../shared/pipes';
                   <label for="reset-email">Email address</label>
                   <div class="field__control">
                     <app-icon name="mail" [size]="18" />
-                    <input
+                    <input maxlength="254"
                       #resetMail
                       id="reset-email"
                       type="email"
@@ -440,7 +440,7 @@ import { PhotoPipe } from '../../shared/pipes';
                   <label for="reset-password">New password</label>
                   <div class="field__control">
                     <app-icon name="lock" [size]="18" />
-                    <input
+                    <input maxlength="72"
                       #newPass
                       id="reset-password"
                       [type]="showPassword() ? 'text' : 'password'"
@@ -597,7 +597,7 @@ import { PhotoPipe } from '../../shared/pipes';
                 <label for="auth-email">Email address</label>
                 <div class="field__control">
                   <app-icon name="mail" [size]="18" />
-                  <input
+                  <input maxlength="254"
                     #mail
                     id="auth-email"
                     type="email"
@@ -622,7 +622,7 @@ import { PhotoPipe } from '../../shared/pipes';
                 </div>
                 <div class="field__control">
                   <app-icon name="lock" [size]="18" />
-                  <input
+                  <input maxlength="72"
                     #pass
                     id="auth-password"
                     [type]="showPassword() ? 'text' : 'password'"

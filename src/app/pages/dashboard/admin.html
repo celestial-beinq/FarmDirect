@@ -60,7 +60,7 @@
       <div class="dash-tools">
         <label class="dash-search">
           <app-icon name="search" [size]="18" />
-          <input
+          <input maxlength="100"
             type="search"
             placeholder="Search farm, owner, NIN or state of origin..."
             aria-label="Search farmers"
@@ -287,7 +287,7 @@
               <div class="vetting-section-title">Admin Review & Audit Notes</div>
               <div class="vetting-field">
                 <label>Vetting Feedback / Rejection Reason</label>
-                <textarea
+                <textarea maxlength="1000"
                   class="dash-textarea"
                   rows="2"
                   placeholder="Enter rejection reasons or verification notes for the farmer..."
@@ -479,7 +479,7 @@
       <div class="dash-tools">
         <label class="dash-search">
           <app-icon name="search" [size]="18" />
-          <input
+          <input maxlength="100"
             type="search"
             placeholder="Search by order number, customer or farm"
             aria-label="Search orders"
@@ -819,7 +819,7 @@
           <div style="display: flex; align-items: center; gap: 10px;">
             <div class="dash-search" style="min-width: 260px;">
               <app-icon name="search" [size]="15" />
-              <input
+              <input maxlength="100"
                 type="search"
                 placeholder="Search reviews, authors, products…"
                 [value]="searchQuery()"
