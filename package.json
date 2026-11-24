@@ -11,7 +11,8 @@
     "watch": "ng build --watch --configuration development",
     "pretest": "node scripts/set-env.mjs",
     "test": "ng test",
-    "serve:ssr:FarmDirect": "node dist/FarmDirect/server/server.mjs"
+    "prepreview": "node scripts/set-env.mjs",
+    "preview": "ng serve --configuration production"
   },
   "private": true,
   "packageManager": "npm@11.19.1",
