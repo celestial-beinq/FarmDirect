@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
@@ -174,21 +174,35 @@ import { PhotoPipe } from '../../shared/pipes';
               </div>
 
               <div class="field">
-                <label for="auth-code">Confirmation code</label>
-                <div class="field__control">
-                  <app-icon name="lock" [size]="18" />
+                <label for="auth-code">Enter the {{ codeLength }}-digit code</label>
+                <!-- One real input laid over the boxes, so paste, autofill from
+                     the email ("one-time-code") and screen readers all work. -->
+                <div class="otp" [class.is-focused]="codeFocused()" [class.has-error]="!!error()">
                   <input
                     #code
                     id="auth-code"
+                    class="otp__input"
                     type="text"
                     inputmode="numeric"
+                    pattern="[0-9]*"
                     autocomplete="one-time-code"
-                    placeholder="Enter 6-digit code"
-                    maxlength="8"
+                    [attr.maxlength]="codeLength"
                     required
                     [value]="confirmationCode()"
-                    (input)="confirmationCode.set(code.value)"
+                    (input)="onCodeInput(code)"
+                    (focus)="codeFocused.set(true)"
+                    (blur)="codeFocused.set(false)"
                   />
+                  @for (i of codeSlots; track i) {
+                    <span
+                      class="otp__box"
+                      aria-hidden="true"
+                      [class.is-filled]="i < confirmationCode().length"
+                      [class.is-active]="codeFocused() && i === activeSlot()"
+                    >
+                      {{ confirmationCode().charAt(i) }}
+                    </span>
+                  }
                 </div>
                 <p class="field-hint">
                   Please check your inbox or spam folder for your confirmation code.
@@ -827,10 +841,72 @@ import { PhotoPipe } from '../../shared/pipes';
       color: var(--accent-dark);
     }
 
-    .field__control input#auth-code {
-      letter-spacing: 0.16em;
-      font-weight: 700;
-      font-size: 1.15rem;
+    /* ---------- Confirmation code boxes ---------- */
+    .otp {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    /* The real input covers all boxes but is invisible; taps go to it. */
+    .otp__input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      border: 0;
+      font-size: 16px; /* stops iPhones zooming in */
+      cursor: text;
+    }
+
+    .otp__box {
+      display: grid;
+      place-items: center;
+      height: 52px;
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      background: var(--field-bg);
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--ink);
+      transition:
+        border-color 0.15s,
+        background 0.15s;
+      pointer-events: none;
+    }
+
+    .otp__box.is-filled {
+      background: var(--white);
+      border-color: #c9cfc2;
+    }
+
+    .otp__box.is-active {
+      border-color: var(--accent);
+      background: var(--white);
+    }
+
+    /* Blinking cursor in the box that's next to fill. */
+    .otp__box.is-active:empty::after,
+    .otp__box.is-active:not(.is-filled)::after {
+      content: '';
+      width: 2px;
+      height: 22px;
+      border-radius: 2px;
+      background: var(--accent);
+      animation: otp-blink 1s step-end infinite;
+    }
+
+    .otp.has-error .otp__box.is-filled {
+      border-color: #fca5a5;
+    }
+
+    @keyframes otp-blink {
+      50% {
+        opacity: 0;
+      }
     }
 
     .resend-row {
@@ -1561,6 +1637,14 @@ export class Login implements OnInit, OnDestroy {
 
   /* --- Email Confirmation Code (OTP) State --- */
   protected readonly confirmationCode = signal('');
+  /** Supabase sends 6-digit email codes by default (Auth → Email OTP length). */
+  protected readonly codeLength = 6;
+  protected readonly codeSlots = Array.from({ length: this.codeLength }, (_, i) => i);
+  protected readonly codeFocused = signal(false);
+  /** The box the next digit goes into (the last one once all are filled). */
+  protected readonly activeSlot = computed(() =>
+    Math.min(this.confirmationCode().length, this.codeLength - 1),
+  );
   protected readonly demoCodeHint = signal('');
   protected readonly resendCooldown = signal(0);
   protected readonly resendMessage = signal('');
@@ -1700,7 +1784,8 @@ export class Login implements OnInit, OnDestroy {
         if (result.demoCode) {
           this.demoCodeHint.set(result.demoCode);
         }
-        if (result.confirmEmail || this.role() === 'customer') {
+        // Only ask for a code when Supabase actually emailed one.
+        if (result.confirmEmail) {
           this.setMode('confirm');
           this.startResendCooldown(30);
           return;
@@ -1719,6 +1804,15 @@ export class Login implements OnInit, OnDestroy {
   }
 
   /** Verifies the email confirmation code entered by the customer. */
+  /** Keeps only digits, and checks the code as soon as all of them are in. */
+  protected onCodeInput(input: HTMLInputElement): void {
+    const digits = input.value.replace(/D/g, '').slice(0, this.codeLength);
+    input.value = digits;
+    this.confirmationCode.set(digits);
+    this.error.set('');
+    if (digits.length === this.codeLength && !this.busy()) void this.verifyCode();
+  }
+
   protected async verifyCode(): Promise<void> {
     const email = sanitizeEmail(this.email());
     const code = this.confirmationCode().trim();
@@ -1736,7 +1830,13 @@ export class Login implements OnInit, OnDestroy {
     try {
       const res = await this.auth.verifySignUpCode(email, code);
       if (res.error) {
-        return this.error.set(res.error);
+        this.error.set(
+          /expired|invalid|token/i.test(res.error)
+            ? 'That code is wrong or has expired. Check your latest email, or tap "Resend code".'
+            : res.error,
+        );
+        this.clearCodeSoon();
+        return;
       }
 
       const profile = this.auth.profile();
@@ -1748,6 +1848,25 @@ export class Login implements OnInit, OnDestroy {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /**
+   * After a wrong or expired code: leave it on screen (in red) for a moment so
+   * the person sees what happened, then empty the boxes and put the cursor back
+   * in the first one, ready to try again.
+   */
+  private clearCodeSoon(): void {
+    const wrongCode = this.confirmationCode();
+    setTimeout(() => {
+      // Skip if they already started typing a new code.
+      if (this.confirmationCode() !== wrongCode) return;
+      this.confirmationCode.set('');
+      const input = document.getElementById('auth-code') as HTMLInputElement | null;
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+    }, 1200);
   }
 
   /** Requests a fresh confirmation code to be sent to the user's email. */

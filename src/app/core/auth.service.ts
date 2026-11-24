@@ -243,13 +243,26 @@ export class AuthService {
     });
     if (error) return { error: friendlyError(error), confirmEmail: false };
 
-    // Customers must always confirm via email code before they can login
-    if (details.role === 'customer') {
-      return { error: null, confirmEmail: true };
+    // A session straight away means "Confirm email" is OFF in the Supabase
+    // dashboard (Authentication → Providers → Email): Supabase sends no email and
+    // the account is already signed in, so don't ask for a code that never comes.
+    // To require email confirmation, switch that setting ON; the app then shows
+    // the code screen automatically.
+    if (data.session) {
+      await this.loadProfile(data.session.user.id);
+      return { error: null, confirmEmail: false };
     }
 
-    if (data.session) await this.loadProfile(data.session.user.id);
-    return { error: null, confirmEmail: !data.session };
+    // With confirmation on, Supabase hides whether an email is already
+    // registered: it "succeeds" but sends nothing. Such a user has no identities.
+    if (data.user && data.user.identities?.length === 0) {
+      return {
+        error: 'An account with this email already exists. Sign in instead.',
+        confirmEmail: false,
+      };
+    }
+
+    return { error: null, confirmEmail: true };
   }
 
   /**
