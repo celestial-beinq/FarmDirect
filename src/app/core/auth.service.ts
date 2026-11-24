@@ -144,6 +144,56 @@ export class AuthService {
     );
   }
 
+  /**
+   * Emails a password-reset code. Supabase answers the same way whether or not
+   * the email has an account, so this never reveals who is registered.
+   * The code comes from the "Reset Password" email template ({{ .Token }}).
+   */
+  async sendPasswordReset(email: string): Promise<{ error: string | null; demoCode?: string }> {
+    const cleanEmail = sanitizeEmail(email);
+    if (!cleanEmail) return { error: 'Please enter a valid email address.' };
+    const client = this.supabase.client;
+    if (!client) {
+      return environment.debug
+        ? { error: null, demoCode: '123456' }
+        : { error: 'Password reset is not available right now.' };
+    }
+    const { error } = await client.auth.resetPasswordForEmail(cleanEmail, {
+      redirectTo: `${location.origin}/login`,
+    });
+    return { error: error ? friendlyError(error) : null };
+  }
+
+  /**
+   * Checks the emailed reset code, then saves the new password. On success the
+   * person is signed in. Returns an error message, or null.
+   */
+  async resetPasswordWithCode(email: string, code: string, password: string): Promise<string | null> {
+    const cleanEmail = sanitizeEmail(email);
+    const token = code.replace(/\s+/g, '');
+    if (!cleanEmail) return 'Please enter a valid email address.';
+    if (token.length < 6) return 'Enter the 6-digit code from your email.';
+    if (!password || password.length < 8) return 'Your new password needs at least 8 characters.';
+    if (password.length > 72) return 'Your new password must be 72 characters or fewer.';
+
+    const client = this.supabase.client;
+    if (!client) return 'Password reset is not available right now.';
+
+    const { data, error } = await client.auth.verifyOtp({
+      email: cleanEmail,
+      token,
+      type: 'recovery',
+    });
+    if (error) return friendlyError(error);
+
+    const update = await client.auth.updateUser({ password });
+    if (update.error) return friendlyError(update.error);
+
+    if (this.isBrowser) this.recordActivity();
+    if (data.user) await this.loadProfile(data.user.id);
+    return null;
+  }
+
   /** Sets a new password for the signed-in user. Returns an error message, or null. */
   async changePassword(password: string, confirm: string): Promise<string | null> {
     if (!password || password.length < 8) return 'Password must be at least 8 characters.';

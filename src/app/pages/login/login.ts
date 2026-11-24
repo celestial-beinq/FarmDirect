@@ -28,6 +28,8 @@ import { PhotoPipe } from '../../shared/pipes';
               Good to see you again.
             } @else if (mode() === 'confirm') {
               Verify your email.
+            } @else if (mode() === 'forgot') {
+              Let's get you back in.
             } @else {
               Fresh food starts with a direct connection.
             }
@@ -80,8 +82,8 @@ import { PhotoPipe } from '../../shared/pipes';
                 <circle class="success__circle" cx="26" cy="26" r="24" fill="none" />
                 <path class="success__tick" fill="none" d="M15 27l7 7 15-16" />
               </svg>
-              <h2>You're all set{{ done.name ? ', ' + done.name : '' }}!</h2>
-              <p>Your email is confirmed and your account is ready.</p>
+              <h2>{{ done.title ?? 'You’re all set' }}{{ done.name ? ', ' + done.name : '' }}!</h2>
+              <p>{{ done.message ?? 'Your email is confirmed and your account is ready.' }}</p>
               <p class="success__next">
                 <span class="spinner spinner--dark" aria-hidden="true"></span>
                 Taking you to {{ done.destination }}…
@@ -96,6 +98,8 @@ import { PhotoPipe } from '../../shared/pipes';
             <h1>
               @if (mode() === 'confirm') {
                 Confirm your email
+              } @else if (mode() === 'forgot') {
+                {{ resetStep() === 'email' ? 'Forgot your password?' : 'Set a new password' }}
               } @else if (mode() === 'up') {
                 Create your account
               } @else {
@@ -105,6 +109,12 @@ import { PhotoPipe } from '../../shared/pipes';
             <p>
               @if (mode() === 'confirm') {
                 Enter the confirmation code sent to your email to verify your account.
+              } @else if (mode() === 'forgot') {
+                @if (resetStep() === 'email') {
+                  Enter your email and we’ll send you a code to reset it.
+                } @else {
+                  Enter the code we emailed you and choose a new password.
+                }
               } @else if (mode() === 'up') {
                 Join FarmDirect in under a minute: it’s free.
               } @else {
@@ -113,7 +123,7 @@ import { PhotoPipe } from '../../shared/pipes';
             </p>
           </header>
 
-          @if (mode() !== 'confirm') {
+          @if (mode() === 'in' || mode() === 'up') {
             <div class="tabs" role="tablist" aria-label="Account">
               <button
                 type="button"
@@ -167,7 +177,7 @@ import { PhotoPipe } from '../../shared/pipes';
             </p>
           }
 
-          @if (confirmEmail() && mode() !== 'confirm') {
+          @if (confirmEmail() && (mode() === 'in' || mode() === 'up')) {
             <p class="alert alert--good" role="status">
               <app-icon name="mail" [size]="18" />
               <span>
@@ -276,6 +286,165 @@ import { PhotoPipe } from '../../shared/pipes';
                 <button type="button" (click)="setMode('in')">Sign in</button>
               </p>
             </form>
+          } @else if (mode() === 'forgot') {
+            @if (resetStep() === 'email') {
+              <form class="auth-form" novalidate (submit)="$event.preventDefault(); sendResetCode()">
+                <div class="field">
+                  <label for="reset-email">Email address</label>
+                  <div class="field__control">
+                    <app-icon name="mail" [size]="18" />
+                    <input
+                      #resetMail
+                      id="reset-email"
+                      type="email"
+                      name="email"
+                      autocomplete="email"
+                      placeholder="you@example.com"
+                      required
+                      [value]="email()"
+                      (input)="email.set(resetMail.value)"
+                    />
+                  </div>
+                </div>
+
+                @if (error()) {
+                  <p class="alert alert--bad" role="alert">
+                    <app-icon name="info" [size]="18" />
+                    <span>{{ error() }}</span>
+                  </p>
+                }
+
+                <button type="submit" class="auth-submit" [disabled]="busy()">
+                  @if (busy()) {
+                    <span class="spinner" aria-hidden="true"></span> Sending…
+                  } @else {
+                    Send reset code <app-icon name="arrow-right" [size]="18" />
+                  }
+                </button>
+
+                <p class="switch">
+                  Remembered it?
+                  <button type="button" (click)="setMode('in')">Back to sign in</button>
+                </p>
+              </form>
+            } @else {
+              <form class="auth-form" novalidate (submit)="$event.preventDefault(); resetPassword()">
+                <div class="confirm-email-chip">
+                  <app-icon name="mail" [size]="18" />
+                  <span class="confirm-email-chip__text">{{ email() }}</span>
+                  <button type="button" class="confirm-email-chip__edit" (click)="resetStep.set('email')">
+                    Change
+                  </button>
+                </div>
+
+                <div class="field">
+                  <label for="auth-code">Enter the {{ codeLength }}-digit code</label>
+                  <div class="otp" [class.is-focused]="codeFocused()" [class.has-error]="!!error()">
+                    <input
+                      #resetCode
+                      id="auth-code"
+                      class="otp__input"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      autocomplete="one-time-code"
+                      [attr.maxlength]="codeLength"
+                      required
+                      [value]="confirmationCode()"
+                      (input)="onCodeInput(resetCode)"
+                      (focus)="codeFocused.set(true)"
+                      (blur)="codeFocused.set(false)"
+                    />
+                    @for (i of codeSlots; track i) {
+                      <span
+                        class="otp__box"
+                        aria-hidden="true"
+                        [class.is-filled]="i < confirmationCode().length"
+                        [class.is-active]="codeFocused() && i === activeSlot()"
+                      >
+                        {{ confirmationCode().charAt(i) }}
+                      </span>
+                    }
+                  </div>
+                  <p class="field-hint">
+                    Check your inbox or spam folder.
+                    @if (debugMode && demoCodeHint()) {
+                      <span class="demo-code-note">Demo code: {{ demoCodeHint() }}</span>
+                    }
+                  </p>
+                </div>
+
+                <div class="field">
+                  <label for="reset-password">New password</label>
+                  <div class="field__control">
+                    <app-icon name="lock" [size]="18" />
+                    <input
+                      #newPass
+                      id="reset-password"
+                      [type]="showPassword() ? 'text' : 'password'"
+                      name="new-password"
+                      placeholder="At least 8 characters"
+                      autocomplete="new-password"
+                      required
+                      minlength="8"
+                      [value]="password()"
+                      (input)="password.set(newPass.value)"
+                    />
+                    <button
+                      type="button"
+                      class="field__toggle"
+                      [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                      [attr.aria-pressed]="showPassword()"
+                      (click)="showPassword.set(!showPassword())"
+                    >
+                      <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18" />
+                    </button>
+                  </div>
+                  <div class="strength" [attr.data-level]="strength()">
+                    <span></span><span></span><span></span>
+                    <small>{{ strengthLabel() }}</small>
+                  </div>
+                </div>
+
+                @if (resendMessage()) {
+                  <p class="alert alert--good" role="status">
+                    <app-icon name="check" [size]="18" />
+                    <span>{{ resendMessage() }}</span>
+                  </p>
+                }
+
+                @if (error()) {
+                  <p class="alert alert--bad" role="alert">
+                    <app-icon name="info" [size]="18" />
+                    <span>{{ error() }}</span>
+                  </p>
+                }
+
+                <button type="submit" class="auth-submit" [disabled]="busy()">
+                  @if (busy()) {
+                    <span class="spinner" aria-hidden="true"></span> Saving…
+                  } @else {
+                    Reset password <app-icon name="arrow-right" [size]="18" />
+                  }
+                </button>
+
+                <div class="resend-row">
+                  <span>Didn’t get a code?</span>
+                  <button
+                    type="button"
+                    class="resend-btn"
+                    [disabled]="resendCooldown() > 0 || busy()"
+                    (click)="sendResetCode(true)"
+                  >
+                    @if (resendCooldown() > 0) {
+                      Resend in {{ resendCooldown() }}s
+                    } @else {
+                      Resend code
+                    }
+                  </button>
+                </div>
+              </form>
+            }
           } @else {
             <form class="auth-form" novalidate (submit)="$event.preventDefault(); submit()">
               @if (mode() === 'up') {
@@ -404,7 +573,14 @@ import { PhotoPipe } from '../../shared/pipes';
               </div>
 
               <div class="field">
-                <label for="auth-password">Password</label>
+                <div class="field__label-row">
+                  <label for="auth-password">Password</label>
+                  @if (mode() === 'in') {
+                    <button type="button" class="forgot-link" (click)="startForgot()">
+                      Forgot password?
+                    </button>
+                  }
+                </div>
                 <div class="field__control">
                   <app-icon name="lock" [size]="18" />
                   <input
@@ -1483,6 +1659,25 @@ import { PhotoPipe } from '../../shared/pipes';
       }
     }
 
+    /* ---------- Forgot password link ---------- */
+    .field__label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .forgot-link {
+      margin-bottom: 5px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--accent-dark);
+    }
+
+    .forgot-link:hover {
+      text-decoration: underline;
+    }
+
     /* ---------- Sign-up steps ---------- */
     .steps {
       display: grid;
@@ -1746,7 +1941,9 @@ export class Login implements OnInit, OnDestroy {
   /** From route data: the /signup route opens on the "create account" tab. */
   readonly start = input<'in' | 'up'>('in');
 
-  protected readonly mode = signal<'in' | 'up' | 'confirm'>('in');
+  protected readonly mode = signal<'in' | 'up' | 'confirm' | 'forgot'>('in');
+  /** Forgot password: first ask for the email, then the code and new password. */
+  protected readonly resetStep = signal<'email' | 'code'>('email');
   protected readonly role = signal<'customer' | 'farmer'>('customer');
   /** Which sign-up step is showing: 1 who you are, 2 your details, 3 email & password. */
   protected readonly upStep = signal<1 | 2 | 3>(1);
@@ -1761,7 +1958,12 @@ export class Login implements OnInit, OnDestroy {
   /* --- Email Confirmation Code (OTP) State --- */
   protected readonly confirmationCode = signal('');
   /** Set once the email code is accepted: shows the success screen. */
-  protected readonly verified = signal<{ name: string; destination: string } | null>(null);
+  protected readonly verified = signal<{
+    name: string;
+    destination: string;
+    title?: string;
+    message?: string;
+  } | null>(null);
   /** Supabase sends 6-digit email codes by default (Auth → Email OTP length). */
   protected readonly codeLength = 6;
   protected readonly codeSlots = Array.from({ length: this.codeLength }, (_, i) => i);
@@ -1817,12 +2019,87 @@ export class Login implements OnInit, OnDestroy {
     return ['At least 8 characters', 'Too short', 'Good', 'Strong'][this.strength()];
   }
 
-  protected setMode(mode: 'in' | 'up' | 'confirm'): void {
+  protected setMode(mode: 'in' | 'up' | 'confirm' | 'forgot'): void {
     if (mode === 'up' && this.mode() !== 'up') this.upStep.set(1);
     this.mode.set(mode);
     this.error.set('');
     this.resendMessage.set('');
     this.confirmationCode.set('');
+  }
+
+  /** Opens "Forgot password", keeping any email already typed. */
+  protected startForgot(): void {
+    this.resetStep.set('email');
+    this.password.set('');
+    this.setMode('forgot');
+    setTimeout(() => document.getElementById('reset-email')?.focus());
+  }
+
+  /** Emails a reset code. `again` is true for "Resend code". */
+  protected async sendResetCode(again = false): Promise<void> {
+    this.error.set('');
+    this.resendMessage.set('');
+    this.busy.set(true);
+    try {
+      const res = await this.auth.sendPasswordReset(this.email());
+      if (res.error) return this.error.set(res.error);
+      if (res.demoCode) this.demoCodeHint.set(res.demoCode);
+      this.confirmationCode.set('');
+      this.password.set('');
+      this.resetStep.set('code');
+      this.startResendCooldown(60);
+      if (again) {
+        this.resendMessage.set('A new code has been sent to your email.');
+        if (this.resendMessageTimer) clearTimeout(this.resendMessageTimer);
+        this.resendMessageTimer = setTimeout(() => this.resendMessage.set(''), 4000);
+      }
+      setTimeout(() => document.getElementById('auth-code')?.focus());
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** Checks the code, saves the new password, and signs the person in. */
+  protected async resetPassword(): Promise<void> {
+    this.error.set('');
+    this.resendMessage.set('');
+    if (this.confirmationCode().length < this.codeLength) {
+      return this.error.set(`Enter the ${this.codeLength}-digit code from your email.`);
+    }
+    if (this.password().length < 8) {
+      return this.error.set('Your new password needs at least 8 characters.');
+    }
+
+    this.busy.set(true);
+    try {
+      const error = await this.auth.resetPasswordWithCode(
+        this.email(),
+        this.confirmationCode(),
+        this.password(),
+      );
+      if (error) {
+        const badCode = /expired|invalid|token|otp/i.test(error);
+        this.error.set(
+          badCode
+            ? 'That code is wrong or has expired. Check your latest email, or tap "Resend code".'
+            : error,
+        );
+        if (badCode) this.clearCodeSoon();
+        return;
+      }
+
+      const profile = this.auth.profile();
+      this.verified.set({
+        name: (profile?.name ?? '').split(/\s+/)[0],
+        title: 'Password updated',
+        message: 'Your new password is saved and you are signed in.',
+        destination: profile?.role === 'farmer' ? 'your farm dashboard' : 'your account',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 2600));
+      await this.router.navigateByUrl(this.auth.homePath());
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   /** Goes back one sign-up step, keeping what was typed. */
@@ -1938,7 +2215,14 @@ export class Login implements OnInit, OnDestroy {
     input.value = digits;
     this.confirmationCode.set(digits);
     this.error.set('');
-    if (digits.length === this.codeLength && !this.busy()) void this.verifyCode();
+    if (digits.length === this.codeLength && !this.busy()) {
+      if (this.mode() === 'confirm') {
+        void this.verifyCode();
+      } else {
+        // Reset password: move on to the new-password field.
+        document.getElementById('reset-password')?.focus();
+      }
+    }
   }
 
   protected async verifyCode(): Promise<void> {
