@@ -6,7 +6,6 @@ import { Icon } from '../../shared/icon';
 /** Where contact-form messages are addressed. Keep in sync with the footer. */
 const CONTACT_EMAIL = 'hello@farmdirect.example';
 
-type Topic = 'order' | 'quality' | 'farmer' | 'livestock' | 'account' | 'other';
 
 @Component({
   selector: 'app-contact',
@@ -29,7 +28,7 @@ type Topic = 'order' | 'quality' | 'farmer' | 'livestock' | 'account' | 'other';
           </p>
           <p class="info__lede">
             <strong>Something not right with your food?</strong> If anything you bought from us
-            looks, smells or tastes wrong, choose "Food quality concern" and tell us. We trace it to
+            looks, smells or tastes wrong, let us know below. We trace it to
             the farm and follow it up. See our
             <a routerLink="/real-food" class="info__link">Real Food Guide</a> for what to look out
             for.
@@ -89,20 +88,6 @@ type Topic = 'order' | 'quality' | 'farmer' | 'livestock' | 'account' | 'other';
             <p class="card-form__sub">We usually reply within one working day.</p>
 
             <form novalidate (submit)="$event.preventDefault(); submit()">
-              <div class="topics" role="radiogroup" aria-label="What is this about?">
-                @for (t of topics; track t.value) {
-                  <button
-                    type="button"
-                    role="radio"
-                    [attr.aria-checked]="topic() === t.value"
-                    [class.is-chosen]="topic() === t.value"
-                    (click)="topic.set(t.value)"
-                  >
-                    {{ t.label }}
-                  </button>
-                }
-              </div>
-
               <div class="row">
                 <div class="field">
                   <label for="c-name">Your name</label>
@@ -309,36 +294,6 @@ type Topic = 'order' | 'quality' | 'farmer' | 'livestock' | 'account' | 'other';
       text-underline-offset: 2px;
     }
 
-    .topics {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .topics button {
-      padding: 8px 14px;
-      border: 1.5px solid var(--line);
-      border-radius: 999px;
-      font-size: 0.84rem;
-      font-weight: 600;
-      color: var(--muted);
-      transition:
-        border-color 0.15s,
-        background 0.15s,
-        color 0.15s;
-    }
-
-    .topics button:hover {
-      border-color: #c3c9bb;
-      color: var(--ink);
-    }
-
-    .topics button.is-chosen {
-      border-color: var(--green-900);
-      background: var(--green-900);
-      color: var(--white);
-    }
-
     .row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -506,16 +461,6 @@ type Topic = 'order' | 'quality' | 'farmer' | 'livestock' | 'account' | 'other';
 export class Contact {
   protected readonly email = CONTACT_EMAIL;
 
-  protected readonly topics: { value: Topic; label: string }[] = [
-    { value: 'order', label: 'An order' },
-    { value: 'quality', label: 'Food quality concern' },
-    { value: 'farmer', label: 'Selling as a farmer' },
-    { value: 'livestock', label: 'Livestock pools' },
-    { value: 'account', label: 'My account' },
-    { value: 'other', label: 'Something else' },
-  ];
-
-  protected readonly topic = signal<Topic>('order');
   protected readonly name = signal('');
   protected readonly from = signal('');
   protected readonly orderRef = signal('');
@@ -538,8 +483,7 @@ export class Contact {
       return this.error.set('Please tell us a little more (at least 10 characters).');
     }
 
-    const label = this.topics.find((t) => t.value === this.topic())?.label ?? 'General';
-    const subject = `[FarmDirect] ${label}${orderRef ? ` (${orderRef})` : ''}`;
+    const subject = `[FarmDirect] Message from ${name}${orderRef ? ` (${orderRef})` : ''}`;
     const body = [message, '', `Name: ${name}`, `Email: ${from}`]
       .concat(orderRef ? [`Order: ${orderRef}`] : [])
       .join('\n');
