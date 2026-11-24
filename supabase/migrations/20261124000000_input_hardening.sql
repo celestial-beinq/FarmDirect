@@ -26,23 +26,23 @@ as $$
 $$;
 
 -- Every entry of a list of links is safe, and the list is a sensible size.
-create or replace function public.are_safe_links(values text[])
+create or replace function public.are_safe_links(items text[])
 returns boolean
 language sql immutable parallel safe set search_path = ''
 as $$
-  select values is not null
-    and cardinality(values) <= 12
-    and coalesce((select bool_and(public.is_safe_link(v)) from unnest(values) as v), true);
+  select items is not null
+    and cardinality(items) <= 12
+    and coalesce((select bool_and(public.is_safe_link(v)) from unnest(items) as v), true);
 $$;
 
 -- A short list of short labels (tags, highlights).
-create or replace function public.are_short_labels(values text[], max_items int, max_len int)
+create or replace function public.are_short_labels(items text[], max_items int, max_len int)
 returns boolean
 language sql immutable parallel safe set search_path = ''
 as $$
-  select values is not null
-    and cardinality(values) <= max_items
-    and coalesce((select bool_and(char_length(v) <= max_len and v !~ '[<>]') from unnest(values) as v), true);
+  select items is not null
+    and cardinality(items) <= max_items
+    and coalesce((select bool_and(char_length(v) <= max_len and v !~ '[<>]') from unnest(items) as v), true);
 $$;
 
 -- No HTML tags in plain-text fields. Angular already shows text safely, but this
@@ -51,7 +51,7 @@ create or replace function public.is_plain_text(value text)
 returns boolean
 language sql immutable parallel safe set search_path = ''
 as $$
-  select value is null or value !~* '<\s*/?\s*(script|iframe|object|embed|svg|img|style|link|meta|form)\b';
+  select value is null or value !~* '<\s*/?\s*(script|iframe|object|embed|svg|img|style|link|meta|form)\y';
 $$;
 
 -- ---------- Products ----------
