@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Order } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
@@ -17,6 +17,8 @@ export interface ReceiptItem {
 export interface ReceiptData {
   orderCode: string;
   date: string;
+  /** When the order was placed (ISO), used to work out the delivery Sunday. */
+  placedAt: string;
   items: ReceiptItem[];
   total: number;
   paymentMethod: string;
@@ -25,8 +27,8 @@ export interface ReceiptData {
 }
 
 /**
- * Where Paystack sends the customer back to. Displays an authentic
- * thermal paper receipt ticket upon successful payment confirmation.
+ * Where Paystack sends the customer back to. Confirms the payment with the
+ * server, then shows a payment status page with the order and transaction.
  */
 @Component({
   selector: 'app-payment-callback',
@@ -49,6 +51,7 @@ export class PaymentCallback {
   protected readonly receipt = signal<ReceiptData>({
     orderCode: 'ORD-2048',
     date: this.formatReceiptDate(),
+    placedAt: new Date().toISOString(),
     items: [],
     total: 0,
     paymentMethod: 'Paystack',
@@ -61,17 +64,34 @@ export class PaymentCallback {
     });
   }
 
-  /** Formats date to receipt style: "11 AUG 2026 · 14:32" */
+  /** "24 Nov 2026 · 2:32 PM" */
   protected formatReceiptDate(dStr?: string): string {
     const d = dStr ? new Date(dStr) : new Date();
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = months[d.getMonth()];
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const mins = String(d.getMinutes()).padStart(2, '0');
-    return `${day} ${month} ${year} · ${hours}:${mins}`;
+    const date = new Intl.DateTimeFormat('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
+    const time = new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
+    return `${date} · ${time.toUpperCase()}`;
   }
+
+  /** "Ofada Rice" or "Ofada Rice + 3 more". */
+  protected readonly itemsSummary = computed(() => {
+    const items = this.receipt().items;
+    if (!items.length) return 'Your order';
+    const first = items[0].title;
+    return items.length === 1 ? first : `${first} + ${items.length - 1} more`;
+  });
+
+  /**
+   * The Sunday it will arrive. Orders placed by Thursday midnight arrive that
+   * Sunday; orders on Friday, Saturday or Sunday arrive the Sunday after.
+   */
+  protected readonly deliveryDate = computed(() => {
+    const placed = new Date(this.receipt().placedAt);
+    const day = placed.getDay(); // 0 = Sunday … 4 = Thursday
+    const daysAhead = day === 0 ? 7 : 7 - day + (day >= 5 ? 7 : 0);
+    const sunday = new Date(placed);
+    sunday.setDate(placed.getDate() + daysAhead);
+    return new Intl.DateTimeFormat('en-NG', { weekday: 'long', day: 'numeric', month: 'short' }).format(sunday);
+  });
 
   /** Formats amounts with 2 decimal places e.g. "1,200.00" */
   protected formatAmount(val: number): string {
@@ -149,13 +169,15 @@ export class PaymentCallback {
         const orderCode = matchedOrders
           .map((o) => 'ORD-' + o.code.replace(/^FD-/, ''))
           .join(', ');
-        const date = this.formatReceiptDate(matchedOrders[0]?.date);
+        const placedAt = matchedOrders[0]?.date ?? new Date().toISOString();
+        const date = this.formatReceiptDate(placedAt);
         const address = matchedOrders[0]?.address;
         const customerName = matchedOrders[0]?.customerName;
 
         this.receipt.set({
           orderCode: orderCode || 'ORD-2048',
           date,
+          placedAt,
           items,
           total,
           paymentMethod: 'Paystack',
@@ -176,6 +198,7 @@ export class PaymentCallback {
         this.receipt.set({
           orderCode,
           date,
+          placedAt: new Date().toISOString(),
           items,
           total,
           paymentMethod: 'Paystack',

@@ -62,454 +62,260 @@
   margin: 0 auto 16px;
 }
 
-/* ---------- Printer Rig Container ---------- */
-.printer-rig-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* ---------- Payment status (success) ---------- */
+.status {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   margin: 0 auto;
-  animation: rigEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  padding: 18px 18px 22px;
+  border-radius: 28px;
+  background: #f7f8f5;
+  box-shadow: 0 20px 50px -20px rgba(18, 40, 26, 0.25);
+  animation: status-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-@keyframes rigEntrance {
-  0% {
-    opacity: 0;
-    transform: translateY(-22px) scale(0.97);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* ---------- POS Terminal Machine Shell ---------- */
-.pos-terminal {
-  width: 100%;
-  background: #202023;
-  border-radius: 26px;
-  padding: 16px 16px 8px;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28), 0 4px 14px rgba(0, 0, 0, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  position: relative;
-  z-index: 10;
-}
-
-.pos-top-bar {
-  display: flex;
+.status__bar {
+  display: grid;
+  grid-template-columns: 38px 1fr 38px;
   align-items: center;
-  justify-content: space-between;
-  padding: 4px 4px 14px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
-.pos-logo-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: #2b2b30;
+.status__back {
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.pos-home-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 16px;
-  border-radius: 100px;
-  background: #323237;
-  color: #f4f4f5;
-  font-size: 0.82rem;
-  font-weight: 600;
-  text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
-  transition: all 0.15s ease;
-}
-
-.pos-home-btn:hover {
-  background: #3e3e46;
-  transform: translateY(-1px);
-}
-
-/* ---------- Dark Display Screen Inside POS ---------- */
-.pos-display {
-  background: #141416;
-  border-radius: 18px;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
-}
-
-.pos-display__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.pos-display__info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.pos-plan-title {
-  color: #ffffff;
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pos-plan-sub {
-  color: #a1a1aa;
-  font-size: 0.82rem;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pos-display__total {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
-.pos-total-label {
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: #a1a1aa;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.pos-total-num {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-}
-
-.pos-complete-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 16px;
-  padding: 4px 10px 4px 5px;
-  border-radius: 100px;
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.22);
-  animation: badgeIn 0.5s ease 0.3s both;
-}
-
-@keyframes badgeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.pos-check-circle {
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: #22c55e;
-  color: #0c0a09;
-  font-size: 0.62rem;
-  font-weight: 900;
-  display: grid;
-  place-items: center;
-}
-
-.pos-complete-text {
-  color: #4ade80;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-/* ---------- POS Dispense Slot ---------- */
-.pos-slot {
-  height: 8px;
-  background: #09090b;
-  border-radius: 4px;
-  margin: 18px 10px 0;
-  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.9);
-  position: relative;
-  z-index: 12;
-}
-
-/* ---------- Receipt Feeder (Sliding Out from Slot) ---------- */
-.receipt-feeder {
-  position: relative;
-  z-index: 5;
-  width: 90%;
-  max-width: 360px;
-  margin-top: -4px;
-  overflow: hidden;
-  animation: printDispense 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
-  transform-origin: top center;
-}
-
-@keyframes printDispense {
-  0% {
-    max-height: 0;
-    transform: translateY(-50px);
-    opacity: 0.1;
-  }
-  30% {
-    opacity: 1;
-  }
-  100% {
-    max-height: 1400px;
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* ---------- Receipt Paper Ticket ---------- */
-.receipt-ticket {
-  width: 100%;
-  font-family: 'Space Mono', 'SF Mono', 'Courier New', Courier, monospace;
-  color: #1c1917;
-  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.12));
-  transition: transform 0.25s ease, filter 0.25s ease;
-  user-select: text;
-}
-
-.receipt-ticket:hover {
-  transform: translateY(2px) scale(1.008);
-  filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.17));
-}
-
-.receipt__body {
-  background: #ffffff;
-  padding: 24px 22px 14px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ---------- Official Brand Emblem Badge on Receipt ---------- */
-.receipt__brand-badge {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  background: #1e1e21;
-  display: grid;
-  place-items: center;
-  margin: 0 auto 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-}
-
-/* ---------- Dashed Divider ---------- */
-.receipt__dash {
-  border: 0;
-  border-bottom: 1.5px dashed #cfcbbb;
-  margin: 12px 0;
-}
-
-/* ---------- Item Breakdown ---------- */
-.receipt__items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 4px 0 6px;
-}
-
-.receipt__item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 0.85rem;
-  line-height: 1.35;
-}
-
-.receipt__item-left {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.receipt__item-title {
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #1c1917;
-  word-break: break-word;
-}
-
-.receipt__item-sub {
-  font-size: 0.74rem;
-  color: #78716c;
-}
-
-.receipt__item-price {
-  font-weight: 600;
-  color: #1c1917;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
-
-/* ---------- Subtotal & Calculation Rows ---------- */
-.receipt__calc-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 4px 0 10px;
-}
-
-.receipt__calc-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.82rem;
-  color: #57534e;
-}
-
-.receipt__calc-label {
-  font-weight: 500;
-}
-
-.receipt__calc-val {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- TOTAL PAID ---------- */
-.receipt__total-paid-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin: 6px 0 2px;
-}
-
-.receipt__total-paid-label {
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: #1c1917;
-}
-
-.receipt__total-paid-amount {
-  font-size: 1.32rem;
-  font-weight: 800;
-  color: #1c1917;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- Metadata Block ---------- */
-.receipt__meta-block {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin: 4px 0 14px;
-}
-
-.receipt__meta-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 0.78rem;
-  color: #57534e;
-}
-
-.receipt__meta-k {
-  font-weight: 500;
-}
-
-.receipt__meta-v {
-  font-weight: 600;
-  color: #1c1917;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- Barcode Graphic ---------- */
-.receipt__barcode-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin: 8px 0 4px;
-}
-
-.receipt__barcode {
-  width: 170px;
+  width: 38px;
   height: 38px;
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.receipt__barcode-text {
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
-  color: #57534e;
-  font-weight: 600;
+.status__back:hover {
+  background: var(--sand);
 }
 
-/* ---------- Sawtooth Tear Edge ---------- */
-.receipt__tear {
-  display: block;
-  width: 100%;
-  height: 8px;
+/* Big green tick with soft rings */
+.status__hero {
+  padding: 26px 8px 22px;
+  text-align: center;
 }
 
-.receipt__tear--bottom {
-  margin-top: -1px;
+.status__badge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  margin: 0 auto 18px;
 }
 
-/* ---------- External Action Buttons ---------- */
-.receipt-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  margin-top: 28px;
+.status__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.1);
+  animation: status-ring 0.6s 0.1s ease-out both;
 }
 
-.btn--print {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.status__ring--inner {
+  inset: 13px;
+  background: rgba(34, 197, 94, 0.16);
+  animation-delay: 0.2s;
+}
+
+.status__check {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  padding: 16px;
+  border-radius: 50%;
+  background: #22a447;
+  box-shadow: 0 8px 20px -6px rgba(34, 164, 71, 0.6);
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: status-pop 0.45s 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.status__check path {
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+  animation: status-draw 0.35s 0.6s ease-out forwards;
+}
+
+.status__hero h1 {
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.status__hero p {
+  max-width: 28ch;
+  margin: 6px auto 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+/* Info cards */
+.status__card {
+  margin-top: 12px;
+  padding: 16px 16px 6px;
+  border-radius: 18px;
   background: var(--white);
 }
 
-/* ---------- Print Stylesheet ---------- */
+.status__card h2 {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.status__card dl {
+  margin: 0;
+}
+
+.status__card dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  font-size: 0.86rem;
+}
+
+.status__card dl > div + div {
+  border-top: 1px dashed var(--line);
+}
+
+.status__card dt {
+  flex: none;
+  color: var(--muted);
+}
+
+.status__card dd {
+  margin: 0;
+  min-width: 0;
+  text-align: right;
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.status__mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+.status__total {
+  border-top: 1px solid var(--line) !important;
+}
+
+.status__total dt,
+.status__total dd {
+  font-weight: 800;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.status__total dd {
+  color: var(--green-900);
+}
+
+/* Full item list, folded away */
+.status__items {
+  margin: 2px 0 10px;
+  font-size: 0.84rem;
+}
+
+.status__items summary {
+  cursor: pointer;
+  color: #047857;
+  font-weight: 600;
+}
+
+.status__items ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status__items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  color: var(--muted);
+}
+
+.status__items li span:last-child {
+  flex: none;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Actions */
+.status__actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.status__actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.status__actions .btn {
+  border-radius: 14px;
+}
+
+@keyframes status-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes status-ring {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes status-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes status-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status__check path {
+    stroke-dashoffset: 0;
+  }
+}
+
 @media print {
   @page {
-    margin: 8mm;
-    size: auto;
-  }
-
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
+    margin: 10mm;
   }
 
   .no-print,
-  app-navbar,
-  app-footer,
-  nav,
   header,
   footer,
-  .receipt-actions {
+  nav {
     display: none !important;
   }
 
@@ -519,40 +325,29 @@
     min-height: auto !important;
   }
 
-  .receipt-feeder {
+  .status {
+    box-shadow: none !important;
+    background: #ffffff !important;
     animation: none !important;
-    max-height: none !important;
-    overflow: visible !important;
-    width: 380px !important;
   }
 
-  .pos-terminal {
-    box-shadow: none !important;
-    border: 1px solid #000 !important;
+  .status__check path {
+    stroke-dashoffset: 0 !important;
   }
 
-  .receipt-ticket {
-    transform: none !important;
-    filter: none !important;
-    box-shadow: none !important;
+  .status__card {
+    border: 1px solid #ddd;
   }
 }
 
 @media (max-width: 480px) {
   .section--receipt {
-    padding: 24px 12px 60px;
+    padding: 16px 12px 48px;
+    align-items: flex-start;
   }
 
-  .receipt-feeder {
-    width: 96%;
-  }
-
-  .receipt-actions {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .receipt-actions .btn {
-    width: 100%;
+  .status {
+    padding: 14px 12px 18px;
+    border-radius: 22px;
   }
 }
