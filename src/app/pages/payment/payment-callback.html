@@ -36,197 +36,113 @@
       }
 
       @case ('success') {
-        <div class="printer-rig-container">
-          <!-- POS Terminal Hardware Shell -->
-          <div class="pos-terminal">
-            <div class="pos-top-bar">
-              <div class="pos-logo-badge" title="FarmDirect">
-                <svg viewBox="0 0 32 20" width="22" height="14" aria-hidden="true">
-                  <path d="M16 20C16 9 9 3 0 2c1 9 6 15 16 18z" fill="#cfe86e" />
-                  <path d="M16 20c0-9 6-16 16-20c0 10-6 17-16 20z" fill="#a9cc3c" />
-                </svg>
-              </div>
-              <a routerLink="/" class="pos-home-btn" aria-label="Go to Homepage">
-                <app-icon name="home" [size]="14" />
-                <span>Home</span>
-              </a>
-            </div>
+        <article class="status" aria-labelledby="status-title">
+          <header class="status__bar no-print">
+            <a routerLink="/account" [queryParams]="{ tab: 'orders' }" class="status__back" aria-label="Go to my orders">
+              <app-icon name="arrow-left" [size]="18" />
+            </a>
+            <span>Payment Status</span>
+            <span class="status__bar-spacer" aria-hidden="true"></span>
+          </header>
 
-            <!-- Dark Inner Display Screen -->
-            <div class="pos-display">
-              <div class="pos-display__row">
-                <div class="pos-display__info">
-                  <h2 class="pos-plan-title">
-                    {{ receipt().items[0]?.title || 'FarmDirect Order' }}
-                  </h2>
-                  <p class="pos-plan-sub">
-                    {{ receipt().items.length > 1 ? receipt().items.length + ' produce items ordered' : (receipt().items[0]?.detail || 'Fresh farm delivery') }}
-                  </p>
-                </div>
-                <div class="pos-display__total">
-                  <span class="pos-total-label">Total</span>
-                  <span class="pos-total-num">₦{{ formatAmount(receipt().total) }}</span>
-                </div>
-              </div>
-
-              <!-- Order Complete Green Status Pill -->
-              <div class="pos-complete-pill">
-                <span class="pos-check-circle" aria-hidden="true">✓</span>
-                <span class="pos-complete-text">Order complete</span>
-              </div>
-            </div>
-
-            <!-- Printer Dispense Slot -->
-            <div class="pos-slot" aria-hidden="true"></div>
-          </div>
-
-          <!-- Dispensed Receipt Paper with Animated Feed -->
-          <div class="receipt-feeder">
-            <article class="receipt-ticket" aria-label="Payment Receipt">
-              <div class="receipt__body">
-                <!-- FarmDirect Official Badge & Branding -->
-                <div class="receipt__brand-badge" aria-hidden="true">
-                  <svg viewBox="0 0 32 20" width="30" height="19" aria-hidden="true">
-                    <path d="M16 20C16 9 9 3 0 2c1 9 6 15 16 18z" fill="#cfe86e" />
-                    <path d="M16 20c0-9 6-16 16-20c0 10-6 17-16 20z" fill="#a9cc3c" />
-                  </svg>
-                </div>
-
-                <div class="receipt__dash" aria-hidden="true"></div>
-
-                <!-- Itemized Breakdown -->
-                <div class="receipt__items">
-                  @for (item of receipt().items; track $index) {
-                    <div class="receipt__item">
-                      <div class="receipt__item-left">
-                        <span class="receipt__item-title">{{ item.title }}</span>
-                        @if (item.qty > 1 || item.detail) {
-                          <span class="receipt__item-sub">
-                            {{ item.qty > 1 ? item.qty + 'x ' : '' }}{{ item.detail || '' }}
-                          </span>
-                        }
-                      </div>
-                      <span class="receipt__item-price">
-                        ₦{{ formatAmount(item.unitPrice * item.qty) }}
-                      </span>
-                    </div>
-                  }
-                </div>
-
-                <div class="receipt__dash" aria-hidden="true"></div>
-
-                <!-- Subtotal & Delivery Rows -->
-                <div class="receipt__calc-rows">
-                  <div class="receipt__calc-row">
-                    <span class="receipt__calc-label">Subtotal</span>
-                    <span class="receipt__calc-val">₦{{ formatAmount(receipt().total) }}</span>
-                  </div>
-                  <div class="receipt__calc-row">
-                    <span class="receipt__calc-label">Delivery</span>
-                    <span class="receipt__calc-val">FREE</span>
-                  </div>
-                </div>
-
-                <!-- TOTAL PAID -->
-                <div class="receipt__total-paid-row">
-                  <span class="receipt__total-paid-label">TOTAL PAID</span>
-                  <span class="receipt__total-paid-amount">₦{{ formatAmount(receipt().total) }}</span>
-                </div>
-
-                <div class="receipt__dash" aria-hidden="true"></div>
-
-                <!-- Metadata block -->
-                <div class="receipt__meta-block">
-                  <div class="receipt__meta-line">
-                    <span class="receipt__meta-k">Order</span>
-                    <span class="receipt__meta-v">{{ receipt().orderCode }}</span>
-                  </div>
-                  <div class="receipt__meta-line">
-                    <span class="receipt__meta-k">Paid with</span>
-                    <span class="receipt__meta-v">Paystack •••• Online</span>
-                  </div>
-                  <div class="receipt__meta-line">
-                    <span class="receipt__meta-k">Date</span>
-                    <span class="receipt__meta-v">{{ receipt().date }}</span>
-                  </div>
-                </div>
-
-                <!-- Thermal Barcode -->
-                <div class="receipt__barcode-section" aria-hidden="true">
-                  <svg class="receipt__barcode" viewBox="0 0 200 44" preserveAspectRatio="none">
-                    <rect x="0" y="0" width="2" height="44" fill="#1c1917"/>
-                    <rect x="4" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="7" y="0" width="3" height="44" fill="#1c1917"/>
-                    <rect x="13" y="0" width="1.5" height="44" fill="#1c1917"/>
-                    <rect x="17" y="0" width="4" height="44" fill="#1c1917"/>
-                    <rect x="23" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="26" y="0" width="3" height="44" fill="#1c1917"/>
-                    <rect x="31" y="0" width="2" height="44" fill="#1c1917"/>
-                    <rect x="35" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="38" y="0" width="4" height="44" fill="#1c1917"/>
-                    <rect x="44" y="0" width="2" height="44" fill="#1c1917"/>
-                    <rect x="48" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="52" y="0" width="3.5" height="44" fill="#1c1917"/>
-                    <rect x="58" y="0" width="1.5" height="44" fill="#1c1917"/>
-                    <rect x="62" y="0" width="2" height="44" fill="#1c1917"/>
-                    <rect x="66" y="0" width="4" height="44" fill="#1c1917"/>
-                    <rect x="72" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="75" y="0" width="3" height="44" fill="#1c1917"/>
-                    <rect x="80" y="0" width="2" height="44" fill="#1c1917"/>
-                    <rect x="84" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="87" y="0" width="4.5" height="44" fill="#1c1917"/>
-                    <rect x="94" y="0" width="1.5" height="44" fill="#1c1917"/>
-                    <rect x="98" y="0" width="3" height="44" fill="#1c1917"/>
-                    <rect x="103" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="106" y="0" width="3.5" height="44" fill="#1c1917"/>
-                    <rect x="112" y="0" width="2" height="44" fill="#1c1917"/>
-                    <rect x="116" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="119" y="0" width="4" height="44" fill="#1c1917"/>
-                    <rect x="125" y="0" width="1.5" height="44" fill="#1c1917"/>
-                    <rect x="129" y="0" width="3" height="44" fill="#1c1917"/>
-                    <rect x="134" y="0" width="2" height="44" fill="#1c1917"/>
-                    <rect x="138" y="0" width="4.5" height="44" fill="#1c1917"/>
-                    <rect x="145" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="148" y="0" width="3" height="44" fill="#1c1917"/>
-                    <rect x="153" y="0" width="2" height="44" fill="#1c1917"/>
-                    <rect x="157" y="0" width="1.5" height="44" fill="#1c1917"/>
-                    <rect x="161" y="0" width="4" height="44" fill="#1c1917"/>
-                    <rect x="167" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="170" y="0" width="3" height="44" fill="#1c1917"/>
-                    <rect x="175" y="0" width="2" height="44" fill="#1c1917"/>
-                    <rect x="179" y="0" width="1" height="44" fill="#1c1917"/>
-                    <rect x="182" y="0" width="3.5" height="44" fill="#1c1917"/>
-                    <rect x="188" y="0" width="1.5" height="44" fill="#1c1917"/>
-                    <rect x="192" y="0" width="4" height="44" fill="#1c1917"/>
-                    <rect x="198" y="0" width="2" height="44" fill="#1c1917"/>
-                  </svg>
-                  <span class="receipt__barcode-text">{{ receipt().orderCode.replace('-', ' ') }}</span>
-                </div>
-              </div>
-
-              <!-- Bottom Sawtooth Torn Edge -->
-              <svg class="receipt__tear receipt__tear--bottom" viewBox="0 0 360 8" preserveAspectRatio="none" aria-hidden="true">
-                <path
-                  d="M0,0 L5,8 L10,0 L15,8 L20,0 L25,8 L30,0 L35,8 L40,0 L45,8 L50,0 L55,8 L60,0 L65,8 L70,0 L75,8 L80,0 L85,8 L90,0 L95,8 L100,0 L105,8 L110,0 L115,8 L120,0 L125,8 L130,0 L135,8 L140,0 L145,8 L150,0 L155,8 L160,0 L165,8 L170,0 L175,8 L180,0 L185,8 L190,0 L195,8 L200,0 L205,8 L210,0 L215,8 L220,0 L225,8 L230,0 L235,8 L240,0 L245,8 L250,0 L255,8 L260,0 L265,8 L270,0 L275,8 L280,0 L285,8 L290,0 L295,8 L300,0 L305,8 L310,0 L315,8 L320,0 L325,8 L330,0 L335,8 L340,0 L345,8 L350,0 L355,8 L360,0 Z"
-                  fill="#ffffff"
-                />
+          <div class="status__hero" role="status">
+            <div class="status__badge" aria-hidden="true">
+              <span class="status__ring status__ring--outer"></span>
+              <span class="status__ring status__ring--inner"></span>
+              <svg class="status__check" viewBox="0 0 24 24">
+                <path d="M6 12.5l4 4 8-9" />
               </svg>
-            </article>
+            </div>
+            <h1 id="status-title">Payment Successful</h1>
+            <p>Your FarmDirect order has been confirmed successfully.</p>
           </div>
 
-          <!-- Bottom Action Buttons -->
-          <nav class="receipt-actions no-print" aria-label="Receipt actions">
-            <button type="button" class="btn btn--outline btn--print" (click)="printReceipt()">
-              <app-icon name="printer" [size]="17" /> Print Receipt
-            </button>
-            <a routerLink="/account" [queryParams]="{ tab: 'orders' }" class="btn btn--primary">
-              View My Orders
+          <section class="status__card" aria-labelledby="order-info">
+            <h2 id="order-info">Order Information</h2>
+            <dl>
+              <div>
+                <dt>Order</dt>
+                <dd>{{ receipt().orderCode }}</dd>
+              </div>
+              <div>
+                <dt>Items</dt>
+                <dd>{{ itemsSummary() }}</dd>
+              </div>
+              <div>
+                <dt>Delivery</dt>
+                <dd>{{ deliveryDate() }}</dd>
+              </div>
+              @if (receipt().customerName) {
+                <div>
+                  <dt>Name</dt>
+                  <dd>{{ receipt().customerName }}</dd>
+                </div>
+              }
+              @if (receipt().address) {
+                <div>
+                  <dt>Address</dt>
+                  <dd>{{ receipt().address }}</dd>
+                </div>
+              }
+            </dl>
+
+            @if (receipt().items.length > 1) {
+              <details class="status__items">
+                <summary>View all {{ receipt().items.length }} items</summary>
+                <ul>
+                  @for (item of receipt().items; track $index) {
+                    <li>
+                      <span>{{ item.qty > 1 ? item.qty + '× ' : '' }}{{ item.title }}</span>
+                      <span>₦{{ formatAmount(item.unitPrice * item.qty) }}</span>
+                    </li>
+                  }
+                </ul>
+              </details>
+            }
+          </section>
+
+          <section class="status__card" aria-labelledby="txn-info">
+            <h2 id="txn-info">Transaction Detail</h2>
+            <dl>
+              <div>
+                <dt>Transaction ID</dt>
+                <dd class="status__mono">{{ reference() }}</dd>
+              </div>
+              <div>
+                <dt>Transaction Date</dt>
+                <dd>{{ receipt().date }}</dd>
+              </div>
+              <div>
+                <dt>Payment Method</dt>
+                <dd>{{ receipt().paymentMethod }}</dd>
+              </div>
+              <div>
+                <dt>Amount</dt>
+                <dd>₦{{ formatAmount(receipt().total) }}</dd>
+              </div>
+              <div>
+                <dt>Delivery Fee</dt>
+                <dd>Free</dd>
+              </div>
+              <div class="status__total">
+                <dt>Total Paid</dt>
+                <dd>₦{{ formatAmount(receipt().total) }}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <nav class="status__actions no-print" aria-label="What next">
+            <a routerLink="/account" [queryParams]="{ tab: 'orders' }" class="btn btn--primary btn--block">
+              Track My Order
             </a>
-            <a routerLink="/crops" class="btn btn--soft">
-              Continue Shopping
-            </a>
+            <div class="status__actions-row">
+              <a routerLink="/crops" class="btn btn--soft">Continue Shopping</a>
+              <button type="button" class="btn btn--soft" (click)="printReceipt()">
+                <app-icon name="printer" [size]="16" /> Print
+              </button>
+            </div>
           </nav>
-        </div>
+        </article>
       }
     }
   </div>
