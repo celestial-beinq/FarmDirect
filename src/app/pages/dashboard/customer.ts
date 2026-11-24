@@ -1,5 +1,5 @@
-import { DatePipe } from '@angular/common';
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { Component, PLATFORM_ID, computed, effect, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ORDER_STEPS, ORDER_STATUSES, Order, OrderItem, OrderStatus, tone } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
@@ -22,6 +22,22 @@ export class CustomerDashboard {
   protected readonly store = inject(StoreService);
   private readonly cart = inject(CartService);
   private readonly router = inject(Router);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  constructor() {
+    if (this.isBrowser) {
+      void this.auth.ready.then(() => {
+        if (!this.me()) {
+          void this.router.navigate(['/login']);
+        }
+      });
+      effect(() => {
+        if (this.store.loaded() && !this.me()) {
+          void this.router.navigate(['/login']);
+        }
+      });
+    }
+  }
 
   /** The open tab, from "?tab=..." in the URL. */
   readonly tab = input<string>();
