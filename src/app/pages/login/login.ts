@@ -251,6 +251,20 @@ import { PhotoPipe } from '../../shared/pipes';
           } @else {
             <form class="auth-form" novalidate (submit)="$event.preventDefault(); submit()">
               @if (mode() === 'up') {
+                <div class="steps">
+                  <p class="steps__label">
+                    Step {{ upStep() }} of 3 <span aria-hidden="true">·</span>
+                    <strong>{{ stepTitles[upStep() - 1] }}</strong>
+                  </p>
+                  <div class="steps__bar" aria-hidden="true">
+                    @for (n of [1, 2, 3]; track n) {
+                      <span [class.is-done]="n <= upStep()"></span>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (mode() === 'up' && upStep() === 1) {
                 <fieldset class="roles">
                   <legend>I’m joining as</legend>
                   <div class="roles__grid" role="radiogroup" aria-label="Account type">
@@ -259,11 +273,13 @@ import { PhotoPipe } from '../../shared/pipes';
                       role="radio"
                       [attr.aria-checked]="role() === 'customer'"
                       [class.is-chosen]="role() === 'customer'"
-                      title="Order produce and join livestock pools"
                       (click)="role.set('customer')"
                     >
-                      <span class="roles__icon"><app-icon name="basket" [size]="16" /></span>
-                      <strong>A buyer</strong>
+                      <span class="roles__icon"><app-icon name="basket" [size]="18" /></span>
+                      <span class="roles__text">
+                        <strong>A buyer</strong>
+                        <small>Order produce and join livestock pools</small>
+                      </span>
                       <span class="roles__tick"><app-icon name="check" [size]="14" /></span>
                     </button>
                     <button
@@ -271,16 +287,20 @@ import { PhotoPipe } from '../../shared/pipes';
                       role="radio"
                       [attr.aria-checked]="role() === 'farmer'"
                       [class.is-chosen]="role() === 'farmer'"
-                      title="List produce and receive orders"
                       (click)="role.set('farmer')"
                     >
-                      <span class="roles__icon"><app-icon name="leaf" [size]="16" /></span>
-                      <strong>A farmer</strong>
+                      <span class="roles__icon"><app-icon name="leaf" [size]="18" /></span>
+                      <span class="roles__text">
+                        <strong>A farmer</strong>
+                        <small>List produce and receive orders</small>
+                      </span>
                       <span class="roles__tick"><app-icon name="check" [size]="14" /></span>
                     </button>
                   </div>
                 </fieldset>
+              }
 
+              @if (mode() === 'up' && upStep() === 2) {
                 <div class="field">
                   <label for="auth-name">Full name</label>
                   <div class="field__control">
@@ -291,6 +311,7 @@ import { PhotoPipe } from '../../shared/pipes';
                       name="name"
                       autocomplete="name"
                       placeholder="e.g. Ngozi Adebayo"
+                      [value]="name()"
                       required
                       maxlength="120"
                       (input)="name.set(fullName.value)"
@@ -309,6 +330,7 @@ import { PhotoPipe } from '../../shared/pipes';
                           id="auth-farm"
                           name="farm"
                           placeholder="Green Valley Farm"
+                          [value]="farmName()"
                           required
                           maxlength="120"
                           (input)="farmName.set(farm.value)"
@@ -324,6 +346,7 @@ import { PhotoPipe } from '../../shared/pipes';
                           id="auth-location"
                           name="location"
                           placeholder="Town, State"
+                          [value]="farmLocation()"
                           maxlength="160"
                           (input)="farmLocation.set(place.value)"
                         />
@@ -333,6 +356,7 @@ import { PhotoPipe } from '../../shared/pipes';
                 }
               }
 
+              @if (mode() === 'in' || upStep() === 3) {
               <div class="field">
                 <label for="auth-email">Email address</label>
                 <div class="field__control">
@@ -344,6 +368,7 @@ import { PhotoPipe } from '../../shared/pipes';
                     name="email"
                     autocomplete="email"
                     placeholder="you@example.com"
+                    [value]="email()"
                     required
                     (input)="email.set(mail.value)"
                   />
@@ -363,6 +388,7 @@ import { PhotoPipe } from '../../shared/pipes';
                     required
                     minlength="8"
                     [attr.autocomplete]="mode() === 'in' ? 'current-password' : 'new-password'"
+                    [value]="password()"
                     (input)="password.set(pass.value)"
                   />
                   <button
@@ -382,6 +408,7 @@ import { PhotoPipe } from '../../shared/pipes';
                   </div>
                 }
               </div>
+              }
 
               @if (error()) {
                 <p class="alert alert--bad" role="alert">
@@ -390,16 +417,23 @@ import { PhotoPipe } from '../../shared/pipes';
                 </p>
               }
 
-              <button type="submit" class="auth-submit" [disabled]="busy()">
-                @if (busy()) {
-                  <span class="spinner" aria-hidden="true"></span> Please wait…
-                } @else {
-                  {{ mode() === 'in' ? 'Sign in' : 'Create account' }}
-                  <app-icon name="arrow-right" [size]="18" />
+              <div class="auth-actions">
+                @if (mode() === 'up' && upStep() > 1) {
+                  <button type="button" class="auth-back-step" [disabled]="busy()" (click)="prevStep()">
+                    <app-icon name="arrow-left" [size]="18" /> Back
+                  </button>
                 }
-              </button>
+                <button type="submit" class="auth-submit" [disabled]="busy()">
+                  @if (busy()) {
+                    <span class="spinner" aria-hidden="true"></span> Please wait…
+                  } @else {
+                    {{ mode() === 'in' ? 'Sign in' : upStep() < 3 ? 'Continue' : 'Create account' }}
+                    <app-icon name="arrow-right" [size]="18" />
+                  }
+                </button>
+              </div>
 
-              @if (mode() === 'up') {
+              @if (mode() === 'up' && upStep() === 3) {
                 <p class="fine">
                   By creating an account you agree to buy and sell fairly and honestly on FarmDirect.
                 </p>
@@ -870,8 +904,8 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .roles__grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      grid-template-columns: 1fr;
+      gap: 10px;
       width: 100%;
       min-width: 0;
       box-sizing: border-box;
@@ -881,8 +915,8 @@ import { PhotoPipe } from '../../shared/pipes';
       position: relative;
       display: flex;
       align-items: center;
-      gap: 9px;
-      padding: 8px 30px 8px 10px;
+      gap: 12px;
+      padding: 12px 36px 12px 12px;
       border: 1.5px solid var(--line);
       border-radius: 10px;
       text-align: left;
@@ -911,9 +945,9 @@ import { PhotoPipe } from '../../shared/pipes';
       display: grid;
       place-items: center;
       flex: none;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
       background: var(--cream);
       color: var(--green-900);
     }
@@ -1245,6 +1279,80 @@ import { PhotoPipe } from '../../shared/pipes';
       }
     }
 
+    /* ---------- Sign-up steps ---------- */
+    .steps {
+      display: grid;
+      gap: 8px;
+    }
+
+    .steps__label {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .steps__label strong {
+      color: var(--ink);
+    }
+
+    .steps__bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .steps__bar span {
+      height: 4px;
+      border-radius: 999px;
+      background: var(--line);
+      transition: background 0.2s;
+    }
+
+    .steps__bar span.is-done {
+      background: var(--accent);
+    }
+
+    .roles__text {
+      display: grid;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .auth-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .auth-actions .auth-submit {
+      flex: 1;
+    }
+
+    .auth-back-step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 44px;
+      margin-top: 2px;
+      padding: 0 16px;
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      background: var(--white);
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--ink);
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .auth-back-step:hover:not(:disabled) {
+      border-color: #c3c9bb;
+      background: var(--cream);
+    }
+
+    .auth-back-step:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     /* ---------- Responsive Breakpoints ---------- */
     /* Big screens: let the text and the form grow a little so they don't look lost. */
     @media (min-width: 1600px) {
@@ -1436,6 +1544,9 @@ export class Login implements OnInit, OnDestroy {
 
   protected readonly mode = signal<'in' | 'up' | 'confirm'>('in');
   protected readonly role = signal<'customer' | 'farmer'>('customer');
+  /** Which sign-up step is showing: 1 who you are, 2 your details, 3 email & password. */
+  protected readonly upStep = signal<1 | 2 | 3>(1);
+  protected readonly stepTitles = ['Who are you?', 'Your details', 'Secure your account'];
   protected readonly name = signal('');
   protected readonly farmName = signal('');
   protected readonly farmLocation = signal('');
@@ -1490,13 +1601,50 @@ export class Login implements OnInit, OnDestroy {
   }
 
   protected setMode(mode: 'in' | 'up' | 'confirm'): void {
+    if (mode === 'up' && this.mode() !== 'up') this.upStep.set(1);
     this.mode.set(mode);
     this.error.set('');
     this.resendMessage.set('');
     this.confirmationCode.set('');
   }
 
+  /** Goes back one sign-up step, keeping what was typed. */
+  protected prevStep(): void {
+    this.error.set('');
+    const step = this.upStep();
+    if (step > 1) this.goToStep((step - 1) as 1 | 2);
+  }
+
+  /** Checks the current sign-up step. Returns an error message, or '' if it's fine. */
+  private stepError(step: 1 | 2 | 3): string {
+    if (step === 2) {
+      if (!sanitizeText(this.name(), 120)) return 'Enter your full name.';
+      if (this.role() === 'farmer' && sanitizeText(this.farmName(), 120).length < 2) {
+        return 'Enter your farm name.';
+      }
+    }
+    return '';
+  }
+
+  private goToStep(step: 1 | 2 | 3): void {
+    this.upStep.set(step);
+    // Put the cursor in the first field of the new step.
+    const firstField = { 1: '', 2: 'auth-name', 3: 'auth-email' }[step];
+    if (firstField && typeof document !== 'undefined') {
+      setTimeout(() => document.getElementById(firstField)?.focus());
+    }
+  }
+
   protected async submit(): Promise<void> {
+    // Sign-up is split into steps: check this one and move on until the last.
+    if (this.mode() === 'up' && this.upStep() < 3) {
+      const step = this.upStep() as 1 | 2;
+      const problem = this.stepError(step);
+      this.error.set(problem);
+      if (!problem) this.goToStep((step + 1) as 2 | 3);
+      return;
+    }
+
     const email = sanitizeEmail(this.email());
     const password = this.password();
     this.error.set('');
@@ -1525,15 +1673,15 @@ export class Login implements OnInit, OnDestroy {
           return this.error.set(error);
         }
       } else {
+        // Name and farm are on step 2: if something is wrong there, go back to it.
+        const detailsProblem = this.stepError(2);
+        if (detailsProblem) {
+          this.goToStep(2);
+          return this.error.set(detailsProblem);
+        }
         const fullName = sanitizeText(this.name(), 120);
-        if (!fullName) return this.error.set('Enter your full name.');
-
         const farm = sanitizeText(this.farmName(), 120);
         const location = sanitizeText(this.farmLocation(), 160);
-
-        if (this.role() === 'farmer' && farm.length < 2) {
-          return this.error.set('Enter your farm name.');
-        }
 
         const result = await this.auth.signUp({
           email,
