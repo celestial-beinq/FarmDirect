@@ -84,10 +84,12 @@ import { PhotoPipe } from '../../shared/pipes';
               </svg>
               <h2>{{ done.title ?? 'You’re all set' }}{{ done.name ? ', ' + done.name : '' }}!</h2>
               <p>{{ done.message ?? 'Your email is confirmed and your account is ready.' }}</p>
-              <p class="success__next">
-                <span class="spinner spinner--dark" aria-hidden="true"></span>
-                Taking you to {{ done.destination }}…
-              </p>
+              @if (done.destination) {
+                <p class="success__next">
+                  <span class="spinner spinner--dark" aria-hidden="true"></span>
+                  Taking you to {{ done.destination }}…
+                </p>
+              }
             </div>
           }
           <a routerLink="/" class="auth__back">
@@ -99,7 +101,13 @@ import { PhotoPipe } from '../../shared/pipes';
               @if (mode() === 'confirm') {
                 Confirm your email
               } @else if (mode() === 'forgot') {
-                {{ resetStep() === 'email' ? 'Forgot your password?' : 'Set a new password' }}
+                @if (resetStep() === 'email') {
+                  Forgot your password?
+                } @else if (resetStep() === 'code') {
+                  Check your email
+                } @else {
+                  Set a new password
+                }
               } @else if (mode() === 'up') {
                 Create your account
               } @else {
@@ -112,8 +120,10 @@ import { PhotoPipe } from '../../shared/pipes';
               } @else if (mode() === 'forgot') {
                 @if (resetStep() === 'email') {
                   Enter your email and we’ll send you a code to reset it.
+                } @else if (resetStep() === 'code') {
+                  Enter the {{ codeLength }}-digit code we sent you.
                 } @else {
-                  Enter the code we emailed you and choose a new password.
+                  Choose a strong password you haven’t used before.
                 }
               } @else if (mode() === 'up') {
                 Join FarmDirect in under a minute: it’s free.
@@ -287,6 +297,18 @@ import { PhotoPipe } from '../../shared/pipes';
               </p>
             </form>
           } @else if (mode() === 'forgot') {
+            <div class="steps steps--reset">
+              <p class="steps__label">
+                Step {{ resetStepNumber() }} of 3 <span aria-hidden="true">·</span>
+                <strong>{{ resetTitles[resetStepNumber() - 1] }}</strong>
+              </p>
+              <div class="steps__bar" aria-hidden="true">
+                @for (n of [1, 2, 3]; track n) {
+                  <span [class.is-done]="n <= resetStepNumber()"></span>
+                }
+              </div>
+            </div>
+
             @if (resetStep() === 'email') {
               <form class="auth-form" novalidate (submit)="$event.preventDefault(); sendResetCode()">
                 <div class="field">
@@ -327,8 +349,8 @@ import { PhotoPipe } from '../../shared/pipes';
                   <button type="button" (click)="setMode('in')">Back to sign in</button>
                 </p>
               </form>
-            } @else {
-              <form class="auth-form" novalidate (submit)="$event.preventDefault(); resetPassword()">
+            } @else if (resetStep() === 'code') {
+              <form class="auth-form" novalidate (submit)="$event.preventDefault(); checkResetCode()">
                 <div class="confirm-email-chip">
                   <app-icon name="mail" [size]="18" />
                   <span class="confirm-email-chip__text">{{ email() }}</span>
@@ -374,6 +396,46 @@ import { PhotoPipe } from '../../shared/pipes';
                   </p>
                 </div>
 
+                @if (resendMessage()) {
+                  <p class="alert alert--good" role="status">
+                    <app-icon name="check" [size]="18" />
+                    <span>{{ resendMessage() }}</span>
+                  </p>
+                }
+
+                @if (error()) {
+                  <p class="alert alert--bad" role="alert">
+                    <app-icon name="info" [size]="18" />
+                    <span>{{ error() }}</span>
+                  </p>
+                }
+
+                <button type="submit" class="auth-submit" [disabled]="busy()">
+                  @if (busy()) {
+                    <span class="spinner" aria-hidden="true"></span> Checking…
+                  } @else {
+                    Verify code <app-icon name="arrow-right" [size]="18" />
+                  }
+                </button>
+
+                <div class="resend-row">
+                  <span>Didn’t get a code?</span>
+                  <button
+                    type="button"
+                    class="resend-btn"
+                    [disabled]="resendCooldown() > 0 || busy()"
+                    (click)="sendResetCode(true)"
+                  >
+                    @if (resendCooldown() > 0) {
+                      Resend in {{ resendCooldown() }}s
+                    } @else {
+                      Resend code
+                    }
+                  </button>
+                </div>
+              </form>
+            } @else {
+              <form class="auth-form" novalidate (submit)="$event.preventDefault(); saveNewPassword()">
                 <div class="field">
                   <label for="reset-password">New password</label>
                   <div class="field__control">
@@ -406,13 +468,6 @@ import { PhotoPipe } from '../../shared/pipes';
                   </div>
                 </div>
 
-                @if (resendMessage()) {
-                  <p class="alert alert--good" role="status">
-                    <app-icon name="check" [size]="18" />
-                    <span>{{ resendMessage() }}</span>
-                  </p>
-                }
-
                 @if (error()) {
                   <p class="alert alert--bad" role="alert">
                     <app-icon name="info" [size]="18" />
@@ -424,25 +479,9 @@ import { PhotoPipe } from '../../shared/pipes';
                   @if (busy()) {
                     <span class="spinner" aria-hidden="true"></span> Saving…
                   } @else {
-                    Reset password <app-icon name="arrow-right" [size]="18" />
+                    Save new password <app-icon name="arrow-right" [size]="18" />
                   }
                 </button>
-
-                <div class="resend-row">
-                  <span>Didn’t get a code?</span>
-                  <button
-                    type="button"
-                    class="resend-btn"
-                    [disabled]="resendCooldown() > 0 || busy()"
-                    (click)="sendResetCode(true)"
-                  >
-                    @if (resendCooldown() > 0) {
-                      Resend in {{ resendCooldown() }}s
-                    } @else {
-                      Resend code
-                    }
-                  </button>
-                </div>
               </form>
             }
           } @else {
@@ -1659,6 +1698,10 @@ import { PhotoPipe } from '../../shared/pipes';
       }
     }
 
+    .steps--reset {
+      margin: 18px 0 14px;
+    }
+
     /* ---------- Forgot password link ---------- */
     .field__label-row {
       display: flex;
@@ -1943,7 +1986,11 @@ export class Login implements OnInit, OnDestroy {
 
   protected readonly mode = signal<'in' | 'up' | 'confirm' | 'forgot'>('in');
   /** Forgot password: first ask for the email, then the code and new password. */
-  protected readonly resetStep = signal<'email' | 'code'>('email');
+  protected readonly resetStep = signal<'email' | 'code' | 'password'>('email');
+  protected readonly resetTitles = ['Your email', 'Enter code', 'New password'];
+  protected readonly resetStepNumber = computed(
+    () => ({ email: 1, code: 2, password: 3 })[this.resetStep()],
+  );
   protected readonly role = signal<'customer' | 'farmer'>('customer');
   /** Which sign-up step is showing: 1 who you are, 2 your details, 3 email & password. */
   protected readonly upStep = signal<1 | 2 | 3>(1);
@@ -2059,24 +2106,17 @@ export class Login implements OnInit, OnDestroy {
     }
   }
 
-  /** Checks the code, saves the new password, and signs the person in. */
-  protected async resetPassword(): Promise<void> {
+  /** Step 2: checks the emailed code, celebrates briefly, then asks for the new password. */
+  protected async checkResetCode(): Promise<void> {
     this.error.set('');
     this.resendMessage.set('');
     if (this.confirmationCode().length < this.codeLength) {
       return this.error.set(`Enter the ${this.codeLength}-digit code from your email.`);
     }
-    if (this.password().length < 8) {
-      return this.error.set('Your new password needs at least 8 characters.');
-    }
 
     this.busy.set(true);
     try {
-      const error = await this.auth.resetPasswordWithCode(
-        this.email(),
-        this.confirmationCode(),
-        this.password(),
-      );
+      const error = await this.auth.verifyResetCode(this.email(), this.confirmationCode());
       if (error) {
         const badCode = /expired|invalid|token|otp/i.test(error);
         this.error.set(
@@ -2087,6 +2127,34 @@ export class Login implements OnInit, OnDestroy {
         if (badCode) this.clearCodeSoon();
         return;
       }
+
+      this.verified.set({
+        name: '',
+        destination: '',
+        title: 'Code verified',
+        message: 'Now choose your new password.',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1600));
+      this.verified.set(null);
+      this.password.set('');
+      this.resetStep.set('password');
+      setTimeout(() => document.getElementById('reset-password')?.focus());
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** Step 3: saves the new password, then goes to the person's account. */
+  protected async saveNewPassword(): Promise<void> {
+    this.error.set('');
+    if (this.password().length < 8) {
+      return this.error.set('Your new password needs at least 8 characters.');
+    }
+
+    this.busy.set(true);
+    try {
+      const error = await this.auth.setNewPassword(this.password());
+      if (error) return this.error.set(error);
 
       const profile = this.auth.profile();
       this.verified.set({
@@ -2218,9 +2286,8 @@ export class Login implements OnInit, OnDestroy {
     if (digits.length === this.codeLength && !this.busy()) {
       if (this.mode() === 'confirm') {
         void this.verifyCode();
-      } else {
-        // Reset password: move on to the new-password field.
-        document.getElementById('reset-password')?.focus();
+      } else if (this.mode() === 'forgot' && this.resetStep() === 'code') {
+        void this.checkResetCode();
       }
     }
   }
