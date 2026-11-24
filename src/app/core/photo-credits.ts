@@ -611,5 +611,13 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Rams_2.jpg"
+  },
+  {
+    "file": "/images/yamfarm.jpg",
+    "title": "Cultivated farmland in Nigeria",
+    "author": "Confidence24",
+    "licence": "CC BY-SA 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Cultivated_farmland_in_Nigeria.jpg"
   }
 ];

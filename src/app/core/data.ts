@@ -30,6 +30,8 @@ export const IMAGES = {
   farmfield: local('farmfield'),
   harvestbasket: local('harvestbasket'),
   herder: local('herder'),
+  /** Portrait, 1280px wide: for tall frames that would blur a landscape photo. */
+  yamfarm: local('yamfarm'),
   dishes: local('dishes'),
   // Produce
   tomatoes: local('tomatoes'),
