@@ -165,16 +165,15 @@ export class AuthService {
   }
 
   /**
-   * Checks the emailed reset code, then saves the new password. On success the
-   * person is signed in. Returns an error message, or null.
+   * Step 1 of a reset: checks the emailed code. On success Supabase opens a
+   * short "recovery" session, which is what allows the new password to be set.
+   * Returns an error message, or null.
    */
-  async resetPasswordWithCode(email: string, code: string, password: string): Promise<string | null> {
+  async verifyResetCode(email: string, code: string): Promise<string | null> {
     const cleanEmail = sanitizeEmail(email);
     const token = code.replace(/\s+/g, '');
     if (!cleanEmail) return 'Please enter a valid email address.';
     if (token.length < 6) return 'Enter the 6-digit code from your email.';
-    if (!password || password.length < 8) return 'Your new password needs at least 8 characters.';
-    if (password.length > 72) return 'Your new password must be 72 characters or fewer.';
 
     const client = this.supabase.client;
     if (!client) return 'Password reset is not available right now.';
@@ -185,13 +184,19 @@ export class AuthService {
       type: 'recovery',
     });
     if (error) return friendlyError(error);
-
-    const update = await client.auth.updateUser({ password });
-    if (update.error) return friendlyError(update.error);
-
     if (this.isBrowser) this.recordActivity();
     if (data.user) await this.loadProfile(data.user.id);
     return null;
+  }
+
+  /** Step 2 of a reset: saves the new password. Returns an error message, or null. */
+  async setNewPassword(password: string): Promise<string | null> {
+    if (!password || password.length < 8) return 'Your new password needs at least 8 characters.';
+    if (password.length > 72) return 'Your new password must be 72 characters or fewer.';
+    const client = this.supabase.client;
+    if (!client) return 'Password reset is not available right now.';
+    const { error } = await client.auth.updateUser({ password });
+    return error ? friendlyError(error) : null;
   }
 
   /** Sets a new password for the signed-in user. Returns an error message, or null. */
