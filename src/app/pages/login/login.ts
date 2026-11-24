@@ -320,7 +320,7 @@ import { PhotoPipe } from '../../shared/pipes';
                 </div>
 
                 @if (role() === 'farmer') {
-                  <div class="field-row">
+                  <div class="field-stack">
                     <div class="field">
                       <label for="auth-farm">Farm name</label>
                       <div class="field__control">
@@ -938,7 +938,6 @@ import { PhotoPipe } from '../../shared/pipes';
     .roles__grid button.is-chosen {
       border-color: var(--accent);
       background: #f0fdf7;
-      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
     }
 
     .roles__icon {
@@ -989,6 +988,12 @@ import { PhotoPipe } from '../../shared/pipes';
     .is-chosen .roles__tick {
       opacity: 1;
       transform: scale(1);
+    }
+
+    /* Fields stacked one per line, full width (farm name and location). */
+    .field-stack {
+      display: grid;
+      gap: 12px;
     }
 
     .field-row {
