@@ -1511,7 +1511,7 @@ label.settings__row {
 }
 
 /* Toggle switch: a styled checkbox, so it keeps native keyboard and screen-reader support */
-.switch {
+.toggle-switch {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
@@ -1525,7 +1525,7 @@ label.settings__row {
   transition: background-color 0.15s ease;
 }
 
-.switch::after {
+.toggle-switch::after {
   content: '';
   position: absolute;
   top: 3px;
@@ -1538,20 +1538,20 @@ label.settings__row {
   transition: transform 0.15s ease;
 }
 
-.switch:checked {
+.toggle-switch:checked {
   background: #059669;
 }
 
-.switch:checked::after {
+.toggle-switch:checked::after {
   transform: translateX(16px);
 }
 
-.switch:focus-visible {
+.toggle-switch:focus-visible {
   outline: 2px solid #059669;
   outline-offset: 2px;
 }
 
-.switch:disabled {
+.toggle-switch:disabled {
   opacity: 0.6;
   cursor: wait;
 }

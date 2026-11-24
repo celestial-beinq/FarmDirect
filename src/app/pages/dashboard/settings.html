@@ -73,7 +73,7 @@
         <input
           type="checkbox"
           role="switch"
-          class="switch"
+          class="toggle-switch"
           [checked]="settingsService.settings().notify[topic.id]"
           [disabled]="prefsBusy()"
           (change)="setTopic(topic.id, $any($event.target).checked)"
