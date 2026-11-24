@@ -492,9 +492,23 @@ import { PhotoPipe } from '../../shared/pipes';
       content: '';
       position: absolute;
       inset: 0;
+      /* Darker only behind the text (left), clear on the right so the photo shows. */
       background:
-        linear-gradient(180deg, rgba(18, 40, 26, 0.6) 0%, rgba(18, 40, 26, 0.94) 70%),
-        radial-gradient(circle at 20% 15%, rgba(207, 232, 110, 0.25), transparent 50%);
+        linear-gradient(
+          90deg,
+          rgba(18, 40, 26, 0.72) 0%,
+          rgba(18, 40, 26, 0.5) 45%,
+          rgba(18, 40, 26, 0.12) 100%
+        ),
+        linear-gradient(180deg, transparent 60%, rgba(18, 40, 26, 0.35) 100%);
+    }
+
+    /* Keeps white text readable over the brighter parts of the photo. */
+    .auth__visual h2,
+    .auth__lede,
+    .auth__perks strong,
+    .auth__perks small {
+      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
     }
 
     .auth__visual-inner {
@@ -1296,6 +1310,11 @@ import { PhotoPipe } from '../../shared/pipes';
         min-height: 200px;
         padding: 28px 20px;
         text-align: center;
+      }
+
+      /* Text is centred here, so shade evenly instead of from the left. */
+      .auth__visual::before {
+        background: rgba(18, 40, 26, 0.5);
       }
 
       .auth__visual-inner {
