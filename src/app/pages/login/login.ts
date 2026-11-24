@@ -74,6 +74,20 @@ import { PhotoPipe } from '../../shared/pipes';
       <!-- Form side -->
       <div class="auth__main">
         <div class="auth__card">
+          @if (verified(); as done) {
+            <div class="success" role="status" aria-live="polite">
+              <svg class="success__mark" viewBox="0 0 52 52" aria-hidden="true">
+                <circle class="success__circle" cx="26" cy="26" r="24" fill="none" />
+                <path class="success__tick" fill="none" d="M15 27l7 7 15-16" />
+              </svg>
+              <h2>You're all set{{ done.name ? ', ' + done.name : '' }}!</h2>
+              <p>Your email is confirmed and your account is ready.</p>
+              <p class="success__next">
+                <span class="spinner spinner--dark" aria-hidden="true"></span>
+                Taking you to {{ done.destination }}…
+              </p>
+            </div>
+          }
           <a routerLink="/" class="auth__back">
             <app-icon name="arrow-left" [size]="16" /> Back to home
           </a>
@@ -1360,6 +1374,115 @@ import { PhotoPipe } from '../../shared/pipes';
       }
     }
 
+    /* ---------- Success screen (after the email code is accepted) ---------- */
+    .auth__card {
+      position: relative;
+    }
+
+    .success {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 28px;
+      border-radius: inherit;
+      background: var(--white);
+      text-align: center;
+      animation: success-in 0.3s ease-out both;
+    }
+
+    .success__mark {
+      width: 84px;
+      height: 84px;
+      margin-bottom: 14px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: success-pop 0.45s 0.55s ease-out both;
+    }
+
+    /* The circle draws itself, then the tick, then a little bounce. */
+    .success__circle {
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-dasharray: 151;
+      stroke-dashoffset: 151;
+      fill: #f0fdf7;
+      animation: success-draw 0.6s ease-out forwards;
+    }
+
+    .success__tick {
+      stroke: var(--accent);
+      stroke-width: 4;
+      stroke-dasharray: 36;
+      stroke-dashoffset: 36;
+      animation: success-draw 0.35s 0.5s ease-out forwards;
+    }
+
+    .success h2 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      animation: success-up 0.4s 0.7s ease-out both;
+    }
+
+    .success p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      animation: success-up 0.4s 0.8s ease-out both;
+    }
+
+    .success__next {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      font-size: 0.82rem !important;
+      animation-delay: 1s !important;
+    }
+
+    .success .spinner--dark {
+      width: 14px;
+      height: 14px;
+      border-color: rgba(18, 40, 26, 0.15);
+      border-top-color: var(--accent);
+    }
+
+    @keyframes success-in {
+      from { opacity: 0; }
+    }
+
+    @keyframes success-draw {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes success-pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes success-up {
+      from { opacity: 0; transform: translateY(8px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .success,
+      .success__mark,
+      .success h2,
+      .success p {
+        animation: none;
+      }
+
+      .success__circle,
+      .success__tick {
+        animation: none;
+        stroke-dashoffset: 0;
+      }
+    }
+
     /* ---------- Sign-up steps ---------- */
     .steps {
       display: grid;
@@ -1637,6 +1760,8 @@ export class Login implements OnInit, OnDestroy {
 
   /* --- Email Confirmation Code (OTP) State --- */
   protected readonly confirmationCode = signal('');
+  /** Set once the email code is accepted: shows the success screen. */
+  protected readonly verified = signal<{ name: string; destination: string } | null>(null);
   /** Supabase sends 6-digit email codes by default (Auth → Email OTP length). */
   protected readonly codeLength = 6;
   protected readonly codeSlots = Array.from({ length: this.codeLength }, (_, i) => i);
@@ -1842,8 +1967,19 @@ export class Login implements OnInit, OnDestroy {
         return;
       }
 
+      // Show the "You're all set" screen for a moment, then go on.
       const profile = this.auth.profile();
-      if (profile?.role === 'customer' && this.next() === 'basket') {
+      const toBasket = profile?.role === 'customer' && this.next() === 'basket';
+      this.verified.set({
+        name: (profile?.name ?? '').split(/s+/)[0],
+        destination: toBasket
+          ? 'your basket'
+          : profile?.role === 'farmer'
+            ? 'your farm dashboard'
+            : 'your account',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 2600));
+      if (toBasket) {
         await this.router.navigate(['/basket']);
       } else {
         await this.router.navigateByUrl(this.auth.homePath());
