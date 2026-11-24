@@ -259,11 +259,11 @@ import { PhotoPipe } from '../../shared/pipes';
                       role="radio"
                       [attr.aria-checked]="role() === 'customer'"
                       [class.is-chosen]="role() === 'customer'"
+                      title="Order produce and join livestock pools"
                       (click)="role.set('customer')"
                     >
-                      <span class="roles__icon"><app-icon name="basket" [size]="20" /></span>
+                      <span class="roles__icon"><app-icon name="basket" [size]="16" /></span>
                       <strong>A buyer</strong>
-                      <small>Order produce and join livestock pools</small>
                       <span class="roles__tick"><app-icon name="check" [size]="14" /></span>
                     </button>
                     <button
@@ -271,11 +271,11 @@ import { PhotoPipe } from '../../shared/pipes';
                       role="radio"
                       [attr.aria-checked]="role() === 'farmer'"
                       [class.is-chosen]="role() === 'farmer'"
+                      title="List produce and receive orders"
                       (click)="role.set('farmer')"
                     >
-                      <span class="roles__icon"><app-icon name="leaf" [size]="20" /></span>
+                      <span class="roles__icon"><app-icon name="leaf" [size]="16" /></span>
                       <strong>A farmer</strong>
-                      <small>List produce and receive orders</small>
                       <span class="roles__tick"><app-icon name="check" [size]="14" /></span>
                     </button>
                   </div>
@@ -406,15 +406,6 @@ import { PhotoPipe } from '../../shared/pipes';
               }
             </form>
 
-            <p class="switch">
-              @if (mode() === 'in') {
-                New to FarmDirect?
-                <button type="button" (click)="setMode('up')">Create an account</button>
-              } @else {
-                Already have an account?
-                <button type="button" (click)="setMode('in')">Sign in</button>
-              }
-            </p>
           }
 
           <p class="help">Need help? <a routerLink="/contact">Contact our support team</a></p>
@@ -879,8 +870,8 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .roles__grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
       width: 100%;
       min-width: 0;
       box-sizing: border-box;
@@ -888,12 +879,12 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .roles__grid button {
       position: relative;
-      display: grid;
-      gap: 2px;
-      align-content: start;
-      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 30px 8px 10px;
       border: 1.5px solid var(--line);
-      border-radius: 12px;
+      border-radius: 10px;
       text-align: left;
       min-width: 0;
       width: 100%;
@@ -919,10 +910,10 @@ import { PhotoPipe } from '../../shared/pipes';
     .roles__icon {
       display: grid;
       place-items: center;
-      width: 36px;
-      height: 36px;
-      margin-bottom: 8px;
-      border-radius: 10px;
+      flex: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
       background: var(--cream);
       color: var(--green-900);
     }
@@ -944,12 +935,13 @@ import { PhotoPipe } from '../../shared/pipes';
 
     .roles__tick {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 50%;
+      right: 8px;
+      margin-top: -9px;
       display: grid;
       place-items: center;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       background: var(--accent);
       color: var(--white);
@@ -1132,7 +1124,9 @@ import { PhotoPipe } from '../../shared/pipes';
     }
 
     .fine {
-      font-size: 0.75rem;
+      margin-top: -4px;
+      font-size: 0.72rem;
+      line-height: 1.4;
       color: var(--muted);
       text-align: center;
     }
@@ -1162,7 +1156,9 @@ import { PhotoPipe } from '../../shared/pipes';
     }
 
     .help {
-      margin-top: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
       font-size: 0.82rem;
     }
 
@@ -1370,7 +1366,6 @@ import { PhotoPipe } from '../../shared/pipes';
         font-size: 1.45rem;
       }
 
-      .roles__grid,
       .field-row {
         grid-template-columns: 1fr;
         gap: 10px;
