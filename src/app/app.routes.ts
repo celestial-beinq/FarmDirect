@@ -63,12 +63,14 @@ export const routes: Routes = [
   {
     path: 'login',
     title: 'Sign in: FarmDirect',
+    // Full-screen sign-in: no shop header, footer or order banner (see app.ts).
+    data: { bare: true },
     loadComponent: () => import('./pages/login/login').then((m) => m.Login),
   },
   {
     path: 'signup',
     title: 'Create an account: FarmDirect',
-    data: { start: 'up' },
+    data: { start: 'up', bare: true },
     loadComponent: () => import('./pages/login/login').then((m) => m.Login),
   },
   {

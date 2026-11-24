@@ -467,7 +467,8 @@ import { PhotoPipe } from '../../shared/pipes';
       display: grid;
       /* Two equal halves, so neither side swamps the other on wide screens. */
       grid-template-columns: minmax(0, 1fr) minmax(460px, 1fr);
-      min-height: calc(100dvh - 76px);
+      /* The page has no shop header (the route is "bare"), so fill the screen. */
+      min-height: 100dvh;
       width: 100%;
       background: var(--cream);
       overflow-x: hidden;
