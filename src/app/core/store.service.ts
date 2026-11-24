@@ -175,7 +175,7 @@ export class StoreService {
             farmerId: p.farm_id,
             status: p.status,
           }))
-        : MOCK_CROPS,
+        : (this.supabase.configured ? [] : MOCK_CROPS),
     );
 
     const animalRows = productRows.filter((p) => p.kind === 'livestock' && p.status === 'live');
@@ -194,7 +194,7 @@ export class StoreService {
             minShare: p.min_share,
             farmerId: p.farm_id,
           }))
-        : MOCK_ANIMALS,
+        : (this.supabase.configured ? [] : MOCK_ANIMALS),
     );
 
     const poolRows: any[] = pools.data ?? [];
@@ -210,7 +210,7 @@ export class StoreService {
             closesIn: timeLeft(p.closes_at),
             status: p.status,
           }))
-        : MOCK_POOLS,
+        : (this.supabase.configured ? [] : MOCK_POOLS),
     );
 
     const orderRows: any[] = orders.data ?? [];
