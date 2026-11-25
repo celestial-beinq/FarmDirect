@@ -1432,6 +1432,68 @@ select:focus-visible,
   font-weight: 600;
 }
 
+/* Structured delivery address (customer profile) */
+.address-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  min-width: 0;
+  margin: 4px 0 0;
+  padding: 16px;
+  border: 1px solid var(--dash-border);
+  border-radius: 10px;
+}
+
+.address-fields legend {
+  padding: 0 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.address-fields select:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.address-fields .optional {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.address-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #047857;
+}
+
+.address-preview small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #059669;
+}
+
+.address-preview strong {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #064e3b;
+}
+
+@media (max-width: 640px) {
+  .address-fields {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+}
+
 /* Settings tab */
 .settings {
   max-width: 760px;

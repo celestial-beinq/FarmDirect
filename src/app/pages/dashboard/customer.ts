@@ -1,7 +1,19 @@
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { Component, PLATFORM_ID, computed, effect, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { ORDER_STEPS, ORDER_STATUSES, Order, OrderItem, OrderStatus, tone } from '../../core/accounts';
+import {
+  AddressParts,
+  EMPTY_ADDRESS,
+  NIGERIAN_STATES,
+  ORDER_STEPS,
+  ORDER_STATUSES,
+  Order,
+  OrderItem,
+  OrderStatus,
+  formatAddress,
+  tone,
+} from '../../core/accounts';
+import { LGAS_BY_STATE } from '../../core/nigeria-lgas';
 import { AuthService } from '../../core/auth.service';
 import { CartService } from '../../core/cart.service';
 import { sanitizePhone, sanitizeText } from '../../core/sanitizer';
@@ -341,6 +353,39 @@ export class CustomerDashboard {
 
   protected readonly me = computed(() => this.auth.profile());
 
+  /* ---- Delivery address, field by field ---- */
+  protected readonly states = NIGERIAN_STATES;
+  protected readonly addr = signal<AddressParts>({ ...EMPTY_ADDRESS });
+  /** The LGAs of the chosen state. */
+  protected readonly lgas = computed(() => LGAS_BY_STATE[this.addr().state] ?? []);
+  /** The address on one line, exactly as it will be saved on orders. */
+  protected readonly addressPreview = computed(() => formatAddress(this.addr()));
+  private addrLoadedFor = '';
+
+  private readonly loadAddress = effect(() => {
+    const me = this.me();
+    if (!me || me.id === this.addrLoadedFor) return;
+    this.addrLoadedFor = me.id;
+    const parts = me.addressParts;
+    if (parts && (parts.state || parts.street)) {
+      this.addr.set({ ...parts });
+    } else {
+      // Saved before addresses had separate fields: start from the old text so
+      // only the state, LGA and city need picking.
+      this.addr.set({ ...EMPTY_ADDRESS, street: (me.address ?? '').slice(0, 120) });
+    }
+  });
+
+  protected setAddr(field: keyof AddressParts, value: string): void {
+    this.saved.set(false);
+    this.addr.update((a) => ({
+      ...a,
+      [field]: value,
+      // A new state means the old LGA no longer applies.
+      ...(field === 'state' && value !== a.state ? { lga: '' } : {}),
+    }));
+  }
+
   /** My orders, newest first. */
   protected readonly orders = computed(() => {
     const uid = this.me()?.id;
@@ -409,15 +454,22 @@ export class CustomerDashboard {
     return [item.kind === 'crop' ? '/crops' : '/livestock', item.productId];
   }
 
-  protected async saveProfile(name: string, phone: string, address: string): Promise<void> {
+  protected async saveProfile(name: string, phone: string): Promise<void> {
     this.saved.set(false);
     const cleanName = sanitizeText(name, 120);
     const cleanPhone = sanitizePhone(phone);
-    const cleanAddress = sanitizeText(address, 250);
+    const a = this.addr();
 
     if (!cleanName) return this.formError.set('Enter your name.');
-    if (!cleanAddress) return this.formError.set('Enter a delivery address.');
-    const error = await this.store.updateMyProfile(cleanName, cleanPhone, cleanAddress);
+    if (!a.state) return this.formError.set('Choose your state.');
+    if (!a.lga || !this.lgas().includes(a.lga)) {
+      return this.formError.set('Choose your local government area.');
+    }
+    if (!sanitizeText(a.city, 50)) return this.formError.set('Enter your city or town.');
+    if (sanitizeText(a.street, 120).length < 5) {
+      return this.formError.set('Enter your house number and street.');
+    }
+    const error = await this.store.updateMyProfile(cleanName, cleanPhone, '', a);
     this.formError.set(error ?? '');
     this.saved.set(!error);
   }

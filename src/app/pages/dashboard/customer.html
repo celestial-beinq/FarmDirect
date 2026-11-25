@@ -415,7 +415,7 @@
         <div class="panel">
           <form
             class="form"
-            (submit)="$event.preventDefault(); saveProfile(name.value, phone.value, address.value)"
+            (submit)="$event.preventDefault(); saveProfile(name.value, phone.value)"
           >
             <label
               >Full name
@@ -426,16 +426,81 @@
               <input #phone type="tel" [value]="me.phone" maxlength="30" (input)="saved.set(false)"
             /></label>
             <label class="wide">Email <input maxlength="254" [value]="me.email" disabled /></label>
-            <label class="wide">
-              Delivery address
-              <textarea
-                #address
-                required
-                maxlength="300"
-                [value]="me.address"
-                (input)="saved.set(false)"
-              ></textarea>
-            </label>
+            <fieldset class="wide address-fields">
+              <legend>Delivery address</legend>
+
+              <label>
+                State
+                <select
+                  required
+                  autocomplete="address-level1"
+                  (change)="setAddr('state', $any($event.target).value)"
+                >
+                  <option value="" [selected]="!addr().state">Select your state</option>
+                  @for (state of states; track state) {
+                    <option [value]="state" [selected]="state === addr().state">{{ state }}</option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                Local government area
+                <select
+                  required
+                  [disabled]="!addr().state"
+                  (change)="setAddr('lga', $any($event.target).value)"
+                >
+                  <option value="" [selected]="!addr().lga">{{ addr().state ? 'Select your LGA' : 'Choose a state first' }}</option>
+                  @for (lga of lgas(); track lga) {
+                    <option [value]="lga" [selected]="lga === addr().lga">{{ lga }}</option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                City / town
+                <input
+                  maxlength="50"
+                  required
+                  autocomplete="address-level2"
+                  placeholder="e.g. Lekki"
+                  [value]="addr().city"
+                  (input)="setAddr('city', $any($event.target).value)"
+                />
+              </label>
+
+              <label>
+                <span>Nearest landmark <small class="optional">(optional)</small></span>
+                <input
+                  maxlength="60"
+                  placeholder="e.g. Opposite Mega Plaza"
+                  [value]="addr().landmark"
+                  (input)="setAddr('landmark', $any($event.target).value)"
+                />
+              </label>
+
+              <label class="wide">
+                Street address
+                <input
+                  maxlength="120"
+                  required
+                  autocomplete="street-address"
+                  placeholder="House number and street, e.g. 12 Admiralty Way"
+                  [value]="addr().street"
+                  (input)="setAddr('street', $any($event.target).value)"
+                />
+              </label>
+
+              @if (addressPreview()) {
+                <div class="wide address-preview" aria-live="polite">
+                  <app-icon name="pin" [size]="18" />
+                  <div>
+                    <small>Your rider will see</small>
+                    <strong>{{ addressPreview() }}</strong>
+                  </div>
+                </div>
+              }
+            </fieldset>
             <div class="form__foot">
               <button type="submit" class="btn btn--primary">Save Changes</button>
               @if (saved()) {
