@@ -177,6 +177,8 @@ export class StoreService {
             stateOfOrigin: f.state_of_origin,
             documentUrl: f.document_url,
             verificationNotes: f.verification_notes,
+            farmAddress: f.farm_address ?? '',
+            addressParts: f.address_parts ?? {},
           }))
         : (this.supabase.configured ? [] : MOCK_FARMERS),
     );
@@ -494,7 +496,7 @@ export class StoreService {
     );
   }
 
-  submitFarmerVerification(
+  async submitFarmerVerification(
     id: string,
     rawData: {
       nin: string;
@@ -504,9 +506,25 @@ export class StoreService {
       cropProduces: string;
       stateOfOrigin: string;
       documentUrl?: string;
+      farmAddress?: string;
+      addressParts?: { home?: AddressParts; farm?: AddressParts };
     },
   ) {
+    const cleanParts = (p?: AddressParts): AddressParts | undefined =>
+      p && {
+        street: sanitizeText(p.street, 115),
+        landmark: sanitizeText(p.landmark, 60),
+        city: sanitizeText(p.city, 50),
+        lga: sanitizeText(p.lga, 40),
+        state: sanitizeText(p.state, 20),
+      };
+    const addressParts = rawData.addressParts && {
+      home: cleanParts(rawData.addressParts.home),
+      farm: cleanParts(rawData.addressParts.farm),
+    };
     const data = {
+      farmAddress: sanitizeText(rawData.farmAddress ?? '', 300),
+      addressParts,
       nin: rawData.nin.replace(/\D/g, '').slice(0, 20),
       residentialAddress: sanitizeText(rawData.residentialAddress, 300),
       location: sanitizeText(rawData.location, 160),
@@ -526,21 +544,28 @@ export class StoreService {
           : f,
       ),
     );
-    return this.change((c) =>
-      c
-        .from('farms')
-        .update({
-          nin: data.nin,
-          residential_address: data.residentialAddress,
-          location: data.location,
-          farm_size: data.farmSize,
-          crop_produces: data.cropProduces,
-          state_of_origin: data.stateOfOrigin,
-          document_url: data.documentUrl ?? '',
-          status: 'pending',
-        })
-        .eq('id', id),
-    );
+    const row: Record<string, unknown> = {
+      nin: data.nin,
+      residential_address: data.residentialAddress,
+      location: data.location,
+      farm_size: data.farmSize,
+      crop_produces: data.cropProduces,
+      state_of_origin: data.stateOfOrigin,
+      document_url: data.documentUrl ?? '',
+      status: 'pending',
+    };
+    if (data.farmAddress) row['farm_address'] = data.farmAddress;
+    if (data.addressParts) row['address_parts'] = data.addressParts;
+
+    const error = await this.change((c) => c.from('farms').update(row).eq('id', id));
+    // Before the farm-address migration has run, those two columns don't exist
+    // yet: still save everything else rather than failing.
+    if (error && /farm_address|address_parts|schema cache|column/i.test(error)) {
+      delete row['farm_address'];
+      delete row['address_parts'];
+      return this.change((c) => c.from('farms').update(row).eq('id', id));
+    }
+    return error;
   }
 
   updateFarm(id: string, rawName: string, rawLocation: string) {

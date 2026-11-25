@@ -72,6 +72,10 @@ export interface Farmer {
   stateOfOrigin?: string;
   documentUrl?: string;
   verificationNotes?: string;
+  /** The farmland's full address on one line (`location` is the short "City, State"). */
+  farmAddress?: string;
+  /** Home and farmland addresses field by field, for re-editing the KYC form. */
+  addressParts?: { home?: AddressParts; farm?: AddressParts };
 }
 
 export const ORDER_STEPS = ['Placed', 'Confirmed', 'Dispatched', 'Delivered'] as const;

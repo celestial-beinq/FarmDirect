@@ -2,7 +2,10 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
+  AddressParts,
+  EMPTY_ADDRESS,
   NIGERIAN_STATES,
+  formatAddress,
   Review,
   getFarmerVerificationErrors,
   isFarmerVerified,
@@ -16,6 +19,9 @@ import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
 import { Insights } from './insights';
+import { LGAS_BY_STATE } from '../../core/nigeria-lgas';
+import { AddressFields } from '../../shared/address-fields';
+import { SuccessToast } from '../../shared/success-toast';
 import { DashSettings } from './settings';
 import { SettingsService } from '../../core/settings.service';
 
@@ -30,7 +36,7 @@ const EMPTY_FORM: ProductForm = {
 
 @Component({
   selector: 'app-farmer-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, Icon, DashShell, Insights, DashSettings],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, Icon, DashShell, Insights, DashSettings, AddressFields, SuccessToast],
   templateUrl: './farmer.html',
 })
 export class FarmerDashboard {
@@ -270,9 +276,16 @@ export class FarmerDashboard {
 
   /* ---- KYC & Verification Form State ---- */
   protected readonly kycNin = signal('');
-  protected readonly kycResidentialAddress = signal('');
-  protected readonly kycFarmLocation = signal('');
-  protected readonly kycFarmSize = signal('');
+  /** Home and farmland addresses, field by field. */
+  protected readonly kycHome = signal<AddressParts>({ ...EMPTY_ADDRESS });
+  protected readonly kycFarm = signal<AddressParts>({ ...EMPTY_ADDRESS });
+  /** "My farm is at my home address". */
+  protected readonly kycFarmSame = signal(false);
+  protected readonly sizeUnits = ['Hectares', 'Acres', 'Plots', 'Square metres'];
+  protected readonly kycSizeValue = signal('');
+  protected readonly kycSizeUnit = signal('Hectares');
+  /** Bumped after a successful submission to play the green tick popup. */
+  protected readonly kycPulse = signal(0);
   protected readonly kycCropProduces = signal('');
   protected readonly kycStateOfOrigin = signal('Ogun');
   protected readonly kycDocumentUrl = signal('');
@@ -324,15 +337,31 @@ export class FarmerDashboard {
       const farm = this.me();
       if (farm) {
         untracked(() => {
-          if (!this.kycNin() && farm.nin) this.kycNin.set(farm.nin);
-          if (!this.kycResidentialAddress() && farm.residentialAddress) {
-            this.kycResidentialAddress.set(farm.residentialAddress);
+          if (!this.kycNin() && farm.nin) this.kycNin.set(farm.nin.replace(/\D/g, '').slice(0, 11));
+          if (!this.kycHome().state && !this.kycHome().street) {
+            const home = farm.addressParts?.home;
+            this.kycHome.set(
+              home?.state || home?.street
+                ? { ...EMPTY_ADDRESS, ...home }
+                : { ...EMPTY_ADDRESS, street: (farm.residentialAddress ?? '').slice(0, 115) },
+            );
           }
-          if (!this.kycFarmLocation() && farm.location) {
-            this.kycFarmLocation.set(farm.location);
+          if (!this.kycFarm().state && !this.kycFarm().street) {
+            const land = farm.addressParts?.farm;
+            this.kycFarm.set(
+              land?.state || land?.street
+                ? { ...EMPTY_ADDRESS, ...land }
+                : { ...EMPTY_ADDRESS, street: (farm.farmAddress || farm.location || '').slice(0, 115) },
+            );
           }
-          if (!this.kycFarmSize() && farm.farmSize) {
-            this.kycFarmSize.set(farm.farmSize);
+          if (!this.kycSizeValue() && farm.farmSize) {
+            // "20 Hectares" -> 20 + Hectares
+            const m = farm.farmSize.match(/^\s*([\d.,]+)\s*(.*)$/);
+            if (m) {
+              this.kycSizeValue.set(m[1].replace(/,/g, ''));
+              const unit = this.sizeUnits.find((u) => u.toLowerCase().startsWith(m[2].trim().toLowerCase().slice(0, 4)));
+              if (unit && m[2].trim()) this.kycSizeUnit.set(unit);
+            }
           }
           if (!this.kycCropProduces() && farm.cropProduces) {
             this.kycCropProduces.set(farm.cropProduces);
@@ -353,9 +382,9 @@ export class FarmerDashboard {
     if (!me) return;
 
     const nin = this.kycNin().replace(/\D/g, '').slice(0, 11);
-    const residentialAddress = sanitizeText(this.kycResidentialAddress(), 200);
-    const location = sanitizeText(this.kycFarmLocation(), 200);
-    const farmSize = sanitizeText(this.kycFarmSize(), 60);
+    const home = this.kycHome();
+    const land = this.kycFarmSame() ? home : this.kycFarm();
+    const sizeNumber = Number(this.kycSizeValue());
     const cropProduces = sanitizeText(this.kycCropProduces(), 200);
     const stateOfOrigin = sanitizeText(this.kycStateOfOrigin(), 60);
     const documentUrl = sanitizeUrl(this.kycDocumentUrl());
@@ -366,15 +395,24 @@ export class FarmerDashboard {
     if (!/^\d{11}$/.test(nin)) {
       return this.kycError.set('National Identity Number (NIN) must be exactly 11 digits.');
     }
-    if (residentialAddress.length < 5) {
-      return this.kycError.set('Please enter your complete residential address.');
+    const homeProblem = this.addressProblem(home, 'home');
+    if (homeProblem) return this.kycError.set(homeProblem);
+    const farmProblem = this.kycFarmSame() ? '' : this.addressProblem(land, 'farm');
+    if (farmProblem) return this.kycError.set(farmProblem);
+    if (!Number.isFinite(sizeNumber) || sizeNumber <= 0 || sizeNumber > 1_000_000) {
+      return this.kycError.set('Enter your farm size as a number, e.g. 15.');
     }
-    if (location.length < 5) {
-      return this.kycError.set('Please enter the location/address of your farmland.');
+    if (!this.sizeUnits.includes(this.kycSizeUnit())) {
+      return this.kycError.set('Choose a unit for your farm size.');
     }
-    if (farmSize.length < 2) {
-      return this.kycError.set('Please specify your farm size (e.g. 5 Hectares, 10 Acres).');
-    }
+
+    const residentialAddress = formatAddress(home);
+    const farmAddress = formatAddress(land);
+    // Short form, shown as the origin on produce cards: "Abeokuta, Ogun State".
+    const stateName = land.state === 'FCT - Abuja' ? 'FCT, Abuja' : `${land.state} State`;
+    const location = sanitizeText(`${land.city}, ${stateName}`, 160);
+    const unit = sizeNumber === 1 ? this.kycSizeUnit().replace(/s$/, '') : this.kycSizeUnit();
+    const farmSize = `${+sizeNumber.toFixed(2)} ${unit}`;
     if (cropProduces.length < 2) {
       return this.kycError.set('Please list your primary crop produces (e.g. Tomatoes, Cassava, Yam).');
     }
@@ -388,6 +426,8 @@ export class FarmerDashboard {
       cropProduces,
       stateOfOrigin,
       documentUrl,
+      farmAddress,
+      addressParts: { home, farm: land },
     });
     this.kycSaving.set(false);
 
@@ -395,7 +435,31 @@ export class FarmerDashboard {
       this.kycError.set(error);
     } else {
       this.kycSuccess.set(true);
+      this.kycPulse.update((n) => n + 1);
     }
+  }
+
+  /** NIN box: digits only, at most 11. */
+  protected onNinInput(input: HTMLInputElement): void {
+    const digits = input.value.replace(/\D/g, '').slice(0, 11);
+    if (input.value !== digits) input.value = digits;
+    this.kycNin.set(digits);
+  }
+
+  /** What is missing from an address, or '' when it's complete. */
+  private addressProblem(a: AddressParts, which: 'home' | 'farm'): string {
+    const place = which === 'home' ? 'home address' : 'farmland address';
+    if (!a.state) return `Choose the state of your ${place}.`;
+    if (!a.lga || !(LGAS_BY_STATE[a.state] ?? []).includes(a.lga)) {
+      return `Choose the local government area of your ${place}.`;
+    }
+    if (!sanitizeText(a.city, 50)) return `Enter the city or town of your ${place}.`;
+    if (sanitizeText(a.street, 115).length < 5) {
+      return which === 'home'
+        ? 'Enter your house number and street.'
+        : 'Enter the road or street where your farm is.';
+    }
+    return '';
   }
 
   protected productName(id: string): string {

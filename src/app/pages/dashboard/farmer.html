@@ -837,120 +837,155 @@
             </div>
           </div>
 
-          <form class="form" (submit)="$event.preventDefault(); submitKyc()">
-            <div class="grid-2">
-              <label>
-                National Identity Number (NIN) <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
-                <input
-                  type="text"
-                  placeholder="11-digit NIN (e.g. 89421039841)"
-                  maxlength="11"
-                  required
-                  [value]="kycNin()"
-                  (input)="kycNin.set($any($event.target).value)"
-                />
-                <small>11-digit National Identity Number issued by NIMC (Compulsory for listing).</small>
-              </label>
+          <app-success-toast
+            [pulse]="kycPulse()"
+            message="Verification details submitted"
+            detail="An admin will review your farm shortly."
+          />
+          <form class="form kyc-form" (submit)="$event.preventDefault(); submitKyc()">
+            <!-- 1. Identity -->
+            <section class="kyc-section wide">
+              <h3><span class="kyc-step">1</span> Your identity</h3>
+              <div class="kyc-row">
+                <label for="kyc-nin">
+                  <span>National Identity Number (NIN) <em class="kyc-req">Required</em></span>
+                  <input
+                    id="kyc-nin"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    pattern="[0-9]{11}"
+                    maxlength="11"
+                    placeholder="11 digits, e.g. 89421039841"
+                    required
+                    [value]="kycNin()"
+                    (input)="onNinInput($any($event.target))"
+                  />
+                  <small class="kyc-hint" [class.is-ok]="kycNin().length === 11">
+                    {{ kycNin().length }}/11 digits · issued by NIMC
+                  </small>
+                </label>
 
-              <label>
-                State of Origin
-                <select
-                  [value]="kycStateOfOrigin()"
-                  (change)="kycStateOfOrigin.set($any($event.target).value)"
-                >
-                  @for (state of nigerianStates; track state) {
-                    <option [value]="state" [selected]="state === kycStateOfOrigin()">{{ state }}</option>
-                  }
-                </select>
-                <small>Official state of origin in Nigeria.</small>
-              </label>
-            </div>
+                <label for="kyc-origin">
+                  State of origin
+                  <select
+                    id="kyc-origin"
+                    (change)="kycStateOfOrigin.set($any($event.target).value)"
+                  >
+                    @for (state of nigerianStates; track state) {
+                      <option [value]="state" [selected]="state === kycStateOfOrigin()">{{ state }}</option>
+                    }
+                  </select>
+                </label>
+              </div>
+            </section>
 
-            <label>
-              Farmer Residential Address <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
-              <input
-                type="text"
-                placeholder="Your home address (e.g. Plot 12 Quarry Hill, Abeokuta, Ogun State)"
-                required
-                maxlength="300"
-                [value]="kycResidentialAddress()"
-                (input)="kycResidentialAddress.set($any($event.target).value)"
+            <!-- 2. Home address -->
+            <section class="kyc-section wide">
+              <h3><span class="kyc-step">2</span> Your home address <em class="kyc-req">Required</em></h3>
+              <app-address-fields
+                [(parts)]="kycHome"
+                idPrefix="kyc-home"
+                previewLabel="Home address"
               />
-              <small>Physical residence of the farm operator (Compulsory).</small>
-            </label>
+            </section>
 
-            <div class="grid-2">
-              <label>
-                Farmland Address / Location <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
+            <!-- 3. Farmland -->
+            <section class="kyc-section wide">
+              <h3><span class="kyc-step">3</span> Your farmland <em class="kyc-req">Required</em></h3>
+
+              <label class="kyc-same">
                 <input
-                  type="text"
-                  placeholder="e.g. KM 14 Abeokuta-Ibadan Expressway, Odeda LGA"
-                  required
-                  maxlength="160"
-                  [value]="kycFarmLocation()"
-                  (input)="kycFarmLocation.set($any($event.target).value)"
+                  type="checkbox"
+                  [checked]="kycFarmSame()"
+                  (change)="kycFarmSame.set($any($event.target).checked)"
                 />
-                <small>Physical farmland where produce is cultivated (Compulsory).</small>
+                My farm is at my home address
               </label>
 
-              <label>
-                Farm Size <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
-                <input
-                  type="text"
-                  placeholder="e.g. 15 Hectares / 35 Acres / 4 Plots"
-                  required
-                  maxlength="100"
-                  [value]="kycFarmSize()"
-                  (input)="kycFarmSize.set($any($event.target).value)"
+              @if (!kycFarmSame()) {
+                <app-address-fields
+                  [(parts)]="kycFarm"
+                  idPrefix="kyc-farm"
+                  streetLabel="Farm road or street"
+                  streetPlaceholder="e.g. KM 14 Abeokuta-Ibadan Expressway"
+                  cityPlaceholder="e.g. Odeda"
+                  landmarkPlaceholder="e.g. Behind Odeda Primary School"
+                  previewLabel="Farmland address"
                 />
-                <small>Total cultivated land or facility size (Compulsory).</small>
+              }
+
+              <div class="kyc-row kyc-row--size">
+                <label for="kyc-size">
+                  Farm size
+                  <span class="kyc-size">
+                    <input
+                      id="kyc-size"
+                      type="number"
+                      inputmode="decimal"
+                      min="0.1"
+                      max="1000000"
+                      step="0.1"
+                      placeholder="e.g. 15"
+                      required
+                      [value]="kycSizeValue()"
+                      (input)="kycSizeValue.set($any($event.target).value)"
+                    />
+                    <select
+                      aria-label="Farm size unit"
+                      (change)="kycSizeUnit.set($any($event.target).value)"
+                    >
+                      @for (unit of sizeUnits; track unit) {
+                        <option [value]="unit" [selected]="unit === kycSizeUnit()">{{ unit }}</option>
+                      }
+                    </select>
+                  </span>
+                </label>
+
+                <label for="kyc-crops">
+                  What you grow or rear
+                  <input
+                    id="kyc-crops"
+                    type="text"
+                    placeholder="e.g. Tomatoes, Cassava, Ugu, Goats"
+                    required
+                    maxlength="300"
+                    [value]="kycCropProduces()"
+                    (input)="kycCropProduces.set($any($event.target).value)"
+                  />
+                  <small class="kyc-hint">Separate items with commas.</small>
+                </label>
+              </div>
+            </section>
+
+            <!-- 4. Proof -->
+            <section class="kyc-section wide">
+              <h3><span class="kyc-step">4</span> Proof (optional)</h3>
+              <label for="kyc-doc">
+                Link to a photo of your ID, cooperative certificate or land lease
+                <input
+                  id="kyc-doc"
+                  maxlength="500"
+                  type="url"
+                  placeholder="https://..."
+                  [value]="kycDocumentUrl()"
+                  (input)="kycDocumentUrl.set($any($event.target).value)"
+                />
+                <small class="kyc-hint">Speeds up vetting. Must start with https://</small>
               </label>
-            </div>
-
-            <label>
-              Crop &amp; Produce Specialties <span style="color: #dc2626; font-weight: 600;">* Compulsory</span>
-              <input
-                type="text"
-                placeholder="e.g. Vine Tomatoes, Sweet Spinach, Ofada Rice, Ugu Leaves, Cassava"
-                required
-                maxlength="300"
-                [value]="kycCropProduces()"
-                (input)="kycCropProduces.set($any($event.target).value)"
-              />
-              <small>The main crops and agricultural items produced by your farm (Compulsory).</small>
-            </label>
-
-            <label>
-              Proof of Farmland / Identity Document Link (Optional)
-              <input maxlength="500"
-                type="url"
-                placeholder="https://... (photo of ID card, cooperative cert, or land lease)"
-                [value]="kycDocumentUrl()"
-                (input)="kycDocumentUrl.set($any($event.target).value)"
-              />
-              <small>Supporting document or image link to expedite vetting.</small>
-            </label>
+            </section>
 
             @if (kycError()) {
-              <p class="form__error" role="alert" style="color: #dc2626; font-size: 0.8125rem; font-weight: 500;">
-                {{ kycError() }}
-              </p>
-            }
-
-            @if (kycSuccess()) {
-              <div class="banner banner--good" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 10px 14px; color: #065f46; font-size: 0.8125rem; font-weight: 500;">
-                ✓ Verification dossier submitted successfully! Admin will vet your application.
-              </div>
+              <p class="form__error wide" role="alert">{{ kycError() }}</p>
             }
 
             <div class="form__foot">
-              <button
-                type="submit"
-                class="btn btn--primary"
-                [disabled]="kycSaving()"
-              >
-                {{ kycSaving() ? 'Submitting...' : 'Submit Verification Dossier' }}
+              <button type="submit" class="btn btn--primary" [disabled]="kycSaving()">
+                {{ kycSaving() ? 'Submitting…' : 'Submit for verification' }}
               </button>
+              @if (kycSuccess()) {
+                <span class="form__saved" role="status">Submitted. An admin will review it.</span>
+              }
             </div>
           </form>
         </div>

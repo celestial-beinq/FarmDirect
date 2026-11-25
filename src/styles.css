@@ -1432,6 +1432,96 @@ select:focus-visible,
   font-weight: 600;
 }
 
+/* Farmer KYC form */
+.kyc-form {
+  gap: 16px;
+}
+
+.kyc-section {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--dash-border);
+  border-radius: 10px;
+}
+
+.kyc-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.kyc-step {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.kyc-req {
+  margin-left: 4px;
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.kyc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.kyc-hint {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.kyc-hint.is-ok {
+  color: #059669;
+}
+
+.kyc-same {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500 !important;
+  cursor: pointer;
+}
+
+.kyc-same input {
+  width: 16px !important;
+  height: 16px;
+  accent-color: #059669;
+}
+
+.kyc-size {
+  display: grid;
+  grid-template-columns: 1fr 130px;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .kyc-row {
+    grid-template-columns: 1fr;
+  }
+
+  .kyc-section {
+    padding: 12px;
+  }
+}
+
 /* Farm owner email / phone links in the admin farmers list */
 .owner-contact {
   color: #047857;
