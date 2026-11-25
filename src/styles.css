@@ -1377,10 +1377,20 @@ select:focus-visible,
 
 .form label {
   display: grid;
+  /* Keep label, box and hint packed at the top, so a field without a hint
+     doesn't stretch and push its box below its neighbour's. */
+  align-content: start;
   gap: 4px;
   font-size: 0.75rem;
   font-weight: 600;
   color: #334155;
+}
+
+/* Text boxes and dropdowns share one height, so fields in a row line up. */
+.form input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.form select {
+  box-sizing: border-box;
+  height: 40px;
 }
 
 .form .wide {
