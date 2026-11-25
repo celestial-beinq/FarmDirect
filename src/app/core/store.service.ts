@@ -560,7 +560,7 @@ export class StoreService {
     const name = sanitizeText(rawName, 120);
     const phone = sanitizePhone(rawPhone);
     const parts: AddressParts | undefined = rawParts && {
-      street: sanitizeText(rawParts.street, 120),
+      street: sanitizeText(rawParts.street, 115),
       landmark: sanitizeText(rawParts.landmark, 60),
       city: sanitizeText(rawParts.city, 50),
       lga: sanitizeText(rawParts.lga, 40),

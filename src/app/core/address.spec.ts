@@ -22,7 +22,7 @@ describe('formatAddress', () => {
 
   it('stays within the 300 characters the database allows', () => {
     const longest = formatAddress({
-      street: 'x'.repeat(120),
+      street: 'x'.repeat(115),
       landmark: 'x'.repeat(60),
       city: 'x'.repeat(50),
       lga: 'x'.repeat(40),

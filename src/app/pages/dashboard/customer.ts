@@ -372,7 +372,7 @@ export class CustomerDashboard {
     } else {
       // Saved before addresses had separate fields: start from the old text so
       // only the state, LGA and city need picking.
-      this.addr.set({ ...EMPTY_ADDRESS, street: (me.address ?? '').slice(0, 120) });
+      this.addr.set({ ...EMPTY_ADDRESS, street: (me.address ?? '').slice(0, 115) });
     }
   });
 
@@ -466,7 +466,7 @@ export class CustomerDashboard {
       return this.formError.set('Choose your local government area.');
     }
     if (!sanitizeText(a.city, 50)) return this.formError.set('Enter your city or town.');
-    if (sanitizeText(a.street, 120).length < 5) {
+    if (sanitizeText(a.street, 115).length < 5) {
       return this.formError.set('Enter your house number and street.');
     }
     const error = await this.store.updateMyProfile(cleanName, cleanPhone, '', a);

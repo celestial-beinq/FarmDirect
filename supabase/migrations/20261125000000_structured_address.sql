@@ -16,7 +16,7 @@ alter table public.profiles
 
 alter table public.profiles drop constraint if exists profiles_address_parts;
 alter table public.profiles add constraint profiles_address_parts check (
-  char_length(address_street) <= 120
+  char_length(address_street) <= 115
   and char_length(address_landmark) <= 60
   and char_length(address_city) <= 50
   and char_length(address_lga) <= 40
