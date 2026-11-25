@@ -1432,6 +1432,17 @@ select:focus-visible,
   font-weight: 600;
 }
 
+/* Farm owner email / phone links in the admin farmers list */
+.owner-contact {
+  color: #047857;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.owner-contact:hover {
+  text-decoration: underline;
+}
+
 /* Small help text under a form field */
 .form .field-note {
   font-size: 0.7rem;

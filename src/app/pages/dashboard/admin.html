@@ -62,7 +62,7 @@
           <app-icon name="search" [size]="18" />
           <input maxlength="100"
             type="search"
-            placeholder="Search farm, owner, NIN or state of origin..."
+            placeholder="Search farm, owner, email, phone, NIN or state..."
             aria-label="Search farmers"
             [value]="farmerSearch()"
             (input)="farmerSearch.set($any($event.target).value)"
@@ -92,6 +92,12 @@
                   <td>
                     <strong>{{ row.farmer.name }}</strong>
                     <small>{{ row.owner }}</small>
+                    @if (row.ownerProfile?.email; as email) {
+                      <small><a class="owner-contact" [href]="'mailto:' + email">{{ email }}</a></small>
+                    }
+                    @if (row.ownerProfile?.phone; as phone) {
+                      <small><a class="owner-contact" [href]="'tel:' + phone">{{ phone }}</a></small>
+                    }
                   </td>
                   <td>
                     <div>{{ row.farmer.stateOfOrigin || 'N/A' }}</div>
@@ -217,6 +223,26 @@
                 <div class="vetting-field">
                   <label>Owner / Farmer Name</label>
                   <div class="value">{{ store.profileName(f.ownerId) }}</div>
+                </div>
+                <div class="vetting-field">
+                  <label>Email</label>
+                  <div class="value">
+                    @if (ownerProfile(f.ownerId)?.email; as email) {
+                      <a class="owner-contact" [href]="'mailto:' + email">{{ email }}</a>
+                    } @else {
+                      Not available
+                    }
+                  </div>
+                </div>
+                <div class="vetting-field">
+                  <label>Phone</label>
+                  <div class="value">
+                    @if (ownerProfile(f.ownerId)?.phone; as phone) {
+                      <a class="owner-contact" [href]="'tel:' + phone">{{ phone }}</a>
+                    } @else {
+                      Not provided
+                    }
+                  </div>
                 </div>
                 <div class="vetting-field">
                   <label>State of Origin</label>

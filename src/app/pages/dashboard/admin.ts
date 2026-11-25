@@ -41,11 +41,18 @@ export class AdminDashboard {
 
   protected readonly tone = tone;
 
+  /** A farm owner's account (name, email, phone), if it has loaded. */
+  protected ownerProfile(id: string | null | undefined) {
+    return id ? this.store.profiles().find((p) => p.id === id) : undefined;
+  }
+
   /** Farms with how many listings each has. */
   protected readonly farmers = computed(() =>
     this.store.farmers().map((farmer) => ({
       farmer,
       owner: farmer.ownerId ? this.store.profileName(farmer.ownerId) : 'Sample farm (no login)',
+      /** The owner's account, for their email and phone (sample farms have none). */
+      ownerProfile: farmer.ownerId ? this.ownerProfile(farmer.ownerId) : undefined,
       listings: this.store.crops().filter((p) => p.farmerId === farmer.id).length,
     })),
   );
@@ -72,6 +79,8 @@ export class AdminDashboard {
         (f) =>
           f.farmer.name.toLowerCase().includes(q) ||
           f.owner.toLowerCase().includes(q) ||
+          (f.ownerProfile?.email ?? '').toLowerCase().includes(q) ||
+          (f.ownerProfile?.phone ?? '').includes(q) ||
           f.farmer.location.toLowerCase().includes(q) ||
           (f.farmer.nin && f.farmer.nin.includes(q)) ||
           (f.farmer.stateOfOrigin && f.farmer.stateOfOrigin.toLowerCase().includes(q)),
