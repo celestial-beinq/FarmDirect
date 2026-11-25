@@ -28,10 +28,20 @@ export class DashSettings {
   protected readonly topics = computed(() => NOTIFY_TOPICS[this.role()]);
   protected readonly idleMinutes = ADMIN_INACTIVITY_LIMIT_MS / 60000;
 
+  /* ---- "Saved" popup, shared by every section on this page ---- */
+  protected readonly toastPulse = signal(0);
+  protected readonly toastMessage = signal('Saved');
+  protected readonly toastDetail = signal('');
+
+  /** Plays the green tick popup with this message. */
+  private celebrate(message: string, detail = ''): void {
+    this.toastMessage.set(message);
+    this.toastDetail.set(detail);
+    this.toastPulse.update((n) => n + 1);
+  }
+
   /* ---- Account details (farmers and admins; customers use Profile & Address) ---- */
   protected readonly accountSaved = signal(false);
-  /** Bumped after each successful save to play the "Account saved" animation. */
-  protected readonly accountPulse = signal(0);
   protected readonly accountError = signal('');
 
   protected async saveAccount(name: string, phone: string): Promise<void> {
@@ -47,7 +57,7 @@ export class DashSettings {
     );
     this.accountError.set(error ?? '');
     this.accountSaved.set(!error);
-    if (!error) this.accountPulse.update((n) => n + 1);
+    if (!error) this.celebrate('Account details saved');
   }
 
   /** Shows a saved number as plain digits (older ones may have spaces). */
@@ -66,7 +76,11 @@ export class DashSettings {
 
   protected async setTopic(id: string, on: boolean): Promise<void> {
     const current = this.settingsService.settings();
-    await this.savePrefs({ ...current, notify: { ...current.notify, [id]: on } });
+    const saved = await this.savePrefs({ ...current, notify: { ...current.notify, [id]: on } });
+    if (saved) {
+      const label = this.topics().find((t) => t.id === id)?.label ?? 'Notification';
+      this.celebrate(on ? 'Email notification on' : 'Email notification off', label);
+    }
   }
 
   protected async setLowStock(value: string): Promise<void> {
@@ -75,16 +89,24 @@ export class DashSettings {
       this.prefsSaved.set(false);
       return this.prefsError.set('Low-stock level must be a whole number from 1 to 1000.');
     }
-    await this.savePrefs({ ...this.settingsService.settings(), lowStockThreshold: threshold });
+    const saved = await this.savePrefs({
+      ...this.settingsService.settings(),
+      lowStockThreshold: threshold,
+    });
+    if (saved) {
+      this.celebrate('Low-stock level saved', `Listings under ${threshold} units will be flagged.`);
+    }
   }
 
-  private async savePrefs(next: Parameters<SettingsService['save']>[0]): Promise<void> {
+  /** Saves notification/stock preferences. Returns true when fully saved. */
+  private async savePrefs(next: Parameters<SettingsService['save']>[0]): Promise<boolean> {
     this.prefsBusy.set(true);
     this.prefsSaved.set(false);
     const error = await this.settingsService.save(next);
     this.prefsBusy.set(false);
     this.prefsError.set(error ? `Saved on this device only: ${error}` : '');
     this.prefsSaved.set(!error);
+    return !error;
   }
 
   /* ---- Security ---- */
@@ -99,7 +121,10 @@ export class DashSettings {
     this.passwordBusy.set(false);
     this.passwordError.set(error ?? '');
     this.passwordSaved.set(!error);
-    if (!error) form.reset();
+    if (!error) {
+      form.reset();
+      this.celebrate('Password changed', 'Use your new password next time you sign in.');
+    }
   }
 
   protected readonly confirmingSignOut = signal(false);
