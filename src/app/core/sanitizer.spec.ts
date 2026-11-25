@@ -1,4 +1,12 @@
-import { sanitizeEmail, sanitizeNumber, sanitizePhone, sanitizeText, sanitizeUrl } from './sanitizer';
+import {
+  cleanNgPhone,
+  isNgPhone,
+  sanitizeEmail,
+  sanitizeNumber,
+  sanitizePhone,
+  sanitizeText,
+  sanitizeUrl,
+} from './sanitizer';
 
 describe('sanitizeUrl', () => {
   it('keeps safe links', () => {
@@ -64,5 +72,28 @@ describe('other cleaners', () => {
     expect(sanitizeNumber(Infinity, 1, 5)).toBe(1);
     expect(sanitizeNumber(99, 1, 5)).toBe(5);
     expect(sanitizeNumber(-3, 0, 10)).toBe(0);
+  });
+});
+
+describe('Nigerian phone numbers', () => {
+  it('keeps digits only, at most 11', () => {
+    expect(cleanNgPhone('0803-123-4567')).toBe('08031234567');
+    expect(cleanNgPhone('0803 123 4567 999')).toBe('08031234567');
+    expect(cleanNgPhone('abc08031234567')).toBe('08031234567');
+    expect(cleanNgPhone('<script>')).toBe('');
+  });
+
+  it('turns +234 numbers into the local 11-digit form', () => {
+    expect(cleanNgPhone('+234 803 123 4567')).toBe('08031234567');
+    expect(cleanNgPhone('2348031234567')).toBe('08031234567');
+    // still being typed: left alone until all 13 digits are in
+    expect(cleanNgPhone('+234 803')).toBe('234803');
+  });
+
+  it('accepts only 11 digits starting with 0', () => {
+    expect(isNgPhone('08031234567')).toBe(true);
+    expect(isNgPhone('0803123456')).toBe(false);
+    expect(isNgPhone('80312345678')).toBe(false);
+    expect(isNgPhone('0803123456a')).toBe(false);
   });
 });

@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Role } from '../../core/accounts';
 import { ADMIN_INACTIVITY_LIMIT_MS, AuthService } from '../../core/auth.service';
-import { sanitizePhone, sanitizeText } from '../../core/sanitizer';
+import { NG_PHONE_ERROR, cleanNgPhone, isNgPhone, sanitizeText } from '../../core/sanitizer';
 import { NOTIFY_TOPICS, SettingsService } from '../../core/settings.service';
 import { StoreService } from '../../core/store.service';
 
@@ -35,13 +35,24 @@ export class DashSettings {
     this.accountSaved.set(false);
     const cleanName = sanitizeText(name, 120);
     if (!cleanName) return this.accountError.set('Enter your name.');
+    const cleanPhone = cleanNgPhone(phone);
+    if (cleanPhone && !isNgPhone(cleanPhone)) return this.accountError.set(NG_PHONE_ERROR);
     const error = await this.store.updateMyProfile(
       cleanName,
-      sanitizePhone(phone),
+      cleanPhone,
       this.me()?.address ?? '',
     );
     this.accountError.set(error ?? '');
     this.accountSaved.set(!error);
+  }
+
+  /** Shows a saved number as plain digits (older ones may have spaces). */
+  protected readonly cleanPhone = cleanNgPhone;
+
+  /** Keeps the phone box to digits only, at most 11, as the person types or pastes. */
+  protected onPhoneInput(input: HTMLInputElement): void {
+    const digits = cleanNgPhone(input.value);
+    if (input.value !== digits) input.value = digits;
   }
 
   /* ---- Notifications & preferences (saved together) ---- */

@@ -423,8 +423,20 @@
             /></label>
             <label
               >Phone
-              <input #phone type="tel" [value]="me.phone" maxlength="30" (input)="saved.set(false)"
-            /></label>
+              <input
+                #phone
+                type="tel"
+                inputmode="numeric"
+                autocomplete="tel-national"
+                pattern="0[0-9]{10}"
+                maxlength="17"
+                placeholder="08031234567"
+                aria-describedby="phone-hint"
+                [value]="cleanPhone(me.phone)"
+                (input)="onPhoneInput(phone); saved.set(false)"
+              />
+              <small id="phone-hint" class="field-note">11 digits, e.g. 08031234567</small>
+            </label>
             <label class="wide">Email <input maxlength="254" [value]="me.email" disabled /></label>
             <fieldset class="wide address-fields">
               <legend>Delivery address</legend>

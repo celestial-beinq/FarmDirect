@@ -1432,6 +1432,13 @@ select:focus-visible,
   font-weight: 600;
 }
 
+/* Small help text under a form field */
+.form .field-note {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
 /* Structured delivery address (customer profile) */
 .address-fields {
   display: grid;

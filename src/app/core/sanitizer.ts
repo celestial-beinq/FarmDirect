@@ -82,6 +82,28 @@ export function sanitizePhone(phone: unknown): string {
 }
 
 /**
+ * Turns whatever was typed or pasted into a Nigerian phone number's digits:
+ * "+234 803 123 4567" and "0803-123-4567" both become "08031234567".
+ * Use it on every keystroke; it keeps at most 11 digits (13 while a "+234"
+ * number is still being typed, then converts it).
+ */
+export function cleanNgPhone(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const digits = value.replace(/\D/g, '');
+  if (digits.startsWith('234')) {
+    return digits.length >= 13 ? `0${digits.slice(3, 13)}` : digits;
+  }
+  return digits.slice(0, 11);
+}
+
+/** An 11-digit Nigerian number starting with 0, e.g. 08031234567. */
+export function isNgPhone(value: string): boolean {
+  return /^0\d{10}$/.test(value);
+}
+
+export const NG_PHONE_ERROR = 'Enter an 11-digit phone number, e.g. 08031234567.';
+
+/**
  * Ensures a number is finite and constrained within an optional range.
  */
 export function sanitizeNumber(value: unknown, min = 0, max = Number.MAX_SAFE_INTEGER): number {

@@ -21,7 +21,14 @@ import {
   MOCK_PROFILES,
   MOCK_REVIEWS,
 } from './mock-data';
-import { sanitizeNumber, sanitizePhone, sanitizeText, sanitizeUrl } from './sanitizer';
+import {
+  NG_PHONE_ERROR,
+  cleanNgPhone,
+  isNgPhone,
+  sanitizeNumber,
+  sanitizeText,
+  sanitizeUrl,
+} from './sanitizer';
 import { Supabase, friendlyError } from './supabase';
 
 const isUuid = (id: string) =>
@@ -558,7 +565,8 @@ export class StoreService {
     rawParts?: AddressParts,
   ): Promise<string | null> {
     const name = sanitizeText(rawName, 120);
-    const phone = sanitizePhone(rawPhone);
+    const phone = cleanNgPhone(rawPhone);
+    if (phone && !isNgPhone(phone)) return NG_PHONE_ERROR;
     const parts: AddressParts | undefined = rawParts && {
       street: sanitizeText(rawParts.street, 115),
       landmark: sanitizeText(rawParts.landmark, 60),

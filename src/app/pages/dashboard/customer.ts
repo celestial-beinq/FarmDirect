@@ -16,7 +16,7 @@ import {
 import { LGAS_BY_STATE } from '../../core/nigeria-lgas';
 import { AuthService } from '../../core/auth.service';
 import { CartService } from '../../core/cart.service';
-import { sanitizePhone, sanitizeText } from '../../core/sanitizer';
+import { NG_PHONE_ERROR, cleanNgPhone, isNgPhone, sanitizeText } from '../../core/sanitizer';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
@@ -376,6 +376,15 @@ export class CustomerDashboard {
     }
   });
 
+  /** Shows a saved number as plain digits (older ones may have spaces). */
+  protected readonly cleanPhone = cleanNgPhone;
+
+  /** Keeps the phone box to digits only, at most 11, as the person types or pastes. */
+  protected onPhoneInput(input: HTMLInputElement): void {
+    const digits = cleanNgPhone(input.value);
+    if (input.value !== digits) input.value = digits;
+  }
+
   protected setAddr(field: keyof AddressParts, value: string): void {
     this.saved.set(false);
     this.addr.update((a) => ({
@@ -457,10 +466,11 @@ export class CustomerDashboard {
   protected async saveProfile(name: string, phone: string): Promise<void> {
     this.saved.set(false);
     const cleanName = sanitizeText(name, 120);
-    const cleanPhone = sanitizePhone(phone);
+    const cleanPhone = cleanNgPhone(phone);
     const a = this.addr();
 
     if (!cleanName) return this.formError.set('Enter your name.');
+    if (cleanPhone && !isNgPhone(cleanPhone)) return this.formError.set(NG_PHONE_ERROR);
     if (!a.state) return this.formError.set('Choose your state.');
     if (!a.lga || !this.lgas().includes(a.lga)) {
       return this.formError.set('Choose your local government area.');
