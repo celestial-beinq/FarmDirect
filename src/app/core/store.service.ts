@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
-import {
+import { AddressParts, formatAddress,
   Farmer,
   FarmerStatus,
   Order,
@@ -547,24 +547,55 @@ export class StoreService {
     return this.change((c) => c.from('profiles').update({ status }).eq('id', id));
   }
 
-  async updateMyProfile(rawName: string, rawPhone: string, rawAddress: string): Promise<string | null> {
+  /**
+   * Saves my name, phone and address. Pass `rawParts` to save the address field
+   * by field; the one-line `address` is then built from them.
+   */
+  async updateMyProfile(
+    rawName: string,
+    rawPhone: string,
+    rawAddress: string,
+    rawParts?: AddressParts,
+  ): Promise<string | null> {
     const name = sanitizeText(rawName, 120);
     const phone = sanitizePhone(rawPhone);
-    const address = sanitizeText(rawAddress, 300);
+    const parts: AddressParts | undefined = rawParts && {
+      street: sanitizeText(rawParts.street, 120),
+      landmark: sanitizeText(rawParts.landmark, 60),
+      city: sanitizeText(rawParts.city, 50),
+      lga: sanitizeText(rawParts.lga, 40),
+      state: sanitizeText(rawParts.state, 20),
+    };
+    const address = sanitizeText(parts ? formatAddress(parts) : rawAddress, 300);
     const id = this.auth.userId();
     if (!id) return 'Please sign in first.';
     this.profiles.update((list) =>
-      list.map((p) => (p.id === id ? { ...p, name, phone, address } : p)),
+      list.map((p) => (p.id === id ? { ...p, name, phone, address, addressParts: parts ?? p.addressParts } : p)),
     );
     const current = this.auth.profile();
     if (current && current.id === id) {
-      this.auth.profile.set({ ...current, name, phone, address });
+      this.auth.profile.set({ ...current, name, phone, address, addressParts: parts ?? current.addressParts });
     }
     const client = this.supabase.client;
     if (!client || !isUuid(id)) return null;
-    const error = await this.change((c) =>
-      c.from('profiles').update({ full_name: name, phone, address }).eq('id', id),
-    );
+    const row: Record<string, string> = { full_name: name, phone, address };
+    if (parts) {
+      Object.assign(row, {
+        address_street: parts.street,
+        address_landmark: parts.landmark,
+        address_city: parts.city,
+        address_lga: parts.lga,
+        address_state: parts.state,
+      });
+    }
+    let error = await this.change((c) => c.from('profiles').update(row).eq('id', id));
+    // Before the structured-address migration has run, those columns don't
+    // exist yet: still save the one-line address rather than failing.
+    if (error && parts && /address_(street|landmark|city|lga|state)|schema cache|column/i.test(error)) {
+      error = await this.change((c) =>
+        c.from('profiles').update({ full_name: name, phone, address }).eq('id', id),
+      );
+    }
     if (!error) await this.auth.reloadProfile();
     return error;
   }

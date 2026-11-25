@@ -13,6 +13,37 @@ export interface Profile {
   joined: string;
   /** Raw saved settings; read them through SettingsService. */
   settings?: Record<string, unknown>;
+  /** The delivery address in parts. `address` is the same address on one line. */
+  addressParts?: AddressParts;
+}
+
+/** A Nigerian delivery address, field by field. */
+export interface AddressParts {
+  street: string;
+  landmark: string;
+  city: string;
+  lga: string;
+  state: string;
+}
+
+export const EMPTY_ADDRESS: AddressParts = { street: '', landmark: '', city: '', lga: '', state: '' };
+
+/**
+ * One line for riders and order records, e.g.
+ * "12 Admiralty Way, near Mega Plaza, Lekki, Eti Osa LGA, Lagos State".
+ */
+export function formatAddress(parts: AddressParts): string {
+  const state = parts.state === 'FCT - Abuja' ? 'FCT, Abuja' : parts.state ? `${parts.state} State` : '';
+  return [
+    parts.street,
+    parts.landmark ? `near ${parts.landmark}` : '',
+    parts.city,
+    parts.lga ? `${parts.lga} LGA` : '',
+    state,
+  ]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(', ');
 }
 
 export type FarmerStatus = 'verified' | 'pending' | 'rejected' | 'suspended';

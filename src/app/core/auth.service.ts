@@ -139,6 +139,13 @@ export class AuthService {
             status: data.status,
             joined: data.created_at,
             settings: data.settings ?? undefined,
+            addressParts: {
+              street: data.address_street ?? '',
+              landmark: data.address_landmark ?? '',
+              city: data.address_city ?? '',
+              lga: data.address_lga ?? '',
+              state: data.address_state ?? '',
+            },
           }
         : null,
     );
