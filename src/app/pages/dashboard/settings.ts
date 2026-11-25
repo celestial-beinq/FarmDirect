@@ -5,6 +5,7 @@ import { ADMIN_INACTIVITY_LIMIT_MS, AuthService } from '../../core/auth.service'
 import { NG_PHONE_ERROR, cleanNgPhone, isNgPhone, sanitizeText } from '../../core/sanitizer';
 import { NOTIFY_TOPICS, SettingsService } from '../../core/settings.service';
 import { StoreService } from '../../core/store.service';
+import { SuccessToast } from '../../shared/success-toast';
 
 /**
  * The Settings tab, shared by the customer, farmer and admin dashboards.
@@ -12,7 +13,7 @@ import { StoreService } from '../../core/store.service';
  */
 @Component({
   selector: 'app-dash-settings',
-  imports: [RouterLink],
+  imports: [RouterLink, SuccessToast],
   templateUrl: './settings.html',
 })
 export class DashSettings {
@@ -29,6 +30,8 @@ export class DashSettings {
 
   /* ---- Account details (farmers and admins; customers use Profile & Address) ---- */
   protected readonly accountSaved = signal(false);
+  /** Bumped after each successful save to play the "Account saved" animation. */
+  protected readonly accountPulse = signal(0);
   protected readonly accountError = signal('');
 
   protected async saveAccount(name: string, phone: string): Promise<void> {
@@ -44,6 +47,7 @@ export class DashSettings {
     );
     this.accountError.set(error ?? '');
     this.accountSaved.set(!error);
+    if (!error) this.accountPulse.update((n) => n + 1);
   }
 
   /** Shows a saved number as plain digits (older ones may have spaces). */

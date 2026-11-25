@@ -23,10 +23,11 @@ import { NairaPipe, PhotoPipe } from '../../shared/pipes';
 import { DashShell, DashTab } from './dash-shell';
 import { Insights } from './insights';
 import { DashSettings } from './settings';
+import { SuccessToast } from '../../shared/success-toast';
 
 @Component({
   selector: 'app-customer-dashboard',
-  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell, Insights, Icon, DashSettings],
+  imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, DashShell, Insights, Icon, DashSettings, SuccessToast],
   templateUrl: './customer.html',
 })
 export class CustomerDashboard {
@@ -450,6 +451,8 @@ export class CustomerDashboard {
   ]);
 
   protected readonly saved = signal(false);
+  /** Bumped after each successful save to play the "Profile saved" animation. */
+  protected readonly savedPulse = signal(0);
   protected readonly formError = signal('');
 
   /** How far along the Placed → Delivered track an order is. */
@@ -482,6 +485,7 @@ export class CustomerDashboard {
     const error = await this.store.updateMyProfile(cleanName, cleanPhone, '', a);
     this.formError.set(error ?? '');
     this.saved.set(!error);
+    if (!error) this.savedPulse.update((n) => n + 1);
   }
 
   protected async reorder(order: Order): Promise<void> {

@@ -410,6 +410,11 @@
 
       @case ('profile') {
         <h1>Profile &amp; Address</h1>
+        <app-success-toast
+          [pulse]="savedPulse()"
+          message="Profile saved"
+          detail="New orders will go to this address."
+        />
         <p>New orders are delivered to the address saved here.</p>
 
         <div class="panel">
