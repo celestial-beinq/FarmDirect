@@ -866,6 +866,86 @@ select:focus-visible,
   word-break: break-word;
 }
 
+/* Listing review (admin): the full listing before approval */
+.listing-review__warn {
+  padding: 10px 14px;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.8125rem;
+}
+
+.listing-review__warn strong {
+  display: block;
+}
+
+.listing-review__media > img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.listing-review__thumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+.listing-review__thumbs button {
+  flex: none;
+  width: 64px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  opacity: 0.7;
+}
+
+.listing-review__thumbs button.is-active {
+  border-color: #059669;
+  opacity: 1;
+}
+
+.listing-review__thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.listing-review__list {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.listing-review__list li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.listing-review__list app-icon {
+  margin-top: 3px;
+  color: #059669;
+}
+
+.listing-review__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.listing-review__chips span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-size: 0.78rem;
+}
+
 .vetting-doc-preview {
   display: flex;
   align-items: center;

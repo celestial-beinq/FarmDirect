@@ -404,16 +404,9 @@
                         <button
                           type="button"
                           class="btn btn--sm btn--primary"
-                          (click)="store.setProductStatus(product.id, 'live')"
+                          (click)="openReview(product)"
                         >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          class="btn btn--sm btn--danger"
-                          (click)="store.setProductStatus(product.id, 'rejected')"
-                        >
-                          Reject
+                          <app-icon name="eye" [size]="14" /> Review
                         </button>
                       } @else if (product.status === 'rejected') {
                         <button
@@ -1215,16 +1208,9 @@
                         <button
                           type="button"
                           class="btn btn--sm btn--primary"
-                          (click)="store.setProductStatus(product.id, 'live')"
+                          (click)="openReview(product)"
                         >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          class="btn btn--sm btn--danger"
-                          (click)="store.setProductStatus(product.id, 'rejected')"
-                        >
-                          Reject
+                          <app-icon name="eye" [size]="14" /> Review Listing
                         </button>
                       </div>
                     </td>
@@ -1238,5 +1224,122 @@
         }
       </div>
     }
+  }
+
+  <!-- Listing review: the full listing, as shoppers will see it, before a decision -->
+  @if (reviewing(); as p) {
+    <div class="vetting-backdrop" (click)="closeReview()">
+      <div
+        class="vetting-card"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="listing-review-title"
+      >
+        <header class="vetting-card__head">
+          <div>
+            <h2 id="listing-review-title" style="font-size: 1.15rem; margin: 0">{{ p.name }}</h2>
+            <small style="color: #64748b">Listing review · {{ p.category }}</small>
+          </div>
+          <span class="badge-status" [class]="'badge-status--' + tone(p.status)">{{ p.status }}</span>
+        </header>
+
+        <div class="vetting-card__body">
+          @if (!isFarmerVerified(reviewFarm())) {
+            <div class="listing-review__warn">
+              <strong>This farm is not verified yet.</strong>
+              Even if approved, the listing stays hidden from shoppers until the farm passes vetting.
+            </div>
+          }
+
+          <div class="listing-review__media">
+            <img [src]="(reviewPhoto() || p.image) | photo: 900" [alt]="p.name" />
+            @if (reviewPhotos().length > 1) {
+              <div class="listing-review__thumbs" role="list" aria-label="Listing photos">
+                @for (src of reviewPhotos(); track src; let i = $index) {
+                  <button
+                    type="button"
+                    role="listitem"
+                    [class.is-active]="src === (reviewPhoto() || p.image)"
+                    [attr.aria-label]="'Show photo ' + (i + 1)"
+                    (click)="reviewPhoto.set(src)"
+                  >
+                    <img [src]="src | photo: 160" alt="" />
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="vetting-section-title">Listing details</div>
+          <div class="vetting-grid">
+            <div class="vetting-field">
+              <label>Farm</label>
+              <div class="value">
+                {{ store.farmerName(p.farmerId) }}
+                @if (reviewFarm(); as farm) {
+                  <span class="badge-status" [class]="'badge-status--' + tone(farm.status)">{{ farm.status }}</span>
+                }
+              </div>
+            </div>
+            <div class="vetting-field">
+              <label>Origin</label>
+              <div class="value">{{ p.origin || 'Not provided' }}</div>
+            </div>
+            <div class="vetting-field">
+              <label>Price</label>
+              <div class="value">{{ p.price | naira }} / {{ p.unit }}</div>
+            </div>
+            <div class="vetting-field">
+              <label>Stock available</label>
+              <div class="value">{{ p.quantity }} {{ p.unit }}</div>
+            </div>
+            <div class="vetting-field" style="grid-column: 1 / -1">
+              <label>Description</label>
+              <div class="value">{{ p.description || 'No description provided' }}</div>
+            </div>
+            @if (p.highlights.length) {
+              <div class="vetting-field" style="grid-column: 1 / -1">
+                <label>Highlights</label>
+                <ul class="listing-review__list">
+                  @for (h of p.highlights; track h) {
+                    <li><app-icon name="check" [size]="14" /> {{ h }}</li>
+                  }
+                </ul>
+              </div>
+            }
+            @if (p.tags.length) {
+              <div class="vetting-field" style="grid-column: 1 / -1">
+                <label>Tags</label>
+                <div class="listing-review__chips">
+                  @for (t of p.tags; track t) {
+                    <span>{{ t }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="vetting-section-title">What shoppers will pay</div>
+          <div class="listing-review__chips">
+            @for (o of reviewOptions(); track o.label) {
+              <span>{{ o.label }} · <strong>{{ o.price | naira }}</strong></span>
+            }
+          </div>
+        </div>
+
+        <footer class="vetting-card__foot">
+          <button type="button" class="btn btn--sm btn--soft" (click)="closeReview()">Close</button>
+          @if (p.status === 'pending') {
+            <button type="button" class="btn btn--sm btn--danger" (click)="decideListing(p, 'rejected')">
+              Reject Listing
+            </button>
+            <button type="button" class="btn btn--sm btn--primary" (click)="decideListing(p, 'live')">
+              Approve Listing
+            </button>
+          }
+        </footer>
+      </div>
+    </div>
   }
 </app-dash-shell>
