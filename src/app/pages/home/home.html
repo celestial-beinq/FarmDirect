@@ -1,13 +1,13 @@
 <!-- Hero -->
 <section class="hero">
-  <div class="container">
-    <span class="hero__badge"><app-icon name="shield" [size]="16" /> Verified farms only</span>
-    <h1>Fresh Farm Produce<br />Delivered to your Doorstep</h1>
-    <p class="hero__lead">
+  <div class="container" reveal="group" [revealStagger]="0.12">
+    <span class="hero__badge" reveal-item="down"><app-icon name="shield" [size]="16" /> Verified farms only</span>
+    <h1 reveal-item>Fresh Farm Produce<br />Delivered to your Doorstep</h1>
+    <p class="hero__lead" reveal-item>
       Real food from verified Nigerian farms, nothing fake, nothing in between. Order Thursday.
       Enjoy Sunday. It's that simple.
     </p>
-    <div class="hero__cta">
+    <div class="hero__cta" reveal-item>
       <a routerLink="/crops" class="btn btn--primary btn--pill">
         Marketplace <app-icon name="arrow-right" [size]="18" />
       </a>
@@ -17,9 +17,9 @@
     </div>
 
     <div class="hero__frame">
-      <img [src]="img.market | photo: 700" alt="A trader selling fresh peppers, okra and palm oil at a Nigerian market" />
-      <img [src]="img.farmer | photo: 700" alt="A Nigerian farmer carrying freshly harvested plantain" />
-      <img [src]="img.yam | photo: 700" alt="Freshly harvested Nigerian yams" />
+      <img reveal-item="scale" [src]="img.market | photo: 700" alt="A trader selling fresh peppers, okra and palm oil at a Nigerian market" />
+      <img reveal-item="scale" [src]="img.farmer | photo: 700" alt="A Nigerian farmer carrying freshly harvested plantain" />
+      <img reveal-item="scale" [src]="img.yam | photo: 700" alt="Freshly harvested Nigerian yams" />
     </div>
   </div>
 </section>
@@ -38,12 +38,12 @@
 <!-- Core features -->
 <section class="section features">
   <div class="container">
-    <div class="section-head">
+    <div reveal class="section-head">
       <h2>Everything You Need to Eat Real Food</h2>
       <p>Fresh harvests, shared livestock and one simple weekly delivery, all from farms we have checked.</p>
     </div>
 
-    <div class="features__tabs" role="tablist" aria-label="FarmDirect features">
+    <div reveal class="features__tabs" role="tablist" aria-label="FarmDirect features">
       @for (f of features; track f.key) {
         <button
           type="button"
@@ -59,8 +59,8 @@
     </div>
 
     @for (f of [activeFeature()]; track f.key) {
-      <div class="feature" role="tabpanel" [attr.aria-label]="f.tab">
-        <div class="feature__text">
+      <div class="feature" role="tabpanel" reveal="group" [revealStagger]="0.12" [attr.aria-label]="f.tab">
+        <div class="feature__text" reveal-item="left">
           <p class="feature__tags">
             @for (t of f.tags; track t; let last = $last) {
               <span>{{ t }}</span>
@@ -76,7 +76,7 @@
           </a>
         </div>
 
-        <div class="feature__stage">
+        <div class="feature__stage" reveal-item="scale">
           <img [src]="f.image | photo: 800" [alt]="f.alt" />
           <div class="feature__float">
             <span class="feature__float-label">{{ f.float.label }}</span>
@@ -93,7 +93,7 @@
           </div>
         </div>
 
-        <div class="feature__side">
+        <div class="feature__side" reveal-item="right">
           <img [src]="f.side.image | photo: 500" alt="" />
           <span class="feature__side-tag">{{ f.side.tag }}</span>
           <strong class="feature__side-value">{{ f.side.value }}</strong>
@@ -110,12 +110,12 @@
 <!-- Where FarmDirect fits -->
 <section class="section section--tint uses">
   <div class="container">
-    <div class="section-head">
+    <div reveal class="section-head">
       <h2>Where Families Use FarmDirect Every Week</h2>
       <p>From Sunday soup to Sallah rams, buy real food for every table, straight from the farm.</p>
     </div>
   </div>
-  <div class="uses__marquee">
+  <div class="uses__marquee" reveal>
     <div class="uses__track">
       @for (pass of [0, 1]; track pass) {
         @for (u of uses; track u.title) {
@@ -140,13 +140,13 @@
 <!-- How it works -->
 <section class="section" id="how-it-works">
   <div class="container">
-    <div class="section-head">
+    <div reveal class="section-head">
       <span class="eyebrow">How it Works</span>
       <h2>How to order on FarmDirect and get your delivery</h2>
     </div>
-    <ol class="steps">
+    <ol class="steps" reveal="group" [revealStagger]="0.15">
       @for (step of steps; track step.title; let i = $index) {
-        <li>
+        <li reveal-item>
           <div class="steps__icon">
             <app-icon [name]="step.icon" [size]="24" />
             <span>{{ i + 1 }}</span>
@@ -162,12 +162,12 @@
 <!-- Categories -->
 <section class="section categories">
   <div class="container">
-    <div class="section-head">
+    <div reveal class="section-head">
       <span class="eyebrow">What we Offer</span>
       <h2>Our Market Categories</h2>
     </div>
-    <div class="categories__grid">
-      <a routerLink="/crops" class="category">
+    <div class="categories__grid" reveal="group" [revealStagger]="0.15">
+      <a routerLink="/crops" class="category" reveal-item="left">
         <img [src]="img.vegmarket | photo: 1000" alt="" loading="lazy" />
         <div class="category__body">
           <h3>Fresh Vegetables, Fruits and Grains</h3>
@@ -177,7 +177,7 @@
           /></span>
         </div>
       </a>
-      <a routerLink="/livestock" class="category">
+      <a routerLink="/livestock" class="category" reveal-item="right">
         <img [src]="img.whitefulani | photo: 1000" alt="" loading="lazy" />
         <div class="category__body">
           <h3>Ram, Goat, Cow. Full or Shared.</h3>
@@ -194,13 +194,13 @@
 <!-- Trending -->
 <section class="section section--tint">
   <div class="container">
-    <div class="row-head">
+    <div reveal class="row-head">
       <h2>Trending Harvest</h2>
       <a routerLink="/crops">View All Market Items</a>
     </div>
     <div class="trending">
-      @for (item of trending(); track item.crop.id) {
-        <article class="product">
+      @for (item of trending(); track item.crop.id; let i = $index) {
+        <article class="product" reveal [revealDelay]="i * 0.1">
           <a [routerLink]="['/crops', item.crop.id]">
             <img [src]="item.crop.image | photo: 700" [alt]="item.crop.name" loading="lazy" />
           </a>
@@ -226,7 +226,7 @@
 <!-- The problem -->
 <section class="section problem">
   <div class="container">
-    <div class="section-head problem__head">
+    <div reveal class="section-head problem__head">
       <span class="eyebrow">Why we exist</span>
       <h2>Nigerians deserve to know what they are eating</h2>
       <p>
@@ -236,9 +236,9 @@
         real food straight from farms that have been checked.
       </p>
     </div>
-    <div class="problem__grid">
+    <div class="problem__grid" reveal="group" [revealStagger]="0.12">
       @for (c of concerns; track c.title) {
-        <article class="problem__card">
+        <article class="problem__card" reveal-item>
           <img [src]="c.image | photo: 600" alt="" loading="lazy" />
           <div>
             <h3>{{ c.title }}</h3>
@@ -248,7 +248,7 @@
         </article>
       }
     </div>
-    <div class="center">
+    <div reveal class="center">
       <a routerLink="/real-food" class="btn btn--primary btn--pill">
         Read the Real Food Guide <app-icon name="arrow-right" [size]="18" />
       </a>
@@ -258,8 +258,8 @@
 
 <!-- Grown without -->
 <section class="without">
-  <div class="container without__inner">
-    <div>
+  <div class="container without__inner" reveal="group" [revealStagger]="0.06">
+    <div reveal-item="left">
       <span class="eyebrow eyebrow--light">The FarmDirect promise</span>
       <h2>Every farm agrees to grow and raise food without</h2>
       <a routerLink="/real-food" class="without__link">
@@ -268,7 +268,7 @@
     </div>
     <ul>
       @for (item of without; track item) {
-        <li><app-icon name="close" [size]="16" /> {{ item }}</li>
+        <li reveal-item="right"><app-icon name="close" [size]="16" /> {{ item }}</li>
       }
     </ul>
   </div>
@@ -277,15 +277,15 @@
 <!-- Why trust us -->
 <section class="section section--tint">
   <div class="container why">
-    <div class="why__photo">
+    <div class="why__photo" reveal="left">
       <img [src]="img.yamfarm | photo: 800" alt="Yam heaps with climbing stakes on a Nigerian farm" loading="lazy" />
     </div>
-    <div>
-      <span class="eyebrow">Why choose us</span>
-      <h2>Know exactly where your food comes from</h2>
+    <div reveal="group">
+      <span class="eyebrow" reveal-item>Why choose us</span>
+      <h2 reveal-item>Know exactly where your food comes from</h2>
       <ul class="why__grid">
         @for (reason of reasons; track reason.title) {
-          <li>
+          <li reveal-item>
             <app-icon [name]="reason.icon" [size]="28" />
             <h3>{{ reason.title }}</h3>
             <p>{{ reason.text }}</p>
@@ -299,8 +299,8 @@
 <!-- In season now -->
 <section class="section">
   <div class="container season">
-    <img [src]="season.image | photo: 900" alt="" loading="lazy" />
-    <div>
+    <img reveal="left" [src]="season.image | photo: 900" alt="" loading="lazy" />
+    <div reveal="right">
       <span class="eyebrow">In season now</span>
       <h2>{{ season.name }}</h2>
       <p>{{ season.note }}</p>
@@ -322,13 +322,13 @@
 <!-- Regions -->
 <section class="section section--tint">
   <div class="container">
-    <div class="section-head">
+    <div reveal class="section-head">
       <span class="eyebrow">Where your food comes from</span>
       <h2>Grown across Nigeria, by the regions that grow it best</h2>
     </div>
-    <div class="regions">
+    <div class="regions" reveal="group">
       @for (r of regions; track r.name) {
-        <article class="region">
+        <article class="region" reveal-item>
           <img [src]="r.image | photo: 600" alt="" loading="lazy" />
           <div class="region__body">
             <h3>{{ r.name }}</h3>
@@ -344,13 +344,13 @@
 <!-- Blog -->
 <section class="section">
   <div class="container">
-    <div class="section-head">
+    <div reveal class="section-head">
       <span class="eyebrow">From the Farm</span>
       <h2>Fresh Ideas from the Farm</h2>
     </div>
-    <div class="posts">
+    <div class="posts" reveal="group" [revealStagger]="0.12">
       @for (post of posts; track post.title) {
-        <article class="post">
+        <article class="post" reveal-item>
           <a [routerLink]="post.link" [fragment]="post.fragment">
             <img [src]="post.image | photo: 700" alt="" loading="lazy" />
           </a>
@@ -364,7 +364,7 @@
         </article>
       }
     </div>
-    <div class="center">
+    <div reveal class="center">
       <a routerLink="/how-it-works" class="btn btn--primary btn--pill">Learn How FarmDirect Works</a>
     </div>
   </div>

@@ -6,6 +6,7 @@ import { Crop, IMAGES, POSTS, buyOptions } from '../../core/data';
 import { StoreService } from '../../core/store.service';
 import { Icon, IconName } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
+import { Reveal } from '../../shared/reveal';
 
 interface Feature {
   key: string;
@@ -23,7 +24,7 @@ interface Feature {
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Icon, NairaPipe, PhotoPipe],
+  imports: [RouterLink, Icon, NairaPipe, PhotoPipe, Reveal],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
