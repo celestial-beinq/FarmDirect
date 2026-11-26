@@ -115,24 +115,25 @@
       <p>From Sunday soup to Sallah rams, buy real food for every table, straight from the farm.</p>
     </div>
   </div>
-  <div class="uses__rail" #rail>
-    @for (u of uses; track u.title) {
-      <article class="use" tabindex="0" [style.--use-bg]="u.bg" [style.--use-ink]="u.ink">
-        <img [src]="u.image | photo: 600" alt="" loading="lazy" />
-        <div class="use__body">
-          <h3>{{ u.title }}</h3>
-          <p>{{ u.text }}</p>
-        </div>
-      </article>
-    }
-  </div>
-  <div class="container uses__nav">
-    <button type="button" aria-label="Scroll back" (click)="scrollRail(rail, -1)">
-      <app-icon name="chevron-left" [size]="20" />
-    </button>
-    <button type="button" aria-label="Scroll forward" (click)="scrollRail(rail, 1)">
-      <app-icon name="chevron-right" [size]="20" />
-    </button>
+  <div class="uses__marquee">
+    <div class="uses__track">
+      @for (pass of [0, 1]; track pass) {
+        @for (u of uses; track u.title) {
+          <article
+            class="use"
+            [attr.aria-hidden]="pass === 1 ? true : null"
+            [style.--use-bg]="u.bg"
+            [style.--use-ink]="u.ink"
+          >
+            <img [src]="u.image | photo: 600" [alt]="pass === 0 ? u.alt : ''" loading="lazy" />
+            <div class="use__body">
+              <h3>{{ u.title }}</h3>
+              <p>{{ u.text }}</p>
+            </div>
+          </article>
+        }
+      }
+    </div>
   </div>
 </section>
 

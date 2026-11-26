@@ -355,27 +355,43 @@
   font-size: clamp(1.7rem, 3.8vw, 2.5rem);
 }
 
-.uses__rail {
-  display: flex;
-  gap: 18px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: max(20px, calc((100vw - 1180px) / 2 + 20px));
-  padding: 0 max(20px, calc((100vw - 1180px) / 2 + 20px)) 8px;
-  scrollbar-width: none;
+.uses__marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
 }
 
-.uses__rail::-webkit-scrollbar {
-  display: none;
+.uses__track {
+  display: flex;
+  width: max-content;
+  padding-bottom: 4px;
+  animation: uses-scroll 45s linear infinite;
+}
+
+.uses__marquee:hover .uses__track,
+.uses__marquee:focus-within .uses__track {
+  animation-play-state: paused;
+}
+
+@keyframes uses-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uses__marquee {
+    overflow-x: auto;
+  }
 }
 
 .use {
   position: relative;
-  flex: 0 0 clamp(240px, 26vw, 290px);
+  flex: none;
+  width: clamp(240px, 26vw, 290px);
   height: 400px;
+  margin-right: 18px;
   border-radius: 18px;
   overflow: hidden;
-  scroll-snap-align: start;
   background: var(--use-bg);
 }
 
@@ -386,16 +402,13 @@
   transition: transform 0.5s;
 }
 
-.use:hover img,
-.use:focus-visible img {
+.use:hover img {
   transform: scale(1.05);
 }
 
 .use__body {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: auto 0 0;
   padding: 16px 18px;
   background: var(--use-bg);
   color: var(--use-ink);
@@ -407,49 +420,9 @@
 }
 
 .use p {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  font-size: 0.8rem;
-  transition: max-height 0.35s ease, opacity 0.35s ease, margin 0.35s ease;
-}
-
-.use:hover p,
-.use:focus-visible p,
-.uses__rail:not(:hover) .use:first-child p {
-  max-height: 6em;
   margin-top: 6px;
+  font-size: 0.8rem;
   opacity: 0.85;
-}
-
-@media (hover: none) {
-  .use p {
-    max-height: 6em;
-    margin-top: 6px;
-    opacity: 0.85;
-  }
-}
-
-.uses__nav {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.uses__nav button {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 1.5px solid var(--ink);
-  transition: background 0.2s, color 0.2s;
-}
-
-.uses__nav button:hover {
-  background: var(--green-900);
-  color: var(--white);
 }
 
 /* ---------- Steps ---------- */
