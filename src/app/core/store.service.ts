@@ -202,6 +202,7 @@ export class StoreService {
             highlights: p.highlights,
             farmerId: p.farm_id,
             status: p.status,
+            createdAt: p.created_at,
           }))
         : (this.supabase.configured ? [] : MOCK_CROPS),
     );
@@ -385,6 +386,7 @@ export class StoreService {
       tags: ['New Harvest'],
       farmerId: farmId,
       status: 'pending',
+      createdAt: new Date().toISOString(),
     };
     this.crops.update((list) => [newCrop, ...list]);
     const client = this.supabase.client;

@@ -99,6 +99,23 @@ export interface Crop {
   quantity: number;
   /** Only "live" crops from verified farms appear in the marketplace. */
   status: ProductStatus;
+  /** When the listing was created (ISO date); missing on sample data. */
+  createdAt?: string;
+}
+
+/**
+ * Sorts newest first by the given date. Items without a date keep their
+ * current order and go after dated ones, so the sort is stable.
+ */
+export function newestFirst<T>(list: readonly T[], date: (item: T) => string | undefined): T[] {
+  const time = (item: T) => {
+    const t = Date.parse(date(item) ?? '');
+    return Number.isNaN(t) ? -Infinity : t;
+  };
+  return list
+    .map((item, i) => ({ item, i, t: time(item) }))
+    .sort((a, b) => b.t - a.t || a.i - b.i)
+    .map((x) => x.item);
 }
 
 /**

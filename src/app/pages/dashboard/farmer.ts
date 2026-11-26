@@ -12,7 +12,7 @@ import {
   tone,
 } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
-import { CROP_CATEGORIES, Crop, UNIT_PLURALS } from '../../core/data';
+import { CROP_CATEGORIES, Crop, UNIT_PLURALS, newestFirst } from '../../core/data';
 import { sanitizeNumber, sanitizeText, sanitizeUrl } from '../../core/sanitizer';
 import { ProductForm, StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
@@ -65,15 +65,19 @@ export class FarmerDashboard {
   protected readonly products = computed(() => {
     const farmId = this.me()?.id;
     if (!farmId) return [];
-    return this.store.crops().filter((p) => p.farmerId === farmId);
+    return newestFirst(
+      this.store.crops().filter((p) => p.farmerId === farmId),
+      (p) => p.createdAt,
+    );
   });
   /** Paid orders for my farm, newest first. */
   protected readonly orders = computed(() => {
     const farmId = this.me()?.id;
     if (!farmId) return [];
-    return this.store
-      .orders()
-      .filter((o) => o.farmerId === farmId && o.status !== 'Awaiting payment');
+    return newestFirst(
+      this.store.orders().filter((o) => o.farmerId === farmId && o.status !== 'Awaiting payment'),
+      (o) => o.date,
+    );
   });
   /** Orders that still need something from me. */
   protected readonly toFulfil = computed(() =>

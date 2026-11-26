@@ -12,7 +12,7 @@ import {
   tone,
 } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
-import { Crop, buyOptions } from '../../core/data';
+import { Crop, buyOptions, newestFirst } from '../../core/data';
 import { sanitizeUrl, sanitizeText } from '../../core/sanitizer';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
@@ -163,8 +163,10 @@ export class AdminDashboard {
     }
   }
 
+  /** Every listing, newest first, so new submissions sit at the top. */
+  protected readonly listings = computed(() => newestFirst(this.store.crops(), (p) => p.createdAt));
   protected readonly pendingProducts = computed(() =>
-    this.store.crops().filter((p) => p.status === 'pending'),
+    this.listings().filter((p) => p.status === 'pending'),
   );
 
   /* ---- Listing review: admins see the full listing before approving ---- */
@@ -211,7 +213,8 @@ export class AdminDashboard {
     else if (this.inspectingFarmer()) this.closeDossier();
   }
 
-  protected readonly orders = this.store.orders;
+  /** Orders newest first; realtime updates from the store slot in at the top. */
+  protected readonly orders = computed(() => newestFirst(this.store.orders(), (o) => o.date));
   protected readonly openOrders = computed(() =>
     this.orders().filter((o) => ['Placed', 'Confirmed', 'Dispatched'].includes(o.status)),
   );
@@ -476,14 +479,14 @@ export class AdminDashboard {
   protected readonly PRODUCT_PAGE_SIZE = 15;
   private readonly productPageWanted = signal(1);
   protected readonly productPageCount = computed(() =>
-    Math.max(1, Math.ceil(this.store.crops().length / this.PRODUCT_PAGE_SIZE)),
+    Math.max(1, Math.ceil(this.listings().length / this.PRODUCT_PAGE_SIZE)),
   );
   protected readonly productPage = computed(() =>
     Math.min(this.productPageWanted(), this.productPageCount()),
   );
   protected readonly productPageStart = computed(() => (this.productPage() - 1) * this.PRODUCT_PAGE_SIZE);
   protected readonly pagedProducts = computed(() =>
-    this.store.crops().slice(this.productPageStart(), this.productPageStart() + this.PRODUCT_PAGE_SIZE),
+    this.listings().slice(this.productPageStart(), this.productPageStart() + this.PRODUCT_PAGE_SIZE),
   );
   protected readonly productPageNumbers = computed(() => {
     const first = Math.max(1, Math.min(this.productPage() - 2, this.productPageCount() - 4));
