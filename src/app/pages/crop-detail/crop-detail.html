@@ -41,24 +41,18 @@
         <div class="stock-banner">
           @if (isOutOfStock()) {
             <div class="stock-notice stock-notice--out" role="alert">
-              <span class="badge-stock badge-stock--out">Not Available</span>
-              <div>
-                <strong>Produce Finished</strong>
-                <p>This harvest is currently sold out. It will be available again once the farmer updates their harvest quantity.</p>
-              </div>
+              <span class="badge-stock badge-stock--out">Sold out</span>
+              <span>Currently unavailable — check back after the next harvest.</span>
             </div>
           } @else if (isLowStock()) {
             <div class="stock-notice stock-notice--low" role="status">
-              <span class="badge-stock badge-stock--low">Low Stock</span>
-              <div>
-                <strong>Only {{ remainingQuantity() }} {{ crop.unit }}s remaining!</strong>
-                <p>Limited baskets/units left from this harvest. Order soon before it sells out.</p>
-              </div>
+              <span class="badge-stock badge-stock--low">Low stock</span>
+              <span>Only <strong>{{ remainingQuantity() }} {{ crop.unit }}s</strong> left from this harvest.</span>
             </div>
           } @else {
             <div class="stock-notice stock-notice--in" role="status">
-              <span class="badge-stock badge-stock--in">In Stock</span>
-              <span><strong>{{ remainingQuantity() }} {{ crop.unit }}s</strong> remaining from this harvest</span>
+              <span class="badge-stock badge-stock--in">In stock</span>
+              <span><strong>{{ remainingQuantity() }} {{ crop.unit }}s</strong> available from this harvest</span>
             </div>
           }
         </div>
