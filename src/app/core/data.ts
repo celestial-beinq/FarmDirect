@@ -24,9 +24,11 @@ const local = (key: string) => `/images/${key}.jpg`;
 /** Photos of real Nigerian produce, markets, farms and livestock. */
 export const IMAGES = {
   // Scenes
-  market: local('market'),
+  /** Unsplash: produce stall. */
+  market: '1488459716781-31db52582fe9',
   vegmarket: local('vegmarket'),
-  farmer: local('farmer'),
+  /** Unsplash: harvest workers in a field. */
+  farmer: '1605000797499-95a51c5269ae',
   farmfield: local('farmfield'),
   harvestbasket: local('harvestbasket'),
   herder: local('herder'),

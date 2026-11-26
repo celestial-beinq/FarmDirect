@@ -59,7 +59,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
           <figure class="rf-hero__photo rf-hero__photo--main">
             <img
               [src]="img.market | photo: 900"
-              alt="A trader selling fresh peppers, okra and palm oil at a Nigerian market"
+              alt="A market stall piled high with fresh vegetables and fruit"
             />
           </figure>
           <figure class="rf-hero__photo">
@@ -156,7 +156,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
             We don't buy from markets or middlemen. Every listing comes from a named farm that has
             passed these checks, and you can see the farm and region on every product.
           </p>
-          <img [src]="img.farmer | photo: 900" alt="A Nigerian farmer carrying freshly harvested plantain" loading="lazy" />
+          <img [src]="img.farmer | photo: 900" alt="Farm workers harvesting a green field, one carrying a crate of produce" loading="lazy" />
         </div>
         <ol class="verify__steps">
           @for (step of verify; track step.title; let i = $index) {

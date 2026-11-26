@@ -126,7 +126,7 @@ export class Home {
       cta: 'How it works',
       link: '/how-it-works',
       image: IMAGES.farmer,
-      alt: 'A Nigerian farmer carrying freshly harvested plantain',
+      alt: 'Farm workers harvesting a green field, one carrying a crate of produce',
       float: { label: 'Next delivery', icon: 'truck', title: 'Sunday, 10am – 2pm', meta: 'Straight from the farm' },
       side: { image: IMAGES.market, tag: 'Order cutoff', value: 'Thu', label: 'Weekly cycle', detail: 'Every week' },
     },
