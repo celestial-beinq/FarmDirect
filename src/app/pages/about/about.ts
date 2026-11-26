@@ -83,7 +83,7 @@ import { PhotoPipe } from '../../shared/pipes';
           </ol>
         </div>
         <aside class="standards__card">
-          <img [src]="img.harvestbasket | photo: 800" alt="" loading="lazy" />
+          <img [src]="img.vegSpread | photo: 800" alt="" loading="lazy" />
           <div>
             <h3>Grown and raised without</h3>
             <ul>
