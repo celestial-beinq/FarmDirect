@@ -360,7 +360,7 @@ export const MOCK_CROPS: Crop[] = [
   /* ------------------------ Fruits ------------------------ */
   {
     id: 'crop-13',
-    name: 'Sweet Benue Mangoes (Peter & Julie)',
+    name: 'Sweet Benue Mangoes',
     category: 'Fruits',
     price: 1500,
     unit: 'kg',
