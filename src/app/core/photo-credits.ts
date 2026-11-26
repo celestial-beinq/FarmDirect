@@ -13,14 +13,6 @@ export interface PhotoCredit {
 
 export const PHOTO_CREDITS: PhotoCredit[] = [
   {
-    "file": "/images/tomatoes.jpg",
-    "title": "Tomatoes on sale at the Monday Market in Kakuri, Kaduna 03",
-    "author": "Kambai Akau",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Tomatoes_on_sale_at_the_Monday_Market_in_Kakuri,_Kaduna_03.jpg"
-  },
-  {
     "file": "/images/ugu.jpg",
     "title": "Fresh ugu leaves displayed at market stall",
     "author": "TopmanJnr1",
@@ -43,14 +35,6 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Nigerian_spinach_(Celosia_argentea)_with_flowers.jpg"
-  },
-  {
-    "file": "/images/rodo.jpg",
-    "title": "Nigerian Scotch Bonnet Pepper",
-    "author": "Blossom Ozurumba",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Nigerian_Scotch_Bonnet_Pepper.jpg"
   },
   {
     "file": "/images/tatashe.jpg",
@@ -133,28 +117,12 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "source": "https://commons.wikimedia.org/wiki/File:Green_unripe_Plantain.jpg"
   },
   {
-    "file": "/images/pineapple.jpg",
-    "title": "Pineapple in market",
-    "author": "Adamu mc",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Pineapple_in_market.jpg"
-  },
-  {
     "file": "/images/watermelon.jpg",
     "title": "Watermelon at monday market",
     "author": "Dorcas Atule",
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Watermelon_at_monday_market.jpg"
-  },
-  {
-    "file": "/images/oranges.jpg",
-    "title": "Oranges for sale in Monday Market Kd",
-    "author": "Kambai Akau",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Oranges_for_sale_in_Monday_Market_Kd.jpg"
   },
   {
     "file": "/images/agbalumo.jpg",
@@ -261,22 +229,6 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "source": "https://commons.wikimedia.org/wiki/File:Cassava_tubers_being_cleaned.jpg"
   },
   {
-    "file": "/images/cocoyam.jpg",
-    "title": "Cocoyam at monday market 03",
-    "author": "Dorcas Atule",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Cocoyam_at_monday_market_03.jpg"
-  },
-  {
-    "file": "/images/wateryam.jpg",
-    "title": "Cocoyam and water yam",
-    "author": "Daniel Paullll",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Cocoyam_and_water_yam.jpg"
-  },
-  {
     "file": "/images/beetroot.jpg",
     "title": "Nigerian Beetroot",
     "author": "Blossom Ozurumba",
@@ -307,22 +259,6 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Varieties_of_Beans_at_Bakin_Dogo_market_Kaduna_03.jpg"
-  },
-  {
-    "file": "/images/cowpea.jpg",
-    "title": "Cowpea on sale at the Monday Market in Kakuri, Kaduna 01",
-    "author": "Kambai Akau",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Cowpea_on_sale_at_the_Monday_Market_in_Kakuri,_Kaduna_01.jpg"
-  },
-  {
-    "file": "/images/egusi.jpg",
-    "title": "EGUSI",
-    "author": "Zz411 at English Wikipedia",
-    "licence": "CC BY-SA 3.0",
-    "licenceUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
-    "source": "https://commons.wikimedia.org/wiki/File:EGUSI.JPG"
   },
   {
     "file": "/images/ogbono.jpg",
@@ -397,28 +333,12 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "source": "https://commons.wikimedia.org/wiki/File:Locust_beans_(Iru).jpg"
   },
   {
-    "file": "/images/palmoil.jpg",
-    "title": "Palm Oil at kakuri kaduna state 01",
-    "author": "Dorcas Atule",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Palm_Oil_at_kakuri_kaduna_state_01.jpg"
-  },
-  {
     "file": "/images/honey.jpg",
     "title": "Honey Market in Opi town, Enugu State",
     "author": "Ebuka20",
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Honey_Market_in_Opi_town,_Enugu_State.jpg"
-  },
-  {
-    "file": "/images/onions.jpg",
-    "title": "Onions on sale at the Monday Market in Kakuri, Kaduna 01",
-    "author": "Kambai Akau",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Onions_on_sale_at_the_Monday_Market_in_Kakuri,_Kaduna_01.jpg"
   },
   {
     "file": "/images/cucumber.jpg",

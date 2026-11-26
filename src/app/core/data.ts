@@ -24,8 +24,13 @@ const local = (key: string) => `/images/${key}.jpg`;
 /** Photos of real Nigerian produce, markets, farms and livestock. */
 export const IMAGES = {
   // Scenes
-  /** Unsplash: produce stall. */
-  market: '1488459716781-31db52582fe9',
+  market: local('pepper-market'),
+  fruitStall: local('fruit-stall'),
+  vegSpread: local('veg-spread'),
+  plantation: local('plantation'),
+  cattle: local('cattle'),
+  beef: local('beef'),
+  pineapple: local('pineapple'),
   vegmarket: local('vegmarket'),
   /** Unsplash: harvest workers in a field. */
   farmer: '1605000797499-95a51c5269ae',
@@ -57,8 +62,8 @@ export const IMAGES = {
   dwarfgoat: local('dwarfgoat'),
   balami: local('balami'),
   // Older names still used around the site
-  vegMix: local('vegmarket'),
-  fruitMix: local('mango'),
+  vegMix: local('veg-spread'),
+  fruitMix: local('fruit-stall'),
   potatoes: local('yam'),
   cow: local('whitefulani'),
   harvest: local('harvestbasket'),
