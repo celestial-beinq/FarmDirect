@@ -45,14 +45,6 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "source": "https://commons.wikimedia.org/wiki/File:Tatashe_long_pepper.jpg"
   },
   {
-    "file": "/images/shombo.jpg",
-    "title": "Market Place for different varieties of Pepper at Bakin Dogo Market, Kaduna North",
-    "author": "Samsule2",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Market_Place_for_different_varieties_of_Pepper_at_Bakin_Dogo_Market,_Kaduna_North.jpg"
-  },
-  {
     "file": "/images/okra.jpg",
     "title": "Fresh okra for sale at market stall",
     "author": "TopmanJnr1",
@@ -78,11 +70,11 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
   },
   {
     "file": "/images/gardenegg.jpg",
-    "title": "Garden egg at monday market 02",
-    "author": "Dorcas Atule",
+    "title": "Garden Egg (Fresh)",
+    "author": "Aderiqueza",
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Garden_egg_at_monday_market_02.jpg"
+    "source": "https://commons.wikimedia.org/wiki/File:Garden_Egg(Fresh).jpg"
   },
   {
     "file": "/images/vegmarket.jpg",
@@ -91,14 +83,6 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:A_Vegetable_Seller_at_bakin_dogo%27s_market,_Kaduna_State.jpg"
-  },
-  {
-    "file": "/images/mango.jpg",
-    "title": "Bench of mango on a mango tree 04",
-    "author": "Danjuma Anthony",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Bench_of_mango_on_a_mango_tree_04.jpg"
   },
   {
     "file": "/images/plantain.jpg",

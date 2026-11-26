@@ -63,7 +63,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
             />
           </figure>
           <figure class="rf-hero__photo">
-            <img [src]="img.mango | photo: 600" alt="Green mangoes growing on a mango tree" />
+            <img [src]="img.mango | photo: 600" alt="A bowl of ripe golden mangoes" />
             <figcaption>Left on the tree to ripen</figcaption>
           </figure>
           <figure class="rf-hero__photo">
