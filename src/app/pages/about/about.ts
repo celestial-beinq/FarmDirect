@@ -18,7 +18,7 @@ import { PhotoPipe } from '../../shared/pipes';
     <section class="section">
       <div class="container about">
         <div class="about__photos">
-          <img [src]="img.market | photo: 900" alt="A market stall piled high with fresh vegetables and fruit" />
+          <img [src]="img.market | photo: 900" alt="A basket of fresh ata rodo peppers at a Nigerian market" />
           <img [src]="img.farmer | photo: 600" alt="Farm workers harvesting a green field, one carrying a crate of produce" loading="lazy" />
         </div>
         <div>

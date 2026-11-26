@@ -59,7 +59,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
           <figure class="rf-hero__photo rf-hero__photo--main">
             <img
               [src]="img.market | photo: 900"
-              alt="A market stall piled high with fresh vegetables and fruit"
+              alt="A basket of fresh ata rodo peppers at a Nigerian market"
             />
           </figure>
           <figure class="rf-hero__photo">
