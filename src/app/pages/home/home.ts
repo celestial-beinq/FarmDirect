@@ -149,47 +149,65 @@ export class Home {
     () => this.features.find((f) => f.key === this.activeKey()) ?? this.features[0],
   );
 
-  protected readonly uses: { title: string; text: string; image: string; bg: string; ink: string }[] = [
+  /** Unsplash photo ids, rendered through the photo pipe. */
+  protected readonly uses: { title: string; text: string; image: string; alt: string; bg: string; ink: string }[] = [
     {
-      title: 'Family Meals',
-      text: 'Soup ingredients, tubers and grains for the whole household, delivered every Sunday.',
-      image: IMAGES.dishes,
+      title: "Family Meals",
+      text: "Soup ingredients, tubers and grains for the whole household, delivered every Sunday.",
+      image: '1597362925123-77861d3fbac7',
+      alt: "Fresh tomatoes, peppers, corn, onions and other vegetables",
       bg: '#1b3a26',
       ink: '#ffffff',
     },
     {
-      title: 'Festive Seasons',
-      text: 'Rams for Sallah, goats and cows for Christmas and weddings, bought whole or shared.',
-      image: IMAGES.balami,
+      title: "Festive Seasons",
+      text: "Rams for Sallah, goats and cows for Christmas and weddings, bought whole or shared.",
+      image: '1500595046743-cd271d694d30',
+      alt: "Cattle grazing in a field at sunset",
       bg: '#cfe3f5',
       ink: '#111a14',
     },
     {
-      title: 'Restaurants & Caterers',
-      text: 'Bulk produce from named farms, delivered in time to plan the week’s menu.',
-      image: IMAGES.vegmarket,
+      title: "Restaurants & Caterers",
+      text: "Bulk produce from named farms, delivered in time to plan the week’s menu.",
+      image: '1550989460-0adf9ea622e2',
+      alt: "A market stall piled with fresh fruit and vegetables",
       bg: '#cfe86e',
       ink: '#111a14',
     },
     {
-      title: 'Community Pools',
-      text: 'Split a cow with colleagues, neighbours or your church group and pay per share.',
-      image: IMAGES.herder,
+      title: "Healthy Eating",
+      text: "Fresh vegetables and clean grains for families who want to know what they eat.",
+      image: '1540420773420-3366772f4999',
+      alt: "A colourful bowl of fresh vegetables",
       bg: '#f6e3a1',
       ink: '#111a14',
     },
     {
-      title: 'Healthy Eating',
-      text: 'Naturally ripened fruit and clean grains for families who want to know what they eat.',
-      image: IMAGES.mango,
+      title: "Fruit Lovers",
+      text: "Mango, pawpaw, oranges and pineapple ripened naturally, never with carbide.",
+      image: '1610832958506-aa56368176cf',
+      alt: "Pawpaw, oranges, kiwi, avocado and other fresh fruit",
       bg: '#f5d3c3',
       ink: '#111a14',
     },
+    {
+      title: "Soup Greens",
+      text: "Ugu, waterleaf and leafy greens cut fresh for soups and stews.",
+      image: '1576045057995-568f588f82fb',
+      alt: "A bunch of fresh leafy greens",
+      bg: '#e8f4b8',
+      ink: '#111a14',
+    },
+    {
+      title: "Community Pools",
+      text: "Split a cow or bulk produce with neighbours and pay only for your share.",
+      image: '1464226184884-fa280b87c399',
+      alt: "Fresh carrots, peppers and cucumbers",
+      bg: '#12281a',
+      ink: '#ffffff',
+    },
   ];
-
-  protected scrollRail(rail: HTMLElement, dir: 1 | -1): void {
-    rail.scrollBy({ left: dir * Math.min(rail.clientWidth * 0.8, 600), behavior: 'smooth' });
-  }
 
   /** The first three crops on sale. */
   protected readonly trending = computed(() => {
