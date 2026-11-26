@@ -525,14 +525,6 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "source": "https://commons.wikimedia.org/wiki/File:Huda_Ram.jpg"
   },
   {
-    "file": "/images/market.jpg",
-    "title": "Foodstuff Trader 01",
-    "author": "LauraB1",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Foodstuff_Trader_01.jpg"
-  },
-  {
     "file": "/images/tomatoes2.jpg",
     "title": "Fresh Tomatoes in rolls in Barnawa market Kaduna 01",
     "author": "Holiness Istifanus",
@@ -563,14 +555,6 @@ export const PHOTO_CREDITS: PhotoCredit[] = [
     "licence": "CC BY-SA 4.0",
     "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Brown_Beans_at_Bakin_Dogo_Market_Kaduna_North.jpg"
-  },
-  {
-    "file": "/images/farmer.jpg",
-    "title": "Happy plantain farmer with his farm produce",
-    "author": "Dappasolomon001",
-    "licence": "CC BY-SA 4.0",
-    "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Happy_plantain_farmer_with_his_farm_produce.jpg"
   },
   {
     "file": "/images/farmfield.jpg",
