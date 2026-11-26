@@ -12,6 +12,7 @@ import {
   tone,
 } from '../../core/accounts';
 import { AuthService } from '../../core/auth.service';
+import { Crop, buyOptions } from '../../core/data';
 import { sanitizeUrl, sanitizeText } from '../../core/sanitizer';
 import { StoreService } from '../../core/store.service';
 import { Icon } from '../../shared/icon';
@@ -24,6 +25,7 @@ import { DashSettings } from './settings';
   selector: 'app-admin-dashboard',
   imports: [RouterLink, DatePipe, NairaPipe, PhotoPipe, Icon, DashShell, Insights, DashSettings],
   templateUrl: './admin.html',
+  host: { '(document:keydown.escape)': 'closeOverlays()' },
 })
 export class AdminDashboard {
   private readonly auth = inject(AuthService);
@@ -164,6 +166,50 @@ export class AdminDashboard {
   protected readonly pendingProducts = computed(() =>
     this.store.crops().filter((p) => p.status === 'pending'),
   );
+
+  /* ---- Listing review: admins see the full listing before approving ---- */
+  private readonly reviewingId = signal<string | null>(null);
+  /** The listing under review, kept in sync with the store. */
+  protected readonly reviewing = computed(() => {
+    const id = this.reviewingId();
+    return id ? (this.store.crops().find((p) => p.id === id) ?? null) : null;
+  });
+  /** The photo shown large in the review panel. */
+  protected readonly reviewPhoto = signal<string | null>(null);
+  protected readonly reviewFarm = computed(() => {
+    const p = this.reviewing();
+    return p ? (this.store.farmers().find((f) => f.id === p.farmerId) ?? null) : null;
+  });
+  protected readonly reviewPhotos = computed(() => {
+    const p = this.reviewing();
+    return p ? [...new Set([p.image, ...(p.gallery ?? [])].filter(Boolean))] : [];
+  });
+  protected readonly reviewOptions = computed(() => {
+    const p = this.reviewing();
+    return p ? buyOptions(p) : [];
+  });
+  protected readonly isFarmerVerified = isFarmerVerified;
+
+  protected openReview(product: Crop): void {
+    this.reviewingId.set(product.id);
+    this.reviewPhoto.set(product.image);
+  }
+
+  protected closeReview(): void {
+    this.reviewingId.set(null);
+    this.reviewPhoto.set(null);
+  }
+
+  protected decideListing(product: Crop, status: 'live' | 'rejected'): void {
+    void this.store.setProductStatus(product.id, status);
+    this.closeReview();
+  }
+
+  /** Escape closes whichever review panel is open. */
+  protected closeOverlays(): void {
+    if (this.reviewingId()) this.closeReview();
+    else if (this.inspectingFarmer()) this.closeDossier();
+  }
 
   protected readonly orders = this.store.orders;
   protected readonly openOrders = computed(() =>
