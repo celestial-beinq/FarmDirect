@@ -124,6 +124,12 @@ select:focus-visible,
   }
 }
 
+/* ---------- Entrance animations (see shared/reveal.ts) ---------- */
+.motion-ready [reveal]:not([reveal='group']),
+.motion-ready [reveal='group'] [reveal-item] {
+  opacity: 0;
+}
+
 /* ---------- Layout ---------- */
 .container {
   width: 100%;

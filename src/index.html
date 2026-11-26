@@ -10,6 +10,16 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Hides [reveal] elements before first paint so Motion can animate them in.
+       Skipped for reduced motion; undone after 3s if the app never starts. -->
+  <script>
+    (function () {
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var d = document.documentElement;
+      d.classList.add('motion-ready');
+      setTimeout(function () { if (d.dataset.motion !== 'on') d.classList.remove('motion-ready'); }, 3000);
+    })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
