@@ -390,68 +390,328 @@
       }
 
       @case ('orders') {
-        <h1>Orders</h1>
-        <p>Confirm each paid order, harvest it, then mark it dispatched.</p>
-
-        @for (order of orders(); track order.id) {
-          <article class="order">
-            <div class="order__head">
-              <div>
-                <h3>Order {{ order.code }}</h3>
-                <p>
-                  {{ order.date | date: 'mediumDate' }} · {{ order.customerName || 'Customer' }}
-                </p>
-              </div>
-              <span class="badge-status" [class]="'badge-status--' + tone(order.status)">{{
-                order.status
-              }}</span>
-            </div>
-            <ul class="order__items">
-              @for (item of order.items; track $index) {
-                <li>
-                  <img [src]="item.image | photo: 120" alt="" />
-                  <span
-                    >{{ item.title }} <small>{{ item.detail }} × {{ item.qty }}</small></span
-                  >
-                  <strong>{{ item.unitPrice * item.qty | naira }}</strong>
-                </li>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h1 style="margin: 0;">Orders</h1>
+              <span class="badge-status badge-status--good" style="font-size: 0.72rem;">
+                {{ matchingOrders().length }} {{ matchingOrders().length === 1 ? 'order' : 'orders' }}
+              </span>
+              @if (toFulfil().length > 0) {
+                <span class="badge-status badge-status--warn" style="font-size: 0.72rem;">
+                  {{ toFulfil().length }} to fulfil
+                </span>
               }
-            </ul>
-            <p class="muted" style="font-size: 0.85rem; margin-bottom: 14px">
-              Deliver to: {{ order.address }}
-            </p>
-            <div class="order__foot">
-              <span
-                >Total <strong>{{ order.total | naira }}</strong></span
-              >
+            </div>
+            <p style="margin: 4px 0 0;">Confirm each paid order, harvest it, then mark it dispatched.</p>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="dash-tools" style="margin: 14px 0 16px;">
+          <label class="dash-search" style="min-width: 220px;">
+            <app-icon name="search" [size]="16" />
+            <input
+              type="search"
+              placeholder="Search order #, customer, address, or crop..."
+              aria-label="Search orders"
+              [value]="orderSearch()"
+              (input)="setOrderSearch($any($event.target).value)"
+            />
+          </label>
+
+          <label class="dash-filter-select">
+            <app-icon name="calendar" [size]="15" />
+            <select
+              aria-label="Filter by date range"
+              (change)="setOrderDatePreset($any($event.target).value)"
+            >
+              <option value="all" [selected]="orderDatePreset() === 'all'">All Dates</option>
+              <option value="today" [selected]="orderDatePreset() === 'today'">Today</option>
+              <option value="7days" [selected]="orderDatePreset() === '7days'">Past 7 Days</option>
+              <option value="30days" [selected]="orderDatePreset() === '30days'">Past 30 Days</option>
+              <option value="custom" [selected]="orderDatePreset() === 'custom'">Custom Date Range…</option>
+            </select>
+          </label>
+
+          @if (orderDatePreset() === 'custom') {
+            <div class="dash-date-range">
+              <input
+                type="date"
+                aria-label="Start date"
+                title="From date"
+                [value]="orderDateFrom()"
+                (change)="setOrderDateFrom($any($event.target).value)"
+              />
+              <span class="muted" style="font-size: 0.75rem;">to</span>
+              <input
+                type="date"
+                aria-label="End date"
+                title="To date"
+                [value]="orderDateTo()"
+                (change)="setOrderDateTo($any($event.target).value)"
+              />
+            </div>
+          }
+
+          <label class="dash-filter-select">
+            <select
+              aria-label="Filter by order status"
+              (change)="setOrderStatusFilter($any($event.target).value)"
+            >
+              <option value="all" [selected]="orderStatusFilter() === 'all'">All Statuses</option>
+              @for (st of farmerOrderStatuses; track st) {
+                <option [value]="st" [selected]="orderStatusFilter() === st">{{ st }}</option>
+              }
+            </select>
+          </label>
+
+          @if (hasActiveOrderFilters()) {
+            <button
+              type="button"
+              class="btn btn--sm btn--soft"
+              (click)="resetOrderFilters()"
+              title="Reset all search and date filters"
+            >
+              <app-icon name="close" [size]="13" /> Reset
+            </button>
+          }
+
+          <span class="dash-count" style="margin-left: auto;">
+            <b>{{ matchingOrders().length }}</b> of {{ orders().length }} orders
+          </span>
+        </div>
+
+        <div class="panel">
+          <div class="table-wrap">
+            <table class="table orders-table">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Delivery Address</th>
+                  <th class="num">Total</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of pagedOrders(); track order.id) {
+                  <tr [class.is-expanded]="expandedOrderId() === order.id">
+                    <td>
+                      <div class="cell-single-line">
+                        <strong class="mono" style="font-size: 0.85rem;">{{ order.code }}</strong>
+                        <span class="dot-sep">·</span>
+                        <span class="muted" style="font-size: 0.75rem;">
+                          {{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="cell-single-line">
+                        <span>{{ order.date | date: 'mediumDate' }}</span>
+                        <span class="dot-sep">·</span>
+                        <span class="muted" style="font-size: 0.75rem;">{{ order.date | date: 'shortTime' }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="cell-single-line" style="font-weight: 500;">
+                        {{ order.customerName || 'Customer' }}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="cell-single-line order-items-preview" [title]="itemsTooltip(order)">
+                        @for (item of order.items.slice(0, 3); track $index) {
+                          <img [src]="item.image | photo: 40" [alt]="item.title" class="order-mini-thumb" />
+                        }
+                        @if (order.items.length > 3) {
+                          <span class="order-mini-more">+{{ order.items.length - 3 }}</span>
+                        }
+                        <span style="font-size: 0.75rem; color: #475569;">
+                          {{ itemsSummary(order) }}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div
+                        class="cell-single-line muted"
+                        style="max-width: 240px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;"
+                        [title]="order.address"
+                      >
+                        {{ order.address || '—' }}
+                      </div>
+                    </td>
+                    <td class="num">
+                      <strong>{{ order.total | naira }}</strong>
+                    </td>
+                    <td>
+                      <span class="badge-status" [class]="'badge-status--' + tone(order.status)">
+                        {{ order.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="actions">
+                        @if (order.status === 'Placed') {
+                          <button
+                            type="button"
+                            class="btn btn--sm btn--primary"
+                            (click)="store.advanceOrder(order.id, 'Confirmed')"
+                          >
+                            Confirm Order
+                          </button>
+                        }
+                        @if (order.status === 'Confirmed') {
+                          <button
+                            type="button"
+                            class="btn btn--sm btn--primary"
+                            (click)="store.advanceOrder(order.id, 'Dispatched')"
+                          >
+                            Mark Dispatched
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--soft"
+                          (click)="toggleOrderExpand(order.id)"
+                          [attr.aria-expanded]="expandedOrderId() === order.id"
+                        >
+                          <app-icon [name]="expandedOrderId() === order.id ? 'minus' : 'plus'" [size]="12" />
+                          {{ expandedOrderId() === order.id ? 'Close' : 'Details' }}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  @if (expandedOrderId() === order.id) {
+                    <tr class="table__expanded-row">
+                      <td colspan="8">
+                        <div class="order-expanded-card">
+                          <div class="order-expanded-header">
+                            <div>
+                              <h4>Order {{ order.code }} Details</h4>
+                              <small class="muted">
+                                {{ order.customerName || 'Customer' }} · Ordered on {{ order.date | date: 'medium' }}
+                              </small>
+                            </div>
+                            <span class="badge-status" [class]="'badge-status--' + tone(order.status)">
+                              {{ order.status }}
+                            </span>
+                          </div>
+
+                          <ul class="order__items" style="margin-top: 12px;">
+                            @for (item of order.items; track $index) {
+                              <li>
+                                <img [src]="item.image | photo: 120" alt="" />
+                                <span>
+                                  {{ item.title }} <small>{{ item.detail }} × {{ item.qty }}</small>
+                                </span>
+                                <strong>{{ item.unitPrice * item.qty | naira }}</strong>
+                              </li>
+                            }
+                          </ul>
+
+                          <div class="order__foot" style="margin-top: 14px; padding-top: 12px;">
+                            <div>
+                              <small class="muted" style="display: block;">Delivery Address:</small>
+                              <span style="font-size: 0.825rem; font-weight: 500;">
+                                {{ order.address || '—' }}
+                              </span>
+                            </div>
+                            <div class="order__actions">
+                              @if (order.status === 'Placed') {
+                                <button
+                                  type="button"
+                                  class="btn btn--sm btn--primary"
+                                  (click)="store.advanceOrder(order.id, 'Confirmed')"
+                                >
+                                  Confirm Order
+                                </button>
+                              }
+                              @if (order.status === 'Confirmed') {
+                                <button
+                                  type="button"
+                                  class="btn btn--sm btn--primary"
+                                  (click)="store.advanceOrder(order.id, 'Dispatched')"
+                                >
+                                  Mark Dispatched
+                                </button>
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="panel__empty">
+                      @if (hasActiveOrderFilters()) {
+                        <p>No orders match your search or date filter.</p>
+                        <button
+                          type="button"
+                          class="btn btn--sm btn--soft"
+                          style="margin-top: 8px;"
+                          (click)="resetOrderFilters()"
+                        >
+                          Reset filters
+                        </button>
+                      } @else {
+                        <p>No orders yet. Paid orders for your produce will appear here.</p>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (matchingOrders().length > 0) {
+            <div class="pager" style="margin-top: 14px;">
+              <label>
+                Rows per page
+                <select (change)="setOrderPageSize($any($event.target).value)">
+                  @for (size of orderPageSizes; track size) {
+                    <option [value]="size" [selected]="size === orderPageSize()">{{ size }}</option>
+                  }
+                </select>
+              </label>
               <div>
-                @if (order.status === 'Placed') {
+                <span>
+                  {{ orderPageStart() + 1 }} to {{ Math.min(orderPageStart() + pagedOrders().length, matchingOrders().length) }} of
+                  {{ matchingOrders().length }}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Previous page"
+                  [disabled]="orderPage() === 1"
+                  (click)="goToOrderPage(orderPage() - 1)"
+                >
+                  <app-icon name="chevron-left" [size]="16" />
+                </button>
+                @for (number of orderPageNumbers(); track number) {
                   <button
                     type="button"
-                    class="btn btn--sm btn--primary"
-                    (click)="store.advanceOrder(order.id, 'Confirmed')"
+                    [attr.aria-label]="'Page ' + number"
+                    [attr.aria-current]="number === orderPage() ? 'page' : null"
+                    (click)="goToOrderPage(number)"
                   >
-                    Confirm Order
+                    {{ number }}
                   </button>
                 }
-                @if (order.status === 'Confirmed') {
-                  <button
-                    type="button"
-                    class="btn btn--sm btn--primary"
-                    (click)="store.advanceOrder(order.id, 'Dispatched')"
-                  >
-                    Mark Dispatched
-                  </button>
-                }
+                <button
+                  type="button"
+                  aria-label="Next page"
+                  [disabled]="orderPage() === orderPageCount()"
+                  (click)="goToOrderPage(orderPage() + 1)"
+                >
+                  <app-icon name="chevron-right" [size]="16" />
+                </button>
               </div>
             </div>
-          </article>
-        } @empty {
-          <div class="empty">
-            <h2>No orders yet</h2>
-            <p class="muted">Paid orders for your produce will appear here.</p>
-          </div>
-        }
+          }
+        </div>
       }
 
       @case ('reviews') {

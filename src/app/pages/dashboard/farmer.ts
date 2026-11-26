@@ -5,6 +5,9 @@ import {
   AddressParts,
   EMPTY_ADDRESS,
   NIGERIAN_STATES,
+  ORDER_STATUSES,
+  Order,
+  OrderStatus,
   formatAddress,
   Review,
   getFarmerVerificationErrors,
@@ -121,6 +124,167 @@ export class FarmerDashboard {
   });
   protected goToProductPage(p: number): void {
     this.productPageWanted.set(p);
+  }
+
+  /* ---- Orders tab: search, filter, expand & pagination ---- */
+  protected readonly farmerOrderStatuses = ORDER_STATUSES.filter(
+    (s) => s !== 'Awaiting payment',
+  );
+  protected readonly orderSearch = signal('');
+  protected readonly orderStatusFilter = signal<'all' | OrderStatus>('all');
+  protected readonly orderDatePreset = signal<'all' | 'today' | '7days' | '30days' | 'custom'>(
+    'all',
+  );
+  protected readonly orderDateFrom = signal('');
+  protected readonly orderDateTo = signal('');
+  protected readonly expandedOrderId = signal<string | null>(null);
+
+  protected readonly orderPageSizes = [5, 10, 15, 25];
+  protected readonly orderPageSize = signal(10);
+  private readonly orderPageWanted = signal(1);
+
+  protected readonly hasActiveOrderFilters = computed(() => {
+    return (
+      Boolean(this.orderSearch().trim()) ||
+      this.orderStatusFilter() !== 'all' ||
+      this.orderDatePreset() !== 'all' ||
+      Boolean(this.orderDateFrom()) ||
+      Boolean(this.orderDateTo())
+    );
+  });
+
+  protected readonly matchingOrders = computed(() => {
+    const list = this.orders();
+    const search = this.orderSearch().trim().toLowerCase();
+    const status = this.orderStatusFilter();
+    const preset = this.orderDatePreset();
+    const from = this.orderDateFrom();
+    const to = this.orderDateTo();
+    const now = Date.now();
+    const dayMs = 86400000;
+
+    return list.filter((order) => {
+      if (status !== 'all' && order.status !== status) return false;
+
+      if (search) {
+        const customer = (order.customerName || 'Customer').toLowerCase();
+        const code = order.code.toLowerCase();
+        const address = order.address.toLowerCase();
+        const items = order.items.map((i) => i.title.toLowerCase()).join(' ');
+        if (
+          !code.includes(search) &&
+          !customer.includes(search) &&
+          !address.includes(search) &&
+          !items.includes(search)
+        ) {
+          return false;
+        }
+      }
+
+      if (preset !== 'all') {
+        const orderTime = new Date(order.date).getTime();
+        const orderDateStr = order.date.slice(0, 10);
+        if (preset === 'today') {
+          if (orderDateStr !== new Date().toISOString().slice(0, 10)) return false;
+        } else if (preset === '7days') {
+          if (orderTime < now - 7 * dayMs) return false;
+        } else if (preset === '30days') {
+          if (orderTime < now - 30 * dayMs) return false;
+        } else if (preset === 'custom') {
+          if (from && orderDateStr < from) return false;
+          if (to && orderDateStr > to) return false;
+        }
+      }
+
+      return true;
+    });
+  });
+
+  protected readonly orderPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.matchingOrders().length / this.orderPageSize())),
+  );
+  protected readonly orderPage = computed(() =>
+    Math.min(this.orderPageWanted(), this.orderPageCount()),
+  );
+  protected readonly orderPageStart = computed(
+    () => (this.orderPage() - 1) * this.orderPageSize(),
+  );
+  protected readonly pagedOrders = computed(() =>
+    this.matchingOrders().slice(
+      this.orderPageStart(),
+      this.orderPageStart() + this.orderPageSize(),
+    ),
+  );
+  protected readonly orderPageNumbers = computed(() => {
+    const total = this.orderPageCount();
+    const current = this.orderPage();
+    const first = Math.max(1, Math.min(current - 2, total - 4));
+    const length = Math.min(5, total);
+    return Array.from({ length }, (_, i) => first + i);
+  });
+
+  protected setOrderSearch(val: string): void {
+    this.orderSearch.set(val);
+    this.orderPageWanted.set(1);
+  }
+
+  protected setOrderStatusFilter(val: 'all' | OrderStatus): void {
+    this.orderStatusFilter.set(val);
+    this.orderPageWanted.set(1);
+  }
+
+  protected setOrderDatePreset(val: 'all' | 'today' | '7days' | '30days' | 'custom'): void {
+    this.orderDatePreset.set(val);
+    if (val !== 'custom') {
+      this.orderDateFrom.set('');
+      this.orderDateTo.set('');
+    }
+    this.orderPageWanted.set(1);
+  }
+
+  protected setOrderDateFrom(val: string): void {
+    this.orderDateFrom.set(val);
+    this.orderDatePreset.set('custom');
+    this.orderPageWanted.set(1);
+  }
+
+  protected setOrderDateTo(val: string): void {
+    this.orderDateTo.set(val);
+    this.orderDatePreset.set('custom');
+    this.orderPageWanted.set(1);
+  }
+
+  protected setOrderPageSize(val: string | number): void {
+    this.orderPageSize.set(Number(val));
+    this.orderPageWanted.set(1);
+  }
+
+  protected goToOrderPage(p: number): void {
+    this.orderPageWanted.set(p);
+  }
+
+  protected toggleOrderExpand(orderId: string): void {
+    this.expandedOrderId.set(this.expandedOrderId() === orderId ? null : orderId);
+  }
+
+  protected resetOrderFilters(): void {
+    this.orderSearch.set('');
+    this.orderStatusFilter.set('all');
+    this.orderDatePreset.set('all');
+    this.orderDateFrom.set('');
+    this.orderDateTo.set('');
+    this.orderPageWanted.set(1);
+  }
+
+  protected itemsSummary(order: Order): string {
+    if (!order.items.length) return 'No items';
+    const first = order.items[0].title;
+    if (order.items.length === 1) return first;
+    return `${first} + ${order.items.length - 1} more`;
+  }
+
+  protected itemsTooltip(order: Order): string {
+    return order.items.map((i) => `${i.title} (${i.qty}×)`).join(', ');
   }
   protected readonly sales = computed(() =>
     this.orders()
