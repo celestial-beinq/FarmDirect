@@ -35,43 +35,109 @@
   </div>
 </div>
 
-<!-- The problem -->
-<section class="section problem">
+<!-- Core features -->
+<section class="section features">
   <div class="container">
-    <div class="problem__head">
-      <div>
-        <span class="eyebrow">Why we exist</span>
-        <h2>Nigerians deserve to know what they are eating</h2>
-      </div>
-      <p>
-        Fruit ripened overnight with carbide. Beans sprayed with insecticide to keep weevils away.
-        Palm oil coloured with dye. Food that passes through so many hands that nobody can say where
-        it came from, or what seed it grew from. We started FarmDirect to give families a way to buy
-        real food straight from farms that have been checked.
-      </p>
+    <div class="section-head">
+      <h2>Everything You Need to Eat Real Food</h2>
+      <p>Fresh harvests, shared livestock and one simple weekly delivery, all from farms we have checked.</p>
     </div>
-    <div class="problem__grid">
-      @for (c of concerns; track c.title) {
-        <article class="problem__card">
-          <img [src]="c.image | photo: 600" alt="" loading="lazy" />
-          <div>
-            <h3>{{ c.title }}</h3>
-            <p>{{ c.text }}</p>
-            <p class="problem__answer"><app-icon name="check" [size]="16" /> {{ c.answer }}</p>
-          </div>
-        </article>
+
+    <div class="features__tabs" role="tablist" aria-label="FarmDirect features">
+      @for (f of features; track f.key) {
+        <button
+          type="button"
+          role="tab"
+          class="features__tab"
+          [class.is-active]="f.key === activeFeature().key"
+          [attr.aria-selected]="f.key === activeFeature().key"
+          (click)="activeKey.set(f.key)"
+        >
+          {{ f.tab }}
+        </button>
       }
     </div>
-    <div class="center">
-      <a routerLink="/real-food" class="btn btn--primary btn--pill">
-        Read the Real Food Guide <app-icon name="arrow-right" [size]="18" />
-      </a>
+
+    @for (f of [activeFeature()]; track f.key) {
+      <div class="feature" role="tabpanel" [attr.aria-label]="f.tab">
+        <div class="feature__text">
+          <p class="feature__tags">
+            @for (t of f.tags; track t; let last = $last) {
+              <span>{{ t }}</span>
+              @if (!last) {
+                <span aria-hidden="true">•</span>
+              }
+            }
+          </p>
+          <h3>{{ f.title }}</h3>
+          <p>{{ f.text }}</p>
+          <a [routerLink]="f.link" class="btn btn--primary">
+            {{ f.cta }} <app-icon name="arrow-right" [size]="16" />
+          </a>
+        </div>
+
+        <div class="feature__stage">
+          <img [src]="f.image | photo: 800" [alt]="f.alt" />
+          <div class="feature__float">
+            <span class="feature__float-label">{{ f.float.label }}</span>
+            <div class="feature__float-row">
+              <span class="feature__float-icon"><app-icon [name]="f.float.icon" [size]="16" /></span>
+              <div>
+                <strong>{{ f.float.title }}</strong>
+                <small>{{ f.float.meta }}</small>
+              </div>
+            </div>
+            @if (f.float.progress !== undefined) {
+              <div class="feature__bar"><span [style.width.%]="f.float.progress"></span></div>
+            }
+          </div>
+        </div>
+
+        <div class="feature__side">
+          <img [src]="f.side.image | photo: 500" alt="" />
+          <span class="feature__side-tag">{{ f.side.tag }}</span>
+          <strong class="feature__side-value">{{ f.side.value }}</strong>
+          <div class="feature__side-foot">
+            <span><app-icon name="pin" [size]="14" /> {{ f.side.label }}</span>
+            <span>{{ f.side.detail }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- Where FarmDirect fits -->
+<section class="section section--tint uses">
+  <div class="container">
+    <div class="section-head">
+      <h2>Where Families Use FarmDirect Every Week</h2>
+      <p>From Sunday soup to Sallah rams, buy real food for every table, straight from the farm.</p>
     </div>
+  </div>
+  <div class="uses__rail" #rail>
+    @for (u of uses; track u.title) {
+      <article class="use" tabindex="0" [style.--use-bg]="u.bg" [style.--use-ink]="u.ink">
+        <img [src]="u.image | photo: 600" alt="" loading="lazy" />
+        <div class="use__body">
+          <h3>{{ u.title }}</h3>
+          <p>{{ u.text }}</p>
+        </div>
+      </article>
+    }
+  </div>
+  <div class="container uses__nav">
+    <button type="button" aria-label="Scroll back" (click)="scrollRail(rail, -1)">
+      <app-icon name="chevron-left" [size]="20" />
+    </button>
+    <button type="button" aria-label="Scroll forward" (click)="scrollRail(rail, 1)">
+      <app-icon name="chevron-right" [size]="20" />
+    </button>
   </div>
 </section>
 
 <!-- How it works -->
-<section class="section section--tint" id="how-it-works">
+<section class="section" id="how-it-works">
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">How it Works</span>
@@ -124,24 +190,67 @@
   </div>
 </section>
 
-<!-- Why trust us -->
+<!-- Trending -->
 <section class="section section--tint">
-  <div class="container why">
-    <div class="why__photo">
-      <img [src]="img.yamfarm | photo: 800" alt="Yam heaps with climbing stakes on a Nigerian farm" loading="lazy" />
+  <div class="container">
+    <div class="row-head">
+      <h2>Trending Harvest</h2>
+      <a routerLink="/crops">View All Market Items</a>
     </div>
-    <div>
-      <span class="eyebrow">Why choose us</span>
-      <h2>Know exactly where your food comes from</h2>
-      <ul class="why__grid">
-        @for (reason of reasons; track reason.title) {
-          <li>
-            <app-icon [name]="reason.icon" [size]="28" />
-            <h3>{{ reason.title }}</h3>
-            <p>{{ reason.text }}</p>
-          </li>
-        }
-      </ul>
+    <div class="trending">
+      @for (item of trending(); track item.crop.id) {
+        <article class="product">
+          <a [routerLink]="['/crops', item.crop.id]">
+            <img [src]="item.crop.image | photo: 700" [alt]="item.crop.name" loading="lazy" />
+          </a>
+          <div class="product__top">
+            <div>
+              <span class="product__origin">{{ item.crop.origin }}</span>
+              <h3>
+                <a [routerLink]="['/crops', item.crop.id]">{{ item.crop.name }}</a>
+              </h3>
+            </div>
+            <span class="price">{{ item.option.price | naira }}</span>
+          </div>
+          <p>{{ item.crop.description }}</p>
+          <button type="button" class="btn btn--primary btn--block" (click)="add(item.crop)">
+            <app-icon name="basket" [size]="18" /> Add {{ item.option.label }} to Basket
+          </button>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- The problem -->
+<section class="section problem">
+  <div class="container">
+    <div class="section-head problem__head">
+      <span class="eyebrow">Why we exist</span>
+      <h2>Nigerians deserve to know what they are eating</h2>
+      <p>
+        Fruit ripened overnight with carbide. Beans sprayed with insecticide to keep weevils away.
+        Palm oil coloured with dye. Food that passes through so many hands that nobody can say where
+        it came from, or what seed it grew from. We started FarmDirect to give families a way to buy
+        real food straight from farms that have been checked.
+      </p>
+    </div>
+    <div class="problem__grid">
+      @for (c of concerns; track c.title) {
+        <article class="problem__card">
+          <img [src]="c.image | photo: 600" alt="" loading="lazy" />
+          <div>
+            <h3>{{ c.title }}</h3>
+            <p>{{ c.text }}</p>
+            <p class="problem__answer"><app-icon name="check" [size]="16" /> {{ c.answer }}</p>
+          </div>
+        </article>
+      }
+    </div>
+    <div class="center">
+      <a routerLink="/real-food" class="btn btn--primary btn--pill">
+        Read the Real Food Guide <app-icon name="arrow-right" [size]="18" />
+      </a>
     </div>
   </div>
 </section>
@@ -161,6 +270,28 @@
         <li><app-icon name="close" [size]="16" /> {{ item }}</li>
       }
     </ul>
+  </div>
+</section>
+
+<!-- Why trust us -->
+<section class="section section--tint">
+  <div class="container why">
+    <div class="why__photo">
+      <img [src]="img.yamfarm | photo: 800" alt="Yam heaps with climbing stakes on a Nigerian farm" loading="lazy" />
+    </div>
+    <div>
+      <span class="eyebrow">Why choose us</span>
+      <h2>Know exactly where your food comes from</h2>
+      <ul class="why__grid">
+        @for (reason of reasons; track reason.title) {
+          <li>
+            <app-icon [name]="reason.icon" [size]="28" />
+            <h3>{{ reason.title }}</h3>
+            <p>{{ reason.text }}</p>
+          </li>
+        }
+      </ul>
+    </div>
   </div>
 </section>
 
@@ -209,40 +340,8 @@
   </div>
 </section>
 
-<!-- Trending -->
-<section class="section">
-  <div class="container">
-    <div class="row-head">
-      <h2>Trending Harvest</h2>
-      <a routerLink="/crops">View All Market Items</a>
-    </div>
-    <div class="trending">
-      @for (item of trending(); track item.crop.id) {
-        <article class="product">
-          <a [routerLink]="['/crops', item.crop.id]">
-            <img [src]="item.crop.image | photo: 700" [alt]="item.crop.name" loading="lazy" />
-          </a>
-          <div class="product__top">
-            <div>
-              <span class="product__origin">{{ item.crop.origin }}</span>
-              <h3>
-                <a [routerLink]="['/crops', item.crop.id]">{{ item.crop.name }}</a>
-              </h3>
-            </div>
-            <span class="price">{{ item.option.price | naira }}</span>
-          </div>
-          <p>{{ item.crop.description }}</p>
-          <button type="button" class="btn btn--primary btn--block" (click)="add(item.crop)">
-            <app-icon name="basket" [size]="18" /> Add {{ item.option.label }} to Basket
-          </button>
-        </article>
-      }
-    </div>
-  </div>
-</section>
-
 <!-- Blog -->
-<section class="section section--tint">
+<section class="section">
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">From the Farm</span>

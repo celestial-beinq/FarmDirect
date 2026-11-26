@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/cart.service';
 import { FOOD_CONCERNS, GROWN_WITHOUT, REGIONS, seasonFor } from '../../core/content';
@@ -6,6 +6,20 @@ import { Crop, IMAGES, POSTS, buyOptions } from '../../core/data';
 import { StoreService } from '../../core/store.service';
 import { Icon, IconName } from '../../shared/icon';
 import { NairaPipe, PhotoPipe } from '../../shared/pipes';
+
+interface Feature {
+  key: string;
+  tab: string;
+  tags: string[];
+  title: string;
+  text: string;
+  cta: string;
+  link: string;
+  image: string;
+  alt: string;
+  float: { label: string; icon: IconName; title: string; meta: string; progress?: number };
+  side: { image: string; tag: string; value: string; label: string; detail: string };
+}
 
 @Component({
   selector: 'app-home',
@@ -74,6 +88,108 @@ export class Home {
       text: 'The price you see is the price you pay. Buying together in pools brings the cost down.',
     },
   ];
+
+  protected readonly features: Feature[] = [
+    {
+      key: 'harvest',
+      tab: 'Fresh Harvest',
+      tags: ['Picked to order', 'Peak ripeness', 'Named farms'],
+      title: 'Produce harvested for your order',
+      text: 'Tomatoes, ugu, yam, plantain and grains picked after you order, not left sitting in a warehouse. Every listing names the farm and region it came from.',
+      cta: 'Shop Harvest',
+      link: '/crops',
+      image: IMAGES.harvestbasket,
+      alt: 'A basket of freshly harvested Nigerian produce',
+      float: { label: 'Your basket', icon: 'basket', title: 'Ugu, tomatoes, plantain', meta: 'Harvested Saturday' },
+      side: { image: IMAGES.tomatoes, tag: 'Origin', value: 'Kano', label: 'Plum tomatoes', detail: 'Northern farm' },
+    },
+    {
+      key: 'livestock',
+      tab: 'Livestock Pools',
+      tags: ['Buy whole', 'Or share', 'Vet-checked'],
+      title: 'Share a cow with other families',
+      text: 'Can’t use a whole animal? Join a pool and pay only for your share. Every ram, goat and cow is checked by a vet before it is sold.',
+      cta: 'Buy Livestock',
+      link: '/livestock',
+      image: IMAGES.whitefulani,
+      alt: 'A White Fulani cow',
+      float: { label: 'Pool progress', icon: 'users', title: 'White Fulani cow', meta: '6 of 8 shares taken', progress: 75 },
+      side: { image: IMAGES.balami, tag: 'Your share', value: '1/4', label: 'Balami ram', detail: 'Vet-checked' },
+    },
+    {
+      key: 'delivery',
+      tab: 'Sunday Delivery',
+      tags: ['Order Thursday', 'Harvest Saturday', 'Enjoy Sunday'],
+      title: 'One weekly run, straight to your door',
+      text: 'Place your order by Thursday. Farmers harvest for it on Saturday and it reaches your home on Sunday, fresh and in one trip.',
+      cta: 'How it works',
+      link: '/how-it-works',
+      image: IMAGES.farmer,
+      alt: 'A Nigerian farmer carrying freshly harvested plantain',
+      float: { label: 'Next delivery', icon: 'truck', title: 'Sunday, 10am – 2pm', meta: 'Straight from the farm' },
+      side: { image: IMAGES.market, tag: 'Order cutoff', value: 'Thu', label: 'Weekly cycle', detail: 'Every week' },
+    },
+    {
+      key: 'verified',
+      tab: 'Verified Farms',
+      tags: ['Farm visits', 'No carbide', 'Traceable'],
+      title: 'Farms checked before they can sell',
+      text: 'We visit and vet every farm. Carbide ripening, chemical storage or dyed oil gets a farm removed, so what reaches you is real food.',
+      cta: 'Read the Real Food Guide',
+      link: '/real-food',
+      image: IMAGES.farmfield,
+      alt: 'Rows of crops on a Nigerian farm',
+      float: { label: 'Farm status', icon: 'shield', title: 'Verified farm', meta: 'Inspected and approved' },
+      side: { image: IMAGES.yamfarm, tag: 'Promise', value: '0%', label: 'Carbide used', detail: 'Natural only' },
+    },
+  ];
+
+  protected readonly activeKey = signal(this.features[0].key);
+  protected readonly activeFeature = computed(
+    () => this.features.find((f) => f.key === this.activeKey()) ?? this.features[0],
+  );
+
+  protected readonly uses: { title: string; text: string; image: string; bg: string; ink: string }[] = [
+    {
+      title: 'Family Meals',
+      text: 'Soup ingredients, tubers and grains for the whole household, delivered every Sunday.',
+      image: IMAGES.dishes,
+      bg: '#1b3a26',
+      ink: '#ffffff',
+    },
+    {
+      title: 'Festive Seasons',
+      text: 'Rams for Sallah, goats and cows for Christmas and weddings, bought whole or shared.',
+      image: IMAGES.balami,
+      bg: '#cfe3f5',
+      ink: '#111a14',
+    },
+    {
+      title: 'Restaurants & Caterers',
+      text: 'Bulk produce from named farms, delivered in time to plan the week’s menu.',
+      image: IMAGES.vegmarket,
+      bg: '#cfe86e',
+      ink: '#111a14',
+    },
+    {
+      title: 'Community Pools',
+      text: 'Split a cow with colleagues, neighbours or your church group and pay per share.',
+      image: IMAGES.herder,
+      bg: '#f6e3a1',
+      ink: '#111a14',
+    },
+    {
+      title: 'Healthy Eating',
+      text: 'Naturally ripened fruit and clean grains for families who want to know what they eat.',
+      image: IMAGES.mango,
+      bg: '#f5d3c3',
+      ink: '#111a14',
+    },
+  ];
+
+  protected scrollRail(rail: HTMLElement, dir: 1 | -1): void {
+    rail.scrollBy({ left: dir * Math.min(rail.clientWidth * 0.8, 600), behavior: 'smooth' });
+  }
 
   /** The first three crops on sale. */
   protected readonly trending = computed(() => {
