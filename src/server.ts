@@ -31,7 +31,7 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.paystack.co",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",
@@ -59,11 +59,17 @@ const PRODUCTION_HEADERS: Record<string, string> = {
   'Content-Security-Policy': CONTENT_SECURITY_POLICY,
 };
 
-function withSecurityHeaders(response: Response, live: boolean): Response {
+const PRIVATE_ROUTES = ['/account', '/farmer', '/admin', '/login', '/signup', '/payment'];
+
+function withSecurityHeaders(response: Response, live: boolean, isPrivate = false): Response {
   const headers = new Headers(response.headers);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
   if (live) {
     for (const [name, value] of Object.entries(PRODUCTION_HEADERS)) headers.set(name, value);
+  }
+  if (isPrivate) {
+    headers.set('Cache-Control', 'no-store');
+    headers.set('X-Robots-Tag', 'noindex, nofollow');
   }
   return new Response(response.body, {
     status: response.status,
@@ -77,6 +83,7 @@ export async function netlifyAppEngineHandler(request: Request): Promise<Respons
   /** True on Netlify; undefined under `ng serve`. */
   const live = !!context;
   const { pathname } = new URL(request.url);
+  const isPrivate = PRIVATE_ROUTES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
   // Health check for uptime monitors.
   if (pathname === '/api/health') {
@@ -95,7 +102,7 @@ export async function netlifyAppEngineHandler(request: Request): Promise<Respons
   }
 
   const result = await angularAppEngine.handle(request, context);
-  return withSecurityHeaders(result ?? new Response('Not found', { status: 404 }), live);
+  return withSecurityHeaders(result ?? new Response('Not found', { status: 404 }), live, isPrivate);
 }
 
 /**

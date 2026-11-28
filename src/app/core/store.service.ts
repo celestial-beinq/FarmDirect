@@ -111,11 +111,11 @@ export class StoreService {
   /** True while the realtime connection opened by `watch()` is up. */
   readonly live = signal(false);
 
-  /** What shoppers can buy: approved listings from verified farms with complete NIN & dossier. */
+  /** What shoppers can buy: approved listings from verified farms. */
   readonly liveCrops = computed(() => {
     const verified = new Set(
       this.farmers()
-        .filter((f) => isFarmerVerified(f))
+        .filter((f) => f.status === 'verified')
         .map((f) => f.id),
     );
     return this.crops().filter((c) => c.status === 'live' && verified.has(c.farmerId));
@@ -138,48 +138,76 @@ export class StoreService {
       return;
     }
     await this.auth.ready;
-    const signedIn = !!this.auth.userId();
+    const profile = this.auth.profile();
+    const signedIn = !!profile?.id;
+    const privilegedFarmReader = profile?.role === 'farmer' || profile?.role === 'admin';
 
-    const [farms, products, pools, orders, profiles] = await Promise.all([
-      client.from('farms').select('*').order('created_at'),
-      client.from('products').select('*').order('created_at'),
-      client.from('pools').select('*').order('created_at'),
-      signedIn
-        ? client
-            .from('orders')
-            .select('*, order_items(*)')
-            .order('created_at', { ascending: false })
-        : { data: [], error: null },
-      signedIn
-        ? client.from('profiles').select('*').order('created_at')
-        : { data: [], error: null },
-    ]);
+    const [verifiedFarms, ownedOrAllFarms, farmKycs, products, pools, orders, profiles] =
+      await Promise.all([
+        client.rpc('get_verified_farms'),
+        privilegedFarmReader
+          ? client.from('farms').select('id, owner_id, name, location, status, created_at').order('created_at')
+          : { data: [], error: null },
+        privilegedFarmReader
+          ? client.from('farm_kyc').select('*')
+          : { data: [], error: null },
+        client.from('products').select('*').order('created_at'),
+        client
+          .from('pools')
+          .select('id, product_id, name, target, raised, members, closes_at, status, created_at')
+          .order('created_at'),
+        signedIn
+          ? client
+              .from('orders')
+              .select('*, order_items(*)')
+              .order('created_at', { ascending: false })
+          : { data: [], error: null },
+        signedIn
+          ? client.from('profiles').select('*').order('created_at')
+          : { data: [], error: null },
+      ]);
 
-    const failed = [farms, products, pools, orders, profiles].find((r) => r.error);
+    const failed = [verifiedFarms, ownedOrAllFarms, farmKycs, products, pools, orders, profiles].find(
+      (r) => r.error,
+    );
     this.error.set(failed ? friendlyError(failed.error) : '');
 
-    const farmRows: any[] = farms.data ?? [];
+    const kycByFarm = new Map<string, any>(
+      (farmKycs.data ?? []).map((k: any) => [k.farm_id, k]),
+    );
+    const mergedFarms = new Map<string, any>();
+    for (const f of verifiedFarms.data ?? []) mergedFarms.set(f.id, f);
+    for (const f of ownedOrAllFarms.data ?? []) mergedFarms.set(f.id, f);
+
+    const farmRows: any[] = [...mergedFarms.values()];
     const location = new Map(farmRows.map((f) => [f.id, f.location]));
 
     this.farmers.set(
       farmRows.length
-        ? farmRows.map((f) => ({
-            id: f.id,
-            ownerId: f.owner_id,
-            name: f.name,
-            location: f.location,
-            status: f.status,
-            joined: f.created_at,
-            nin: f.nin,
-            residentialAddress: f.residential_address,
-            farmSize: f.farm_size,
-            cropProduces: f.crop_produces,
-            stateOfOrigin: f.state_of_origin,
-            documentUrl: f.document_url,
-            verificationNotes: f.verification_notes,
-            farmAddress: f.farm_address ?? '',
-            addressParts: f.address_parts ?? {},
-          }))
+        ? farmRows.map((f) => {
+            const kyc = kycByFarm.get(f.id);
+            return {
+              id: f.id,
+              ownerId: f.owner_id ?? null,
+              name: f.name,
+              location: f.location,
+              status: f.status,
+              joined: f.created_at,
+              ...(kyc
+                ? {
+                    nin: kyc.nin,
+                    residentialAddress: kyc.residential_address,
+                    farmSize: kyc.farm_size,
+                    cropProduces: kyc.crop_produces,
+                    stateOfOrigin: kyc.state_of_origin,
+                    documentUrl: kyc.document_url,
+                    verificationNotes: kyc.verification_notes,
+                    farmAddress: kyc.farm_address ?? '',
+                    addressParts: kyc.address_parts ?? {},
+                  }
+                : {}),
+            };
+          })
         : (this.supabase.configured ? [] : MOCK_FARMERS),
     );
 
@@ -473,15 +501,13 @@ export class StoreService {
     return this.change((c) => c.from('products').delete().eq('id', id));
   }
 
-  setFarmerStatus(id: string, status: FarmerStatus, rawNotes?: string): Promise<string | null> {
+  async setFarmerStatus(id: string, status: FarmerStatus, rawNotes?: string): Promise<string | null> {
     const notes = rawNotes === undefined ? undefined : sanitizeText(rawNotes, 1000);
     const targetFarmer = this.farmers().find((f) => f.id === id);
     if (status === 'verified') {
       const errors = getFarmerVerificationErrors(targetFarmer);
       if (errors.length > 0) {
-        return Promise.resolve(
-          `Cannot verify farm: NIN and full verification dossier are compulsory. ${errors.join(' ')}`,
-        );
+        return `Cannot verify farm: NIN and full verification dossier are compulsory. ${errors.join(' ')}`;
       }
     }
 
@@ -490,12 +516,25 @@ export class StoreService {
         f.id === id ? { ...f, status, verificationNotes: notes ?? f.verificationNotes } : f,
       ),
     );
-    return this.change((c) =>
-      c
-        .from('farms')
-        .update({ status, verification_notes: notes ?? '' })
-        .eq('id', id),
-    );
+
+    const client = this.supabase.client;
+    if (!client) return null;
+
+    if (notes !== undefined) {
+      const { error: notesError } = await client
+        .from('farm_kyc')
+        .upsert({ farm_id: id, verification_notes: notes }, { onConflict: 'farm_id' });
+      if (notesError) {
+        const message = friendlyError(notesError);
+        this.error.set(message);
+        await this.refresh();
+        return message;
+      }
+    }
+
+    const err = await this.change((c) => c.from('farms').update({ status }).eq('id', id));
+    if (err) await this.refresh();
+    return err;
   }
 
   async submitFarmerVerification(
@@ -546,28 +585,34 @@ export class StoreService {
           : f,
       ),
     );
-    const row: Record<string, unknown> = {
+    const client = this.supabase.client;
+    if (!client) return null;
+
+    const kycRow: Record<string, unknown> = {
+      farm_id: id,
       nin: data.nin,
       residential_address: data.residentialAddress,
-      location: data.location,
       farm_size: data.farmSize,
       crop_produces: data.cropProduces,
       state_of_origin: data.stateOfOrigin,
       document_url: data.documentUrl ?? '',
-      status: 'pending',
+      farm_address: data.farmAddress,
+      address_parts: data.addressParts ?? {},
     };
-    if (data.farmAddress) row['farm_address'] = data.farmAddress;
-    if (data.addressParts) row['address_parts'] = data.addressParts;
 
-    const error = await this.change((c) => c.from('farms').update(row).eq('id', id));
-    // Before the farm-address migration has run, those two columns don't exist
-    // yet: still save everything else rather than failing.
-    if (error && /farm_address|address_parts|schema cache|column/i.test(error)) {
-      delete row['farm_address'];
-      delete row['address_parts'];
-      return this.change((c) => c.from('farms').update(row).eq('id', id));
+    const { error: kycError } = await client
+      .from('farm_kyc')
+      .upsert(kycRow, { onConflict: 'farm_id' });
+    if (kycError) {
+      const message = friendlyError(kycError);
+      this.error.set(message);
+      await this.refresh();
+      return message;
     }
-    return error;
+
+    const err = await this.change((c) => c.from('farms').update({ location: data.location }).eq('id', id));
+    if (err) await this.refresh();
+    return err;
   }
 
   updateFarm(id: string, rawName: string, rawLocation: string) {
@@ -759,16 +804,19 @@ export class StoreService {
   /** Reviews for the given products, newest first. With no ids, all reviews. */
   async loadReviews(productIds?: string[]): Promise<Review[]> {
     const client = this.supabase.client;
+    const columns = this.auth.userId()
+      ? '*'
+      : 'id, product_id, author_name, rating, comment, created_at';
     let list: Review[] = [];
     if (client && productIds && productIds.length > 0) {
-      let query = client.from('reviews').select('*').order('created_at', { ascending: false });
+      let query = client.from('reviews').select(columns).order('created_at', { ascending: false });
       query = query.in('product_id', productIds);
       const { data } = await query.limit(200);
       list = (data ?? []).map(toReview);
     } else if (client && !productIds) {
       const { data } = await client
         .from('reviews')
-        .select('*')
+        .select(columns)
         .order('created_at', { ascending: false })
         .limit(200);
       list = (data ?? []).map(toReview);

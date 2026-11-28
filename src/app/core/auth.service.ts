@@ -621,12 +621,19 @@ export function roleGuard(requiredRole: Role): CanActivateFn {
 
     await auth.ready;
 
-    // Verify session with Supabase client if configured and not debug mode
+    // Verify active user token with Supabase Auth if configured and not debug mode
     if (auth.isSupabaseConfigured() && !environment.debug) {
       const client = auth.supabaseClient;
       if (client) {
-        const { data } = await client.auth.getSession();
-        if (!data.session) {
+        const { data: sessionData } = await client.auth.getSession();
+        if (!sessionData.session) {
+          return router.createUrlTree(['/login'], {
+            queryParams: { next: state.url },
+          });
+        }
+        const { data: userData, error: userError } = await client.auth.getUser();
+        if (userError?.status === 401 || userError?.status === 403 || (!userError && !userData.user)) {
+          await auth.signOut();
           return router.createUrlTree(['/login'], {
             queryParams: { next: state.url },
           });
