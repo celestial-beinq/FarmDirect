@@ -8,14 +8,16 @@ payments and reviews. Do the steps in order. It takes about 20 minutes.
 | Value | Where it lives | Visible in the browser? |
 | --- | --- | --- |
 | Supabase project URL | `.env` (root) | Yes — public by design |
-| Supabase anon / publishable key | `.env` (root) | Yes — public by design |
-| Supabase service-role key | Supabase only (functions get it automatically) | **Never** |
+| Supabase publishable / anon key | `.env` (root) | Yes — public by design |
+| Supabase service-role / `sb_secret_` key | Supabase only (Edge Functions) | **Never** |
 | Paystack secret key (`sk_...`) | Supabase function secrets | **Never** |
 
 The two public values are safe to expose because the database's Row Level
-Security decides what each visitor can read or change. The two secret values
-never appear in this repository or in the website's code. The site does not
-use a Paystack public key at all: customers pay on Paystack's own page.
+Security decides what each visitor can read or change, and all sensitive
+operations (farmer KYC, payments, orders, Paystack calls) run behind RLS or
+server-only Edge Functions. Secret keys never appear in this repository or in
+the website's code. `scripts/set-env.mjs` rejects any `.env` containing secret
+keys before a build can proceed.
 
 `.env`, `supabase/functions/.env` and the generated
 `src/environments/environment.ts` are all listed in `.gitignore`. Before your
@@ -24,24 +26,26 @@ first push, run `git status` and check none of them appear.
 ## 1. Create the Supabase project
 
 1. Create a project at <https://supabase.com/dashboard>.
-2. Open **SQL Editor**, paste the whole of
-   `supabase/migrations/20261115000000_init.sql` and run it. This creates the
-   tables, the security policies and the server-side rules.
+2. Apply **all** migrations in `supabase/migrations/` in filename order — either via CLI:
+   ```bash
+   supabase link --project-ref YOUR_PROJECT_REF
+   supabase db push
+   ```
+   or by pasting each `.sql` file in `supabase/migrations/` in chronological order into the Supabase **SQL Editor** (through `20261128000000_security_hardening.sql`).
 3. **Turn off Email Confirmation during development** to avoid email rate limits:
-   In your dashboard, go to **Authentication → Providers → Email** and toggle **Confirm email** to **OFF** (click Save). This allows instant sign-ups without hitting Supabase's email rate limit.
+   In your dashboard, go to **Authentication → Providers → Email** and toggle **Confirm email** to **OFF** (click Save). Remember to turn it back **ON** for production.
 4. Optional: paste and run `supabase/seed.sql` to add sample farms, produce
    and livestock so the marketplace is not empty. It is placeholder data.
 
 ## 2. Connect the website
 
 1. Copy `.env.example` to `.env`.
-2. In the Supabase dashboard open **Project Settings → API** and copy the
-   **Project URL** and the **anon / publishable** key into `.env`.
-3. Run `npm start`. The yellow "Supabase is not connected" banner disappears.
+2. In the Supabase dashboard open **Project Settings → API Keys**, copy the **Project URL** into `SUPABASE_URL`, and copy your **Publishable key (`sb_publishable_...`)** into `SUPABASE_PUBLISHABLE_KEY` (or legacy `SUPABASE_ANON_KEY`).
+3. Run `npm start`. The preview-mode banner disappears.
 
 Always start and build with `npm start` / `npm run build` (not `ng serve`
 directly): those commands generate the app's config from `.env` first, and
-refuse to continue if a secret key has been pasted into it by mistake.
+refuse to continue if any secret key (`service_role`, `sb_secret_`, `sk_live_`, `sk_test_`, DB passwords) has been pasted into `.env`.
 
 ## 3. Deploy the payment functions
 
@@ -91,23 +95,17 @@ is what slows down password guessing. Keep **Confirm email** switched on
 
 ## 6. Create an Admin Account (Supabase Only)
 
-Nobody can sign up as an admin from the website. An admin account can **only** be created from Supabase:
+Nobody can sign up as an admin from the website or via client `user_metadata` (`raw_user_meta_data` is forced to `customer` or `farmer`). An admin account can **only** be created or promoted from Supabase itself:
 
-### Method A: Direct creation in Supabase Dashboard (Recommended)
-1. In your Supabase Dashboard, go to **Authentication → Users → Add User → Create User**.
-2. Enter the admin email and password.
-3. Check **Auto Confirm User?** (so you don't need to verify via email).
-4. Under **User Metadata**, paste:
-   ```json
-   { "role": "admin", "full_name": "Admin Name" }
-   ```
-5. Click **Create User**. The server trigger will automatically assign the `admin` role.
-
-### Method B: Promote any existing registered user via SQL Editor
-Run this single line in the Supabase **SQL Editor**:
+### Method A: Create user and promote via SQL Editor (Recommended)
+1. In your Supabase Dashboard, go to **Authentication → Users → Add User → Create User** (or sign up normally on the site), enter the admin email and password, and check **Auto Confirm User?**.
+2. Open the Supabase **SQL Editor** and run:
 ```sql
 select public.make_admin('your-email@example.com');
 ```
+
+### Method B: Server Admin API (`service_role` only)
+From a trusted server script using your `service_role` / `sb_secret_` key, call `supabase.auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { role: 'admin' }, user_metadata: { full_name: 'Admin Name' } })`.
 
 When this user signs in on the website, they are immediately authenticated with the admin role and redirected to `/admin`.
 
@@ -122,11 +120,17 @@ When this user signs in on the website, they are immediately authenticated with 
 
 ## How the site is protected
 
-- **Row Level Security on every table.** Customers see only their own orders
-  and payments; farmers see only their own listings and their farm's orders;
-  shoppers see only approved listings from verified farms.
-- **Locked fields.** Database triggers stop anyone changing their own role or
-  account status, verifying their own farm, or approving their own listing.
+- **Row Level Security + least-privilege grants on every table.** Customers see
+  only their own orders and payments; farmers see only their own listings and
+  paid orders; shoppers see only approved listings from verified farms via
+  `get_verified_farms()` with zero access to farmer PII or `owner_id`.
+- **Isolated farmer KYC / PII.** National Identity Numbers (NIN), residential
+  and farmland addresses, and verification documents live in `public.farm_kyc`,
+  accessible only to the farm owner and admins.
+- **Locked fields & safe signup trigger.** Database triggers stop anyone
+  changing their own role or account status, verifying their own farm, or
+  approving their own listing. Public sign-ups can never claim `'admin'` via
+  `user_metadata`.
 - **Orders and payments are server-only.** The browser cannot insert or edit
   orders, payments or pool totals. The `checkout` function re-prices every
   item from the database, so a tampered request cannot change what is charged.

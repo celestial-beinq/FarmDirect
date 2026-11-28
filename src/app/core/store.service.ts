@@ -73,7 +73,7 @@ function timeLeft(closesAt: string): string {
 const toReview = (row: any): Review => ({
   id: row.id,
   productId: row.product_id,
-  customerId: row.customer_id,
+  customerId: row.customer_id ?? '',
   author: row.author_name,
   rating: row.rating,
   comment: row.comment,
