@@ -77,6 +77,10 @@ serve(async (req) => {
   const admin = adminClient();
   await rateLimit(admin, `checkout:${user.id}`, 10, 60);
 
+  if (!/^https?:\/\/.+/.test(SITE_URL)) {
+    throw new Error('SITE_URL secret must be configured with an http(s) URL.');
+  }
+
   const lines = parseLines(await req.json().catch(() => null));
 
   // ---- Who is buying ----

@@ -9,21 +9,17 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-const PUBLIC_KEYS = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
-const FORBIDDEN_SECRET_PATTERNS = [
-  /service_role/i,
-  /^sk_(test|live)_/,
-  /^sb_secret_/,
-  /secret/i,
-  /private/i,
-  /password/i,
-];
+const PUBLIC_KEYS = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_PUBLISHABLE_KEY'];
+const FORBIDDEN_KEY_PATTERN = /(service_role|secret|private|password|access_token|database_url|db_url|webhook)/i;
+const SECRET_VALUE_PATTERN = /^(sk_(test|live)_|sb_secret_|sbp_|postgres(ql)?:\/\/)/i;
 
 function readEnvFile(path) {
   if (!existsSync(path)) return {};
   const values = {};
   for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
-    const match = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const match = trimmed.match(/^([A-Za-z0-9_]+)\s*=\s*(.*?)$/);
     if (match) values[match[1]] = match[2].replace(/^(['"])(.*)\1$/, '$2');
   }
   return values;
@@ -31,36 +27,69 @@ function readEnvFile(path) {
 
 /** True if the value is a key that must stay on the server. */
 function looksSecret(value) {
-  if (/^(sk_(test|live)_|sb_secret_)/.test(value)) return true;
-  try {
-    // Supabase keys are JWTs; the service_role one says so in its payload.
-    const payload = JSON.parse(Buffer.from(value.split('.')[1] ?? '', 'base64url').toString());
-    return payload.role === 'service_role';
-  } catch {
-    return false;
+  if (!value) return false;
+  if (SECRET_VALUE_PATTERN.test(value)) return true;
+  if (/^sb_publishable_[A-Za-z0-9_-]{12,}$/.test(value)) return false;
+  const parts = value.split('.');
+  if (parts.length === 3 && parts[0].startsWith('eyJ')) {
+    try {
+      // Supabase JWT keys declare their Postgres role in the payload; ONLY 'anon' is safe in browsers.
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+      return payload.role !== 'anon';
+    } catch {
+      return true;
+    }
   }
+  return false;
 }
 
-function validateUrl(urlStr) {
+function validateUrl(urlStr, requireHttps) {
   if (!urlStr) return false;
   try {
     const parsed = new URL(urlStr);
+    if (requireHttps) return parsed.protocol === 'https:';
     return parsed.protocol === 'https:' || parsed.protocol === 'http:';
   } catch {
     return false;
   }
 }
 
+const isProduction =
+  process.env.NODE_ENV === 'production' ||
+  process.env.PRODUCTION === 'true';
+
+// Audit root .env first so server-only secrets are rejected even if not in PUBLIC_KEYS.
+const dotEnv = readEnvFile('.env');
+for (const [key, value] of Object.entries(dotEnv)) {
+  if (FORBIDDEN_KEY_PATTERN.test(key) || looksSecret(value)) {
+    console.error(
+      `\nSTOP: .env contains a server-only secret (${key}).\n` +
+        'Secret keys (service_role, sb_secret_, Paystack sk_, DB passwords/URLs) must NEVER live in root .env.\n' +
+        'Remove it from .env and set it on the server with `supabase secrets set`.\n',
+    );
+    process.exit(1);
+  }
+  if (!PUBLIC_KEYS.includes(key) && !['NODE_ENV', 'PRODUCTION', 'DEBUG', 'APP_DEBUG'].includes(key)) {
+    console.warn(`[set-env] Ignoring unknown key "${key}" in .env (only public keys are forwarded).`);
+  }
+}
+
 // Real environment variables (e.g. on a hosting provider) win over the file.
-const env = { ...readEnvFile('.env'), ...process.env };
-const config = Object.fromEntries(PUBLIC_KEYS.map((key) => [key, (env[key] ?? '').trim()]));
+const env = { ...dotEnv, ...process.env };
+const supabaseUrl = (env.SUPABASE_URL ?? '').trim();
+// Prefer sb_publishable_... when provided, falling back to legacy SUPABASE_ANON_KEY.
+const supabasePublicKey = (env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || '').trim();
+const config = {
+  SUPABASE_URL: supabaseUrl,
+  SUPABASE_ANON_KEY: supabasePublicKey,
+};
 
 // Check for accidental secret leakage in public keys
 for (const [key, value] of Object.entries(config)) {
   if (looksSecret(value)) {
     console.error(
-      `\nSTOP: ${key} contains a SECRET key (service_role or Paystack secret).\n` +
-        'That key must never reach the browser. Put the anon / publishable key in .env\n' +
+      `\nSTOP: ${key} contains a SECRET or non-anon key.\n` +
+        'That key must never reach the browser. Use the publishable / anon key in .env\n' +
         'and give secret keys to the server with `supabase secrets set`.\n',
     );
     process.exit(1);
@@ -68,14 +97,14 @@ for (const [key, value] of Object.entries(config)) {
 }
 
 // Validate SUPABASE_URL structure if present
-if (config.SUPABASE_URL && !validateUrl(config.SUPABASE_URL)) {
-  console.error(`\nERROR: SUPABASE_URL (${config.SUPABASE_URL}) is not a valid HTTP/HTTPS URL.\n`);
+if (config.SUPABASE_URL && !validateUrl(config.SUPABASE_URL, isProduction || env.PRODUCTION === 'true')) {
+  console.error(`\nERROR: SUPABASE_URL (${config.SUPABASE_URL}) is not a valid ${isProduction ? 'HTTPS' : 'HTTP/HTTPS'} URL.\n`);
   process.exit(1);
 }
 
-// Validate SUPABASE_ANON_KEY format if present
+// Validate public key format if present
 if (config.SUPABASE_ANON_KEY && config.SUPABASE_ANON_KEY.length < 20) {
-  console.error(`\nERROR: SUPABASE_ANON_KEY appears invalid or truncated.\n`);
+  console.error(`\nERROR: SUPABASE_ANON_KEY / SUPABASE_PUBLISHABLE_KEY appears invalid or truncated.\n`);
   process.exit(1);
 }
 
@@ -86,13 +115,9 @@ if (!config.SUPABASE_URL || !config.SUPABASE_ANON_KEY) {
   );
 }
 
-// Determine production and debug flags
-const isProduction =
-  process.env.NODE_ENV === 'production' ||
-  process.env.PRODUCTION === 'true' ||
-  env.NODE_ENV === 'production';
+const prodFlag = isProduction || env.PRODUCTION === 'true';
 const isDebug =
-  !isProduction &&
+  !prodFlag &&
   (process.env.DEBUG === 'true' ||
     process.env.APP_DEBUG === 'true' ||
     env.DEBUG === 'true' ||
@@ -103,11 +128,11 @@ writeFileSync(
   'src/environments/environment.ts',
   `// GENERATED by scripts/set-env.mjs from .env: do not edit, do not commit.
 export const environment = {
-  production: ${JSON.stringify(isProduction)},
+  production: ${JSON.stringify(prodFlag)},
   debug: ${JSON.stringify(isDebug)},
   supabaseUrl: ${JSON.stringify(config.SUPABASE_URL)},
   supabaseAnonKey: ${JSON.stringify(config.SUPABASE_ANON_KEY)},
 };
 `,
 );
-console.log(`[set-env] src/environments/environment.ts generated successfully (production: ${isProduction}, debug: ${isDebug}).`);
+console.log(`[set-env] src/environments/environment.ts generated successfully (production: ${prodFlag}, debug: ${isDebug}).`);

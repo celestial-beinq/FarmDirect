@@ -48,7 +48,14 @@ Deno.serve(async (req) => {
     if (!safeEqual(expected, received)) return new Response('Invalid signature', { status: 401 });
 
     const event = JSON.parse(raw);
-    if (event?.event === 'charge.success' && typeof event.data?.reference === 'string') {
+    if (
+      event?.event === 'charge.success' &&
+      event.data?.status === 'success' &&
+      event.data?.currency === 'NGN' &&
+      typeof event.data?.reference === 'string' &&
+      Number.isSafeInteger(event.data?.amount) &&
+      event.data.amount > 0
+    ) {
       const { error } = await admin.rpc('confirm_payment', {
         p_reference: event.data.reference,
         p_amount_kobo: event.data.amount,

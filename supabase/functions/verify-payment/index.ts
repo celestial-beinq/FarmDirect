@@ -48,6 +48,13 @@ serve(async (req) => {
     // "abandoned", "failed", "ongoing"... — nothing has been paid.
     return json(req, 200, { status: result.data?.status === 'failed' ? 'failed' : 'pending' });
   }
+  if (
+    result.data?.currency !== 'NGN' ||
+    !Number.isSafeInteger(result.data?.amount) ||
+    result.data.amount <= 0
+  ) {
+    throw new HttpError(409, 'Payment currency or amount could not be verified. Please contact support.');
+  }
 
   const { data: outcome, error } = await admin.rpc('confirm_payment', {
     p_reference: reference,

@@ -19,16 +19,23 @@ const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
   .map((origin) => origin.trim().replace(/\/$/, ''))
   .filter(Boolean);
 
+const LOCAL_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/;
+
+function isAllowedOrigin(origin: string): boolean {
+  if (!origin) return true;
+  if (ALLOWED_ORIGINS.length > 0) return ALLOWED_ORIGINS.includes(origin);
+  return LOCAL_ORIGIN.test(origin);
+}
+
 /** The site's own address, used for the payment return link. */
 export const SITE_URL = (Deno.env.get('SITE_URL') ?? ALLOWED_ORIGINS[0] ?? '').replace(/\/$/, '');
 
 /** Only our own website may call these functions from a browser. */
 export function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get('origin') ?? '';
+  const origin = (req.headers.get('origin') ?? '').replace(/\/$/, '');
+  const allowOrigin = origin && isAllowedOrigin(origin) ? origin : (ALLOWED_ORIGINS[0] ?? '');
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin)
-      ? origin
-      : (ALLOWED_ORIGINS[0] ?? ''),
+    ...(allowOrigin ? { 'Access-Control-Allow-Origin': allowOrigin } : {}),
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin',
@@ -38,7 +45,12 @@ export function corsHeaders(req: Request): Record<string, string> {
 export function json(req: Request, status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
+    headers: {
+      ...corsHeaders(req),
+      'Content-Type': 'application/json',
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'no-store',
+    },
   });
 }
 
@@ -87,7 +99,11 @@ export async function rateLimit(
 }
 
 export function clientIp(req: Request): string {
-  return (req.headers.get('x-forwarded-for') ?? 'unknown').split(',')[0].trim();
+  const raw =
+    req.headers.get('cf-connecting-ip') ??
+    req.headers.get('x-real-ip') ??
+    (req.headers.get('x-forwarded-for') ?? 'unknown').split(',')[0];
+  return (raw ?? 'unknown').trim().slice(0, 64);
 }
 
 export function paystackSecret(): string {
@@ -95,12 +111,16 @@ export function paystackSecret(): string {
 }
 
 /**
- * Wraps a function so that CORS pre-flight, wrong methods and errors are
- * handled the same way everywhere. Unexpected errors are logged on the
- * server and the caller only sees a generic message.
+ * Wraps a function so that CORS pre-flight, disallowed origins, wrong methods
+ * and errors are handled the same way everywhere. Unexpected errors are logged
+ * on the server and the caller only sees a generic message.
  */
 export function serve(handler: (req: Request) => Promise<Response>): void {
   Deno.serve(async (req) => {
+    const origin = (req.headers.get('origin') ?? '').replace(/\/$/, '');
+    if (origin && !isAllowedOrigin(origin)) {
+      return json(req, 403, { error: 'Origin not allowed.' });
+    }
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) });
     if (req.method !== 'POST') return json(req, 405, { error: 'Method not allowed.' });
     try {
